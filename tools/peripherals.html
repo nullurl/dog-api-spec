@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>外设总线控制台 — DOG API | DOG API</title>
+<meta name="description" content="可交互的 DOG API 外设总线控制台：14 类设备、13 道门槛、序列闭合检查、配额承接上限与磨损预测，全部由 assets/js/peripherals.js 实算。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .qwrap { max-width: 1240px; margin: 0 auto; padding: 36px 28px 120px; }
+  .qhead { border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 26px; }
+  .qhead h1 { font-size: 30px; }
+  .qhead p { color: var(--muted); font-size: 15px; max-width: 820px; }
+  .qcols { display: grid; grid-template-columns: 330px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 1040px) { .qcols { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .panel > h3 { margin: 0 0 14px; font-size: 14px; letter-spacing: .06em; color: var(--accent); text-transform: uppercase; }
+  .fld { display: grid; grid-template-columns: 1fr 104px; gap: 10px; align-items: center; margin: 9px 0; }
+  .fld label { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  .fld input, .fld select { width: 100%; padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px; font-family: inherit; font-size: 13.5px; background: #fff; color: var(--ink); }
+  .subhead { font-size: 12px; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; margin: 16px 0 6px; }
+  .chk { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start; margin: 6px 0; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+  .chk input { margin-top: 4px; width: 15px; height: 15px; }
+  .scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 760px) { .scores { grid-template-columns: repeat(2, 1fr); } }
+  .sc { border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; background: var(--panel); }
+  .sc .k { font-size: 11.5px; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+  .sc .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.25; }
+  .sc .b { font-size: 12.5px; color: var(--muted); }
+  .sc.good .v { color: var(--ok); }
+  .sc.warn .v { color: var(--warn); }
+  .sc.bad .v { color: #b91c1c; }
+  .banner { border-radius: 10px; padding: 15px 20px; margin-bottom: 16px; font-size: 14.5px; line-height: 1.8; }
+  .banner.p0 { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+  .banner.p1 { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+  .banner.info { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; }
+  .bar { display: grid; grid-template-columns: 116px 1fr 132px; gap: 10px; align-items: center; font-size: 13px; margin: 7px 0; }
+  .bar .track { background: var(--code-bg); border-radius: 5px; height: 9px; overflow: hidden; }
+  .bar .fill { height: 100%; background: var(--accent); border-radius: 5px; }
+  .bar .fill.low { background: #b91c1c; }
+  .bar .num { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+  .grade { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: var(--code-bg); color: var(--code-ink); }
+  .grade.A { background: #dcfce7; color: #15803d; }
+  .grade.B { background: #fef3c7; color: #92400e; }
+  .grade.C { background: #f1f2f4; color: #4b5563; }
+  .vtag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
+  .vtag.ok { background: #dcfce7; color: #15803d; }
+  .vtag.cond { background: #fef3c7; color: #92400e; }
+  .vtag.fail { background: #fee2e2; color: #991b1b; }
+  .vtag.ban { background: #1f2430; color: #f8fafc; }
+  .devwrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  table.dev { font-size: 12.5px; margin: 0; width: 100%; }
+  table.dev th { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); white-space: nowrap; padding: 9px 6px; }
+  table.dev td { padding: 6px; vertical-align: middle; }
+  table.dev input[type=number] { width: 62px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px; font-family: inherit; font-size: 12.5px; background: #fff; color: var(--ink); }
+  table.dev select { padding: 4px 5px; border: 1px solid var(--line); border-radius: 5px; font-family: inherit; font-size: 12.5px; background: #fff; color: var(--ink); max-width: 132px; }
+  table.dev input[type=checkbox] { width: 15px; height: 15px; }
+  table.dev .rm { border: 1px solid var(--line); background: #fff; border-radius: 5px; cursor: pointer; padding: 3px 8px; font-size: 12px; color: var(--muted); }
+  table.dev .rm:hover { color: #b91c1c; border-color: #fca5a5; }
+  .gate { border: 1px solid var(--line); border-radius: 9px; background: var(--panel); margin-bottom: 9px; overflow: hidden; }
+  .gate > summary { cursor: pointer; padding: 11px 15px; font-weight: 600; font-size: 14px; list-style: none; display: flex; gap: 10px; align-items: center; }
+  .gate > summary::-webkit-details-marker { display: none; }
+  .gate > summary .cid { font-family: "SF Mono", Menlo, monospace; font-size: 12px; color: var(--accent); }
+  .gate > summary .sp { margin-left: auto; font-weight: 400; font-size: 12px; color: var(--faint); }
+  .gate .body { padding: 0 15px 14px; border-top: 1px solid var(--line); }
+  .grow { display: grid; grid-template-columns: 118px 62px 1fr; gap: 9px; padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 12.5px; align-items: baseline; }
+  .grow:last-child { border-bottom: none; }
+  .grow .st { font-size: 11px; font-weight: 700; }
+  .st.pass { color: var(--ok); }
+  .st.warn { color: var(--warn); }
+  .st.fail { color: #b91c1c; }
+  .st.rule, .st.manual, .st.n\/a { color: var(--faint); }
+  .grow .dt { color: var(--muted); line-height: 1.6; }
+  .grow .dt em { color: var(--faint); font-style: normal; font-size: 11.5px; }
+  .jsonout { background: #1f2430; border-radius: 10px; padding: 15px 18px; max-height: 460px; overflow: auto; }
+  .jsonout pre { background: none; border: none; padding: 0; margin: 0; color: #d1d5db; font-size: 12.5px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 1040px) { .grid2 { grid-template-columns: 1fr; } }
+  .note { font-size: 13px; color: var(--muted); line-height: 1.75; }
+  .regwrap { overflow-x: auto; }
+  .dep { border-left: 3px solid #94a3b8; padding: 10px 0 10px 14px; margin: 12px 0; }
+  .dep .h { font-weight: 700; font-size: 14px; }
+  .dep .r { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; }
+  .chip { font-size: 12px; border: 1px solid var(--line); border-radius: 20px; padding: 3px 11px; color: var(--muted); background: var(--panel); }
+  .chip b { color: var(--ink); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div class="qwrap">
+  <div class="qhead">
+    <span class="doc-tag">TOOL / 实算</span>
+    <h1>DOG API 外设总线控制台</h1>
+    <p>
+      §31 的实现。左侧填入一份档案与一份外设清单，右侧立刻产出序列闭合检查、配额承接上限、逐设备门槛判定与磨损预测。
+      全部由 <code>assets/js/peripherals.js</code> 完成 —— 页面上没有任何写死的配额或门槛。
+    </p>
+    <p style="font-size:13.5px;color:var(--faint);margin-top:12px;">
+      本页的核心结论只有一句：<strong>外设只能转移负荷，不能创造配额</strong>。下面那张覆盖率图就是这句话的算术形式，而它算的是引擎里的五个权重，不是本页写下的数字。
+    </p>
+  </div>
+
+  <div class="qcols">
+    <div>
+      <div class="panel">
+        <h3>① 实例档案 · Profile</h3>
+        <div class="fld"><label>体重（kg）<span style="color:#b91c1c">*</span></label><input id="f-weight" type="number" step="0.1" value="14.5"></div>
+        <div class="fld"><label>月龄（月）</label><input id="f-age" type="number" value="48"></div>
+        <div class="fld"><label>品种类</label>
+          <select id="f-breed">
+            <option value="herding">牧羊 / 工作型</option>
+            <option value="sporting">运动型</option>
+            <option value="hound">猎犬型</option>
+            <option value="terrier">梗类</option>
+            <option value="working">工作犬</option>
+            <option value="toy">小型 / 玩赏</option>
+            <option value="nonsporting">非运动型</option>
+            <option value="mixed" selected>混种</option>
+          </select>
+        </div>
+        <div class="fld"><label>被毛</label>
+          <select id="f-coat">
+            <option value="short" selected>短毛</option>
+            <option value="double">双层 / 厚被毛</option>
+            <option value="thick">厚密</option>
+            <option value="hairless">无毛 / 极短</option>
+          </select>
+        </div>
+        <div class="fld"><label>啃咬强度（1–5）</label>
+          <select id="f-chew">
+            <option value="1">1 · 只叼不咬</option>
+            <option value="2">2 · 轻度</option>
+            <option value="3" selected>3 · 中度</option>
+            <option value="4">4 · 强力</option>
+            <option value="5">5 · 拆解型</option>
+          </select>
+        </div>
+        <label class="chk"><input id="f-brachy" type="checkbox"><span>短鼻品种（气管更细，气道门槛收紧）</span></label>
+        <label class="chk"><input id="f-long" type="checkbox"><span>体长背短（腊肠等，跳接与拔河列入禁忌）</span></label>
+      </div>
+
+      <div class="panel">
+        <h3>② 今日基线活动 · Baseline</h3>
+        <p class="note" style="margin:0 0 10px;">填「没有外设时本来会发生的部分」。外设清单里的分钟会叠加在这些数字上。</p>
+        <div class="fld"><label>步行（分钟）</label><input id="f-walk" type="number" value="30"></div>
+        <div class="fld"><label>嗅闻（分钟）</label><input id="f-sniff" type="number" value="5"></div>
+        <div class="fld"><label>直接互动（分钟）</label><input id="f-social" type="number" value="20"></div>
+        <div class="fld"><label>认知 / 咀嚼（分钟）</label><input id="f-chewmin" type="number" value="0"></div>
+        <div class="fld"><label>睡眠（小时）</label><input id="f-sleep" type="number" step="0.5" value="12"></div>
+      </div>
+
+      <div class="panel">
+        <h3>③ 环境 · Environment</h3>
+        <div class="fld"><label>气温（°C）</label><input id="f-temp" type="number" value="26"></div>
+        <div class="fld"><label>相对湿度（%）</label><input id="f-rh" type="number" value="50"></div>
+        <div class="fld"><label>近 7 日户外适应（日）</label><input id="f-accl" type="number" value="10"></div>
+        <label class="chk"><input id="f-sun" type="checkbox"><span>日光直射</span></label>
+      </div>
+
+      <div class="panel">
+        <h3>④ 分诊标记 · Triage</h3>
+        <p class="note" style="margin:0 0 10px;">按 §29，P0 / P1 会短路全部接口 —— 外设清单同样不例外。下拉里的每一条都取自引擎的分诊表。</p>
+        <div class="fld"><label>当前状态</label>
+          <select id="f-tri">
+            <option value="3" selected>常规</option>
+            <option value="2">P2 · 72 小时内</option>
+            <option value="1">P1 · 当日</option>
+            <option value="0">P0 · 立即</option>
+          </select>
+        </div>
+        <div id="tri-note" class="note"></div>
+      </div>
+    </div>
+
+    <div>
+      <div id="short"></div>
+
+      <div class="panel">
+        <h3>结论</h3>
+        <div class="scores" id="scores"></div>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="panel">
+        <h3>配额承接：外设能碰多少</h3>
+        <div id="cov-bars"></div>
+        <div id="cov-note" class="note" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="panel">
+        <h3>DNS 明细：外设带来的增量</h3>
+        <div id="dns-bars"></div>
+        <div id="dns-note" class="note" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="panel">
+        <h3>序列闭合检查</h3>
+        <div id="seq"></div>
+      </div>
+
+      <div class="panel">
+        <h3>环境抑制与硬停</h3>
+        <div id="hri"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="padding:0;margin:34px 0 10px;">外设清单 · 部署了什么</div>
+  <div class="devwrap">
+    <table class="dev" id="devtable"></table>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <button class="btn" id="add">＋ 添加设备</button>
+    <button class="btn ghost" id="reset">恢复默认清单</button>
+    <span class="note" id="devcount"></span>
+  </div>
+
+  <div class="grid2" style="margin-top:24px;">
+    <div>
+      <div class="panel">
+        <h3>逐设备门槛判定</h3>
+        <div id="checks"></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <h3>磨损与退役预测</h3>
+        <div id="wear" class="note"></div>
+      </div>
+      <div class="panel">
+        <h3>合规状态</h3>
+        <div id="compliance" class="note"></div>
+      </div>
+      <div class="panel">
+        <h3>来源与等级</h3>
+        <div id="sources"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" id="reghead" style="padding:0;margin:34px 0 10px;">设备注册表</div>
+  <div class="panel">
+    <div class="regwrap" id="registry"></div>
+  </div>
+
+  <div class="section-title" style="padding:0;margin:34px 0 10px;">弃用清单</div>
+  <div class="panel" id="deprecated"></div>
+
+  <div class="section-title" style="padding:0;margin:34px 0 10px;">输出 JSON（对应 POST /api/v1/peripherals/enumerate 的响应）</div>
+  <div class="panel">
+    <button class="btn" id="copy">复制 JSON</button>
+    <span id="copy-msg" style="font-size:13px;color:var(--ok);margin-left:10px;"></span>
+    <div class="jsonout" style="margin-top:12px;"><pre id="json"></pre></div>
+  </div>
+
+  <div class="end-note">
+    本页不发送任何网络请求，不保存任何数据 · 外设内核 <code>assets/js/peripherals.js</code> · 配额与分诊内核 <code>assets/js/quantify.js</code>
+    <br>本页不含第二份配额数据：DNS 五维权重每次都从引擎现读。
+  </div>
+</div>
+
+<script src="../assets/js/quantify.js"></script>
+<script src="../assets/js/peripherals.js"></script>
+<script src="../assets/js/render.js"></script>
+<script>
+(function () {
+  var Q = window.DogQuant, P = window.DogPeriph;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  };
+  var num = function (id) { var v = parseFloat($(id).value); return isNaN(v) ? 0 : v; };
+  var chk = function (id) { return $(id).checked; };
+  var vtag = function (v) { var m = { ok: "推荐", cond: "有条件", fail: "不合格", ban: "MUST NOT" }; return '<span class="vtag ' + v + '">' + (m[v] || v) + "</span>"; };
+
+  SpecSite.mountChrome({ root: "../", active: "peripherals" });
+
+  var DEFAULT = [
+    { cls: "BL", minutes: 15, sessions: 2, diameterMm: 67, vent: false, nailDent: true, edges: "smooth", rope: "none", exposed: false, declared: "FDA 食品接触", deltaC: null },
+    { cls: "SN", minutes: 15, sessions: 1, diameterMm: null, vent: false, nailDent: true, edges: "smooth", rope: "none", exposed: false, declared: "OEKO-TEX 100", deltaC: null },
+    { cls: "PZ", minutes: 15, sessions: 1, diameterMm: null, vent: false, nailDent: true, edges: "smooth", rope: "none", exposed: false, declared: "FDA 食品接触", deltaC: null },
+    { cls: "CH", minutes: 20, sessions: 1, diameterMm: null, vent: false, nailDent: true, edges: "smooth", rope: "none", exposed: false, declared: "EN 71-3", deltaC: null },
+    { cls: "CL", minutes: 0, sessions: 1, diameterMm: null, vent: false, nailDent: true, edges: "smooth", rope: "none", exposed: false, declared: "EN 71-3", deltaC: 4 }
+  ];
+  var state = JSON.parse(JSON.stringify(DEFAULT));
+
+  /* ---------------- 设备清单表 ---------------- */
+  var DECLARED = ["", "FDA 食品接触", "EN 71-3", "ASTM F963", "OEKO-TEX 100"];
+
+  function opts(list, cur) {
+    return list.map(function (o) {
+      return '<option value="' + esc(o.v) + '"' + (String(o.v) === String(cur) ? " selected" : "") + ">" + esc(o.l) + "</option>";
+    }).join("");
+  }
+
+  function renderTable() {
+    var head = "<tr>" +
+      ["类别", "单次<br>min", "次/日", "最小外径<br>mm", "通气孔", "指甲<br>压痕", "边缘", "绳状结构", "外露件", "合规声明", ""]
+        .map(function (h) { return "<th>" + h + "</th>"; }).join("") + "</tr>";
+
+    var body = state.map(function (d, i) {
+      var c = P.cls(d.cls);
+      var clsOpts = opts(P.CLASSES.map(function (x) { return { v: x.code, l: x.code + " · " + x.name }; }), d.cls);
+      return "<tr>" +
+        '<td><select data-i="' + i + '" data-k="cls">' + clsOpts + "</select></td>" +
+        '<td><input type="number" min="0" step="5" data-i="' + i + '" data-k="minutes" value="' + d.minutes + '"></td>' +
+        '<td><input type="number" min="0" step="1" data-i="' + i + '" data-k="sessions" value="' + d.sessions + '"></td>' +
+        '<td><input type="number" min="0" step="1" data-i="' + i + '" data-k="diameterMm" value="' + (d.diameterMm == null ? "" : d.diameterMm) + '" placeholder="—"></td>' +
+        '<td><input type="checkbox" data-i="' + i + '" data-k="vent"' + (d.vent ? " checked" : "") + "></td>" +
+        '<td><input type="checkbox" data-i="' + i + '" data-k="nailDent"' + (d.nailDent ? " checked" : "") + "></td>" +
+        '<td><select data-i="' + i + '" data-k="edges">' +
+          opts([{ v: "smooth", l: "光滑" }, { v: "pointed", l: "已出现尖点" }], d.edges) + "</select></td>" +
+        '<td><select data-i="' + i + '" data-k="rope">' +
+          opts([{ v: "none", l: "无绳" }, { v: "ok", l: "完好" }, { v: "frayed", l: "已松散" }], d.rope) + "</select></td>" +
+        '<td><select data-i="' + i + '" data-k="exposed">' +
+          opts([{ v: "0", l: "无" }, { v: "1", l: "已外露" }], d.exposed ? "1" : "0") + "</select></td>" +
+        '<td><select data-i="' + i + '" data-k="declared">' +
+          opts(DECLARED.map(function (x) { return { v: x, l: x || "空白" }; }), d.declared) + "</select></td>" +
+        '<td><button class="rm" data-rm="' + i + '" title="移除">✕</button></td>' +
+        "</tr>" +
+        (c && c.role === "suppressor"
+          ? '<tr><td colspan="11" style="padding:0 6px 8px;color:var(--faint);font-size:12px;">' +
+            "抑制器不产生分钟。填入该设备声明的垫面温差（°C），本页据此重算 HRI —— " +
+            '温差 <input type="number" min="0" step="0.5" data-i="' + i + '" data-k="deltaC" value="' + (d.deltaC == null ? 0 : d.deltaC) + '" style="width:58px;padding:3px 6px;border:1px solid var(--line);border-radius:5px;font-family:inherit;font-size:12px;">' +
+            "。这个数字来自厂商或你的实测，本项目不提供。</td></tr>"
+          : "");
+    }).join("");
+
+    $("devtable").innerHTML = head + body;
+    $("devcount").textContent = "当前 " + state.length + " 件。合格的设备才计入配额；不合格与禁用的会被拦下并单列。";
+  }
+
+  $("devtable").addEventListener("input", onEdit);
+  $("devtable").addEventListener("change", onEdit);
+  function onEdit(e) {
+    var t = e.target;
+    if (t.dataset && t.dataset.rm != null) return;
+    var i = t.dataset.i, k = t.dataset.k;
+    if (i == null || !k) return;
+    i = parseInt(i, 10);
+    if (t.type === "checkbox") state[i][k] = t.checked;
+    else if (t.type === "number") state[i][k] = t.value === "" ? null : parseFloat(t.value);
+    else if (k === "exposed") state[i][k] = t.value === "1";
+    else state[i][k] = t.value;
+    run(k === "cls");   // 换类别时要重建表格（抑制器多一行）
+  }
+
+  $("devtable").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-rm]");
+    if (!b) return;
+    state.splice(parseInt(b.dataset.rm, 10), 1);
+    renderTable(); run();
+  });
+
+  $("add").addEventListener("click", function () {
+    state.push({ cls: "FP", minutes: 10, sessions: 1, diameterMm: null, vent: false, nailDent: true, edges: "smooth", rope: "ok", exposed: false, declared: "", deltaC: null });
+    renderTable(); run();
+  });
+  $("reset").addEventListener("click", function () {
+    state = JSON.parse(JSON.stringify(DEFAULT));
+    renderTable(); run();
+  });
+
+  /* ---------------- 注册表（数据驱动） ---------------- */
+  function renderRegistry() {
+    var head = "<table><tr><th>代码</th><th>类别</th><th>角色</th><th>服务相</th><th>计入配额</th><th>默认</th><th>级别</th><th>门槛</th></tr>";
+    var rows = P.CLASSES.map(function (c) {
+      var role = P.ROLES.filter(function (r) { return r.key === c.role; })[0] || { label: c.role };
+      var seq = c.seq.length ? c.seq.map(function (s) {
+        var x = P.SEQ.filter(function (y) { return y.key === s; })[0]; return x ? x.label : s;
+      }).join("+") : (c.forage ? "觅食（自成终点）" : "—");
+      var dns = c.dns.length ? c.dns.map(function (d) {
+        var x = Q.DNS_DIMS.filter(function (y) { return y.key === d; })[0]; return x ? x.label : d;
+      }).join("+") : "—";
+      var gates = c.gates.length ? c.gates.map(function (g) {
+        var x = P.GATES.filter(function (y) { return y.key === g; })[0]; return x ? x.label.replace(/门槛$|条款$/, "") : g;
+      }).join("、") : "—";
+      return "<tr><td><code>" + esc(c.id) + "</code></td><td>" + esc(c.name) + "</td><td>" + esc(role.label) + "</td><td>" +
+        esc(seq) + "</td><td>" + esc(dns) + "</td><td>" + vtag(c.default === "ban" ? "ban" : c.default === "cond" ? "cond" : "ok") +
+        '</td><td><span class="grade ' + c.grade + '">' + c.grade + "</span></td><td style='color:var(--muted);font-size:12px;'>" + esc(gates) + "</td></tr>";
+    }).join("");
+    $("registry").innerHTML = head + rows + "</table>";
+
+    $("deprecated").innerHTML = P.DEPRECATED.map(function (d) {
+      var c = P.cls(d.code), m = P.cls(d.migrateTo);
+      return '<div class="dep"><div class="h"><code>' + esc(c.id) + "</code> · " + esc(c.name) + " —— " + esc(d.kind) + "</div>" +
+        '<div class="r"><strong>理由：</strong>' + esc(d.reason) + "<br><strong>迁移到：</strong><code>" + esc(m.id) + "</code> " + esc(m.name) +
+        "<br>" + esc(d.note) + "</div></div>";
+    }).join("") +
+      '<p class="note" style="margin-top:14px;">另外两类在控制台里显示为 <span class="vtag ban">MUST NOT</span>：硬骨 / 鹿角 / 蹄（硬度超过牙齿，失效方式是崩牙）与激光笔（序列不可闭合）。两者的差别是：前者是<strong>选错了工具</strong>，后者是<strong>接口设计错了</strong>。</p>';
+
+    $("sources").innerHTML = "<table><tr><th>条目</th><th>来源</th><th>级别</th></tr>" + P.SOURCES.map(function (s) {
+      return "<tr><td style='font-size:12.5px;'>" + esc(s.topic) + "</td><td style='font-size:12px;color:var(--muted);'>" + esc(s.src) +
+        '</td><td><span class="grade ' + s.grade + '">' + s.grade + "</span></td></tr>";
+    }).join("") + "</table>";
+  }
+
+  /* ---------------- 主循环 ---------------- */
+  function collect() {
+    return {
+      profile: {
+        weightKg: num("f-weight"), ageMonths: num("f-age"), breedClass: $("f-breed").value,
+        coat: $("f-coat").value, chewClass: num("f-chew"),
+        brachycephalic: chk("f-brachy"), longBacked: chk("f-long")
+      },
+      env: { tempC: num("f-temp"), humidityPct: num("f-rh"), sun: chk("f-sun"), acclimatedDays: num("f-accl") },
+      act: { walkMin: num("f-walk"), sniffMin: num("f-sniff"), socialMin: num("f-social"), chewMin: num("f-chewmin"), sleepHours: num("f-sleep") }
+    };
+  }
+
+  function flagsFor(p) {
+    // 从引擎的分诊表里取该优先级的代表条目 —— 页面上不另抄一份分诊数据
+    var d = Q.TRIAGE_DEFS.filter(function (x) { return x.p === p; })[0];
+    if (!d) return { flags: {}, label: "" };
+    var f = {}; f[d.key] = true;
+    return { flags: f, label: d.label };
+  }
+
+  function specOf(d) {
+    return {
+      diameterMm: d.diameterMm == null ? null : d.diameterMm,
+      vent: !!d.vent,
+      nailDent: d.nailDent == null ? null : !!d.nailDent,
+      edges: d.edges,
+      hasRope: d.rope && d.rope !== "none",
+      frayed: d.rope === "frayed",
+      exposed: !!d.exposed,
+      declared: d.declared ? [d.declared] : []
+    };
+  }
+
+  function run(rebuild) {
+    if (rebuild) renderTable();
+    var inp = collect();
+    $("tri-note").innerHTML = "";
+
+    if (!inp.profile.weightKg) {
+      $("short").innerHTML = '<div class="banner p1"><strong>422 UNPROCESSABLE PROFILE</strong> —— 体重是气道门槛与全部能量指标的输入，它不可选，也不接受「大概是十几斤吧」。</div>';
+      ["scores", "chips", "cov-bars", "dns-bars", "seq", "hri", "checks", "wear", "compliance"].forEach(function (id) { $(id).innerHTML = ""; });
+      $("json").textContent = "";
+      return;
+    }
+
+    var p = parseInt($("f-tri").value, 10);
+    var tf = flagsFor(p);
+    if (p < 3) {
+      $("tri-note").innerHTML = "已选 <strong>" + esc("P" + p) + "</strong> 的代表条目：<em>" + esc(tf.label) + "</em>";
+    }
+
+    var devices = state.map(function (d) {
+      var o = JSON.parse(JSON.stringify(d));
+      o.spec = specOf(d);
+      return o;
+    });
+
+    var L = P.lineup(devices, inp.profile, inp.env, inp.act, tf.flags);
+    if (L.error) {
+      $("short").innerHTML = '<div class="banner p0"><strong>' + esc(L.error) + "</strong> —— " + esc(L.note) + "</div>";
+      return;
+    }
+
+    /* 短路横幅 */
+    if (L.shortCircuit) {
+      $("short").innerHTML = '<div class="banner p0"><strong>451 VET VISIT REQUIRED</strong><br>' + esc(L.shortCircuitNote) + "</div>";
+    } else if (L.shortCircuitNote) {
+      $("short").innerHTML = '<div class="banner p1"><strong>硬停生效</strong><br>' + esc(L.shortCircuitNote) + "</div>";
+    } else {
+      $("short").innerHTML = "";
+    }
+
+    /* 四个结论 chip */
+    var delta = L.dns.delta;
+    var cov = L.coverage;
+    $("scores").innerHTML =
+      '<div class="sc ' + (L.dns.after.score >= 85 ? "good" : L.dns.after.score >= 70 ? "warn" : "bad") + '"><div class="k">DNS 部署后</div><div class="v">' +
+        L.dns.after.score + '</div><div class="b">基线 ' + L.dns.before.score + " ／ Δ" + (delta >= 0 ? "+" : "") + delta + "</div></div>" +
+      '<div class="sc"><div class="k">外设可承接</div><div class="v">' + cov.addressablePct + '%</div><div class="b">结构缺口 ' + cov.structuralPct + "% · 宿主 " + cov.hostPct + "%</div></div>" +
+      '<div class="sc ' + (L.env.outdoorAllowedAfter ? "good" : "warn") + '"><div class="k">HRI 部署后</div><div class="v">' + L.env.hriAfter +
+        '</div><div class="b">下行 ' + L.env.deltaTempC + " °C ／ 户外" + (L.env.outdoorAllowedAfter ? "允许" : "禁止") + "</div></div>" +
+      '<div class="sc ' + (L.sequence.closed ? "good" : "bad") + '"><div class="k">序列</div><div class="v" style="font-size:22px;">' +
+        esc(L.sequence.verdict) + '</div><div class="b">覆盖 ' + (L.sequence.covered.length || "无") + " / " + P.SEQ.length + " 相</div></div>";
+
+    $("chips").innerHTML =
+      '<span class="chip">计入配额 <b>' + L.applied.filter(function (a) { return a.added; }).length + "</b> 件</span>" +
+      '<span class="chip">被拦下 <b>' + L.blocked.length + "</b> 件</span>" +
+      '<span class="chip">合规空白 <b>' + L.compliance.blank + " / " + L.compliance.total + "</b></span>" +
+      '<span class="chip">抑制器 <b>' + L.env.suppressors + "</b> 件</span>";
+
+    /* 覆盖率 */
+    $("cov-bars").innerHTML = cov.rows.map(function (r) {
+      var kind = r.kind === "transducer" ? "可承接" : r.kind === "host" ? "宿主" : "结构缺口";
+      var tone = r.kind === "transducer" ? "" : " low";
+      return '<div class="bar"><span>' + esc(r.label) + ' <span class="grade ' + (r.kind === "transducer" ? "B" : "C") + '">' + kind +
+        '</span></span><div class="track"><div class="fill' + tone + '" style="width:' + r.pct + '%"></div></div>' +
+        '<span class="num">' + r.pct + "% 权重</span></div>";
+    }).join("");
+    $("cov-note").innerHTML = "<strong>可承接 " + cov.addressablePct + "% · 结构缺口 " + cov.structuralPct + "% · 宿主 " + cov.hostPct + "%</strong><br>" +
+      "这三个数是拿引擎的五个权重加出来的：" + esc(cov.note) + "。社交那一维碰不到，因为它在引擎里的定义是「直接互动 60 分钟，共处一室不计入」——" +
+      "一个能替你做掉它的外设，按定义就不是外设。";
+
+    /* DNS 明细 */
+    $("dns-bars").innerHTML = L.dns.dims.map(function (d) {
+      var up = d.scoreAfter > d.scoreBefore;
+      return '<div class="bar"><span>' + esc(d.label) + ' <span class="grade C">' + Math.round(d.weight * 100) + '%</span></span>' +
+        '<div class="track"><div class="fill' + (d.scoreBefore < 60 && !up ? " low" : "") + '" style="width:' + d.scoreAfter + '%"></div></div>' +
+        '<span class="num">' + d.scoreBefore + " → <strong>" + d.scoreAfter + "</strong></span></div>";
+    }).join("");
+    $("dns-note").innerHTML =
+      "原始分 " + L.dns.before.raw + " → " + L.dns.after.raw + " ｜ " + esc(L.dns.after.rule) +
+      (L.dns.after.capped ? " ｜ 短板项：<strong>" + esc(L.dns.after.gap.label) + "（缺口 " + L.dns.after.gap.deficit + " " + esc(L.dns.after.gap.unit) + "）</strong>" : "") +
+      (L.applied.some(function (a) { return a.coop && a.added; })
+        ? "<br>注意：清单里有协作型设备，它同时计入了运动与社交。但它计入社交的那部分，恰恰是它无法替你省掉的那部分。"
+        : "");
+
+    /* 序列 */
+    var seqLabel = function (k) { var x = P.SEQ.filter(function (s) { return s.key === k; })[0]; return x ? x.label : k; };
+    $("seq").innerHTML =
+      '<p class="note" style="margin:0 0 10px;"><strong>' + esc(L.sequence.verdict) + "</strong> —— " + esc(L.sequence.rule) + "</p>" +
+      "<div>" + P.SEQ.map(function (s) {
+        var on = L.sequence.covered.indexOf(s.key) >= 0;
+        var who = L.sequence.byStage[s.key] || [];
+        return '<span class="chip" style="' + (on ? "border-color:var(--accent);color:var(--ink);" : "opacity:.5;") + '">' +
+          esc(s.label) + (on ? " <b>" + who.length + "</b>" : "") + "</span>";
+      }).join(" ") + "</div>" +
+      (L.sequence.empty ? "" : "<p class='note' style='margin-top:10px;'>" + esc(P.FORAGE.note) + "</p>");
+
+    /* HRI */
+    $("hri").innerHTML =
+      '<div class="bar"><span>HRI</span><div class="track"><div class="fill" style="width:' + Math.max(0, Math.min(100, L.env.hriAfter * 5)) + '%"></div></div>' +
+      '<span class="num">' + L.env.hriBefore + " → <strong>" + L.env.hriAfter + "</strong></span></div>" +
+      '<p class="note" style="margin:10px 0 0;">热风险带：' + esc(L.env.bandBefore) + " → <strong>" + esc(L.env.bandAfter) + "</strong>；户外运动 " +
+      (L.env.outdoorAllowedBefore ? "允许" : "禁止") + " → <strong>" + (L.env.outdoorAllowedAfter ? "允许" : "禁止") + "</strong>。</p>" +
+      (L.env.note ? '<p class="note" style="margin:8px 0 0;color:var(--faint);">' + esc(L.env.note) + "</p>" : "");
+
+    /* 逐设备门槛 */
+    $("checks").innerHTML = L.devices.map(function (d) {
+      var rows = d.rows.map(function (r) {
+        return '<div class="grow"><span class="st ' + r.status + '">' + esc(r.status) + "</span><span>" + esc(r.label) +
+          '</span><span class="dt">' + esc(r.detail) + (r.basis ? " <em>" + esc(r.basis) + "</em>" : "") + "</span></div>";
+      }).join("") || '<div class="grow"><span class="st n/a">—</span><span>无门槛</span><span class="dt">本类不适用任何门槛</span></div>';
+      return '<details class="gate"><summary><span class="cid">' + esc(d.id) + "</span>" + esc(d.name) + vtag(d.verdict) +
+        '<span class="sp">' + d.minutes + " min × " + d.sessions + " ／ " +
+        (d.contributes ? "→ " + esc(d.contributes) : "不产生分钟") + "</span></summary>" +
+        '<div class="body">' + rows + "</div></details>";
+    }).join("") ||
+      '<p class="note">清单为空。空配置不存在序列问题，也不承接任何配额。</p>';
+
+    /* 磨损 */
+    var wearRows = state.map(function (d) {
+      var c = P.cls(d.cls);
+      if (!c || !c.wear) return null;
+      var w = P.wearForecast(c.wear, inp.profile.chewClass, d.sessions);
+      var band = w.band ? (w.lo + "–" + w.hi + " 天") : "—";
+      return "<tr><td><code>" + esc(c.id) + "</code> " + esc(c.name) + "</td><td>" + esc(band) + "</td><td style='font-size:12px;color:var(--muted);'>" +
+        esc(w.band ? w.band.label + " · " + w.band.src : "") + "</td></tr>";
+    }).filter(Boolean);
+    $("wear").innerHTML = (wearRows.length
+      ? "<table><tr><th>设备</th><th>预算</th><th>区间出处</th></tr>" + wearRows.join("") + "</table>"
+      : "<p>清单里没有可折算磨损的类别。</p>") +
+      '<p style="margin-top:12px;">啃咬强度取 <strong>' + esc(inp.profile.chewClass) + "/5</strong>，会话频次按各设备自己的「次/日」折算。" +
+      "但无论算出多少天，§31 的那条硬规定都压在上面：</p>" +
+      '<p><strong>退役判据不看日历，看外观。</strong>使用前检查四件事：破口、尖点、松散纤维、外露部件。' +
+      "日历是预算，检查才是判据。本页给的是前者，而它替你做不了后者。</p>";
+
+    /* 合规 */
+    $("compliance").innerHTML = "<p>" + esc(L.compliance.note) + "</p>" +
+      '<p style="margin-top:10px;">当前清单：<strong>' + L.compliance.blank + " / " + L.compliance.total +
+      "</strong> 件属于「合规空白」（无任何可核验的自愿声明）。</p>" +
+      '<p style="margin-top:10px;">可核验的四项：FDA 食品接触（21 CFR 177.2600）、EN 71-3、ASTM F963 / CPSIA、OEKO-TEX Standard 100。' +
+      "四项都是自愿的 —— 儿童玩具受 ASTM F963 强制约束，宠物玩具没有对应物。CPSC 只监管「会伤害人类的产品」。</p>" +
+      '<p style="margin-top:10px;"><em>有，说明厂商花过钱；没有，什么都不是。</em>把空白读成不合格，会让你连一只合格的球都买不到。</p>';
+
+    /* JSON */
+    $("json").textContent = JSON.stringify(L, null, 2);
+  }
+
+  $("copy").addEventListener("click", function () {
+    var txt = $("json").textContent;
+    if (!txt) return;
+    var done = function () {
+      $("copy-msg").textContent = "已复制";
+      setTimeout(function () { $("copy-msg").textContent = ""; }, 1600);
+    };
+    var fb = function () {
+      var ta = document.createElement("textarea");
+      ta.value = txt; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); done(); } catch (e) { $("copy-msg").textContent = "复制失败，请手动选择"; }
+      document.body.removeChild(ta);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fb);
+    else fb();
+  });
+
+  /* ---------------- 启动自检 ---------------- */
+  var st = P.selfTest();
+  if (!st.ok) {
+    $("short").innerHTML = '<div class="banner p0"><strong>500 KERNEL SELF-TEST FAILED</strong><br>' + esc(st.errors.join("；")) + "</div>";
+  }
+  renderRegistry();
+  renderTable();
+  run();
+
+  // 标题里的三个数取自内核，不是写在这页上的
+  $("reghead").textContent = "设备注册表 · " + st.stats.classes + " 类 / " + st.stats.gates + " 道门槛";
+
+  document.querySelectorAll(".qcols input, .qcols select").forEach(function (el) {
+    el.addEventListener("change", function () { run(); });
+    el.addEventListener("input", function () { run(); });
+  });
+  document.title += " · " + st.stats.classes + " 类 / " + st.stats.gates + " 门槛 / 可承接 " + st.stats.addressable + "%";
+})();
+</script>
+
+</body>
+</html>

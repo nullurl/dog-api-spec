@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOG API — 狗狗接口规范</title>
+<meta name="description" content="以工程规范文体撰写的动物接口规范：DOG API（34 章、52 条公开信源、实测数据、运维手册、14 个标准场景、可计算的量化接口、一个能渲染 14 种像素表情的表情引擎，以及一条外设总线），附速查卡、生理指标、错误码对照、术语表、量化评估器、表情渲染器、外设控制台与可运行 SDK。">
+<link rel="stylesheet" href="assets/css/spec.css">
+<style>
+  .stat-row { display: flex; gap: 26px; flex-wrap: wrap; margin: 26px 0 0; }
+  .stat { border-left: 2px solid var(--accent); padding-left: 12px; }
+  .stat .n { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 12px; color: var(--faint); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <span class="doc-tag">DOG API / 状态：持续 Revising</span>
+  <h1>DOG API — 狗狗接口规范</h1>
+  <p class="lead">
+    受《HUMAN API — 人类接口规范》启发，本项目用同一套工程文体处理另一种已经大规模部署、
+    却始终没有官方说明书的系统：<strong>狗</strong>。区别在于，这次我们把实测数据、运维手册和公开信源一起写了进去。
+  </p>
+  <a class="btn" href="spec/dog.html">阅读 DOG API →</a>
+  <a class="btn ghost" href="tools/expression.html" style="margin-left:8px;">打开表情渲染器</a>
+  <a class="btn ghost" href="tools/quantifier.html" style="margin-left:8px;">量化评估器</a>
+  <a class="btn ghost" href="tools/charts.html" style="margin-left:8px;">图表图鉴</a>
+  <a class="btn ghost" href="tools/peripherals.html" style="margin-left:8px;">外设控制台</a>
+  <a class="btn ghost" href="sdk/demo.html" style="margin-left:8px;">SDK 控制台</a>
+
+  <div class="stat-row">
+    <div class="stat"><div class="n">34</div><div class="l">DOG 正文章节</div></div>
+    <div class="stat"><div class="n">18</div><div class="l">DOG 附录 （A–R）</div></div>
+    <div class="stat"><div class="n">52</div><div class="l">公开信源条目</div></div>
+    <div class="stat"><div class="n">26</div><div class="l">量化参数（A/B/C 分级）</div></div>
+    <div class="stat"><div class="n">14</div><div class="l">标准场景（D/M/E 三系）</div></div>
+    <div class="stat"><div class="n">14</div><div class="l">表情状态（13 维参数）</div></div>
+    <div class="stat"><div class="n">19</div><div class="l">图表图型（Mono 灰阶）</div></div>
+    <div class="stat"><div class="n">14</div><div class="l">外设类别（13 道门槛）</div></div>
+  </div>
+</div>
+
+<div class="section-title">规范文档</div>
+<div class="grid">
+  <a class="card" href="spec/dog.html">
+    <div class="kicker">正典条目</div>
+    <h3>DOG API — 狗狗接口规范</h3>
+    <p>嗅觉阵列全双工、摇尾的方向性编码、地磁对齐、全天行为预算、生理基线、就医标准场景、外设总线，以及一套可计算的量化接口。</p>
+    <div class="foot">34 章 + 附录 A–R · 52 条公开信源</div>
+  </a>
+</div>
+
+<div class="section-title">量化</div>
+<div class="grid">
+  <a class="card" href="tools/quantifier.html">
+    <div class="kicker">可运行 · 算真数</div>
+    <h3>量化评估器</h3>
+    <p>填入体重、品种、环境与当日行为，实时算出 RER/DER、DNS 达成度、热风险指数、就诊应激指数、免疫排程与分诊等级。参数直接读引擎，可复制 JSON 输出。</p>
+    <div class="foot">tools/quantifier.html · 引擎 assets/js/quantify.js</div>
+  </a>
+  <a class="card" href="reference/vitals.html">
+    <div class="kicker">一页查完</div>
+    <h3>生理指标速查</h3>
+    <p>体温、心率、呼吸、CRT、皮肤回弹、血压、BCS 的参考区间与家庭测量方法，附「什么时候该去医院」的分档。</p>
+    <div class="foot">reference/vitals.html · 可打印</div>
+  </a>
+  <a class="card" href="spec/quantified-api.yaml">
+    <div class="kicker">机器可读</div>
+    <h3>量化接口描述</h3>
+    <p>把 §29 的 10 个量化端点写成 OpenAPI：派生指标、评分模型、分诊矩阵、排程生成，含 <code>451</code> / <code>422</code> 的短路语义。</p>
+    <div class="foot">spec/quantified-api.yaml</div>
+  </a>
+  <a class="card" href="docs/quantification.md">
+    <div class="kicker">设计说明</div>
+    <h3>量化模型</h3>
+    <p>来源等级 A/B/C 的判定标准、11 条派生公式的推导与适用边界、三个评分模型的因子权重与短路规则。</p>
+    <div class="foot">docs/quantification.md</div>
+  </a>
+</div>
+
+<div class="section-title">表情</div>
+<div class="grid">
+  <a class="card" href="tools/expression.html">
+    <div class="kicker">可运行 · 逐像素确定性</div>
+    <h3>表情渲染器</h3>
+    <p>14 个可观测状态、13 维参数向量、24×24 像素 SVG。拖滑块改眉毛高度、张口度与耳廓角度，实时看它变脸；两个状态混合时，权重不够会被拒绝。</p>
+    <div class="foot">tools/expression.html · 引擎 assets/js/expression.js</div>
+  </a>
+  <a class="card" href="spec/dog.html#expression">
+    <div class="kicker">§30 正文</div>
+    <h3>表情接口定义（EXPR v1）</h3>
+    <p>为什么尾巴在响应头里而不是响应体里、为什么写操作一律 405、为什么「愧疚脸」的置信度只有 0.22。</p>
+    <div class="foot">13 维向量 · 14 状态 · 7 端点 · 9 状态码</div>
+  </a>
+  <a class="card" href="docs/expression.md">
+    <div class="kicker">设计说明</div>
+    <h3>像素渲染逻辑</h3>
+    <p>超椭圆栅格化、反向采样的旋转、行程合并成单条 path，以及 24px 下相邻特征互相吞掉的全部案例。</p>
+    <div class="foot">docs/expression.md · 附命令行用法</div>
+  </a>
+  <a class="card" href="docs/expression-sheet.html">
+    <div class="kicker">全在这页</div>
+    <h3>表情联系表</h3>
+    <p>14 帧一次性平铺，每格附三条响应头与「它与基线差在哪」。带橙边的 <code>SICK</code> 没有专属参数 —— 那不是漏了。</p>
+    <div class="foot">docs/expression-sheet.html · 由 --sheet 生成</div>
+  </a>
+</div>
+
+<div class="section-title">图表</div>
+<div class="grid">
+  <a class="card" href="tools/charts.html">
+    <div class="kicker">可运行 · 手写 SVG</div>
+    <h3>图表图鉴</h3>
+    <p>19 张图，一套灰阶，柱、折线、面积、环形、瀑布、热力、哑铃、箱线、K 线、点阵、漏斗、日历热力、平行坐标全在里面。数据实时取自 <code>DogQuant</code> 与 <code>DogExpression</code>，滚到哪画到哪。</p>
+    <div class="foot">tools/charts.html · 引擎 assets/js/charts-dog.js</div>
+  </a>
+  <a class="card" href="tools/charts.html#catalog">
+    <div class="kicker">每一张都能追回原模板</div>
+    <h3>图型对照与偏移说明</h3>
+    <p>19 张图各自对应 Lieflat Charts 目录里的哪个图型、参考实现是哪个文件、数据来自内核还是合成示意，以及为了让它在离线页面里跑起来改了哪四件事。</p>
+    <div class="foot">19 图型 · A/B/C 来源分级</div>
+  </a>
+  <a class="card" href="docs/CHANGELOG.md">
+    <div class="kicker">0.11 起</div>
+    <h3>Mono 图形语言</h3>
+    <p>纸灰底、炭黑墨、七级灰阶，明度即数据：柱状图不断轴，面积一律开方，不透明不发光不留阴影。四处刻意的偏离（字体不外链、K 线不用涨跌色、取整要认账、极值不画）都写在页底说明里。</p>
+    <div class="foot">Lieflat Charts · PolyForm Noncommercial 1.0.0</div>
+  </a>
+</div>
+
+<div class="section-title">外设</div>
+<div class="grid">
+  <a class="card" href="tools/peripherals.html">
+    <div class="kicker">可运行 · 算真数</div>
+    <h3>外设控制台</h3>
+    <p>填入体重、年龄与一份外设清单，实时产出序列闭合检查、配额承接上限、逐设备门槛判定、磨损预测与合规状态。14 个设备类、13 道门槛、33 种失效模式全部来自内核，页面上无一处硬编码。</p>
+    <div class="foot">tools/peripherals.html · 引擎 assets/js/peripherals.js</div>
+  </a>
+  <a class="card" href="spec/dog.html#peripherals">
+    <div class="kicker">§31 正文</div>
+    <h3>外设总线（Peripheral Bus）</h3>
+    <p>一套不接受参数调优的系统，唯一可插拔的部分是它的外设。为什么玩具要按捕猎序列分类而不是按材质、为什么激光笔是整类弃用而不是降低推荐等级、以及那 60% 的上限是怎么被算出来的。</p>
+    <div class="foot">14 类 · 6 种角色 · 5 阶段序列 · 13 道门槛</div>
+  </a>
+  <a class="card" href="spec/dog.html#apx-peripherals">
+    <div class="kicker">附录 R</div>
+    <h3>外设目录与安全门槛</h3>
+    <p>14 类设备的目录表（含来源等级与判定默认值）、33 种失效模式的逐条成因、13 道门槛的依据与放宽条款，以及一份可打印的选购与完整性核对表。</p>
+    <div class="foot">附录 R · 33 种失效模式</div>
+  </a>
+</div>
+
+<div class="section-title">参考</div>
+<div class="grid">
+  <a class="card" href="reference/cheatsheet.html">
+    <div class="kicker">一页看完</div>
+    <h3>速查卡</h3>
+    <p>接口清单、RER/DER 公式、寿命换算、维护周期、环境阈值、必须就医指标。含三条最常被忽略的 MUST。可打印。</p>
+    <div class="foot">REFERENCE / CHEATSHEET</div>
+  </a>
+  <a class="card" href="reference/errors.html">
+    <div class="kicker">逐条对照</div>
+    <h3>错误码对照</h3>
+    <p>13 个状态码逐条对照：哪些它根本不使用、哪些只在兽医院门口出现、哪些是它替你做主的。</p>
+    <div class="foot">13 个状态码</div>
+  </a>
+  <a class="card" href="reference/glossary.html">
+    <div class="kicker">公共约定</div>
+    <h3>术语表</h3>
+    <p>符号约定、规范强度（MUST / SHOULD / MAY / HEURISTIC / WON'T FIX）、禁止自动 Cast 的关系与 POWER CHECK。</p>
+    <div class="foot">符号 · 强度 · 约定</div>
+  </a>
+</div>
+
+<div class="section-title">开发者</div>
+<div class="grid">
+  <a class="card" href="sdk/demo.html">
+    <div class="kicker">可运行</div>
+    <h3>SDK 控制台</h3>
+    <p>点击即可"调用"任一接口，观察返回码与话术。纯模拟，零网络请求，零数据收集。</p>
+    <div class="foot">sdk/dog-api-client.js</div>
+  </a>
+  <a class="card" href="spec/openapi.yaml">
+    <div class="kicker">机器可读</div>
+    <h3>OpenAPI 描述</h3>
+    <p>按 OpenAPI 3.1 结构撰写的接口描述文件。注意：本文件描述的系统不接受参数调优。</p>
+    <div class="foot">spec/openapi.yaml</div>
+  </a>
+  <a class="card" href="docs/CHANGELOG.md">
+    <div class="kicker">维护记录</div>
+    <h3>变更日志与贡献指南</h3>
+    <p>0.1 → 0.12 的修订历史，以及如何为本项目提交新附录。</p>
+    <div class="foot">docs/</div>
+  </a>
+</div>
+
+<div class="section-title">怎么读这套东西</div>
+<div class="grid" style="grid-template-columns:1fr;">
+  <div class="card" style="cursor:default;">
+    <p style="font-size:14.5px;line-height:1.9;">
+      它表面上是一份玩笑文档，实际上每一章的参数都有出处 —— 《公开信源》一章列了 52 条完整来源，包含期刊、DOI 与临床指南编号。
+      文体是故意的：把"狗"写成"系统"之后，那些我们习以为常的事就显出原来的形状。
+      比如：某个系统在疼痛时仍会摇尾巴；某个系统会把你回家的脚步声写入永久存储；
+      以及，某个系统为了和你说上话，专门长出了一块新的肌肉。
+    </p>
+    <p style="font-size:14.5px;line-height:1.9;margin-top:12px;">
+      所以本项目唯一的阅读建议是：<strong>先读《公开信源》，再读正文</strong>。知道哪些是真的之后，剩下的部分才好玩。
+    </p>
+    <p style="font-size:14.5px;line-height:1.9;margin-top:12px;">
+      而从 0.9 起，这件事有了更硬的判断依据：<strong>每条参数都标注了来源等级</strong> ——
+      <span style="color:#15803d;font-weight:700;">A</span> 是同行评议或大规模实测，
+      <span style="color:#92400e;font-weight:700;">B</span> 是临床指南共识，
+      <span style="color:#4b5563;font-weight:700;">C</span> 是社区经验或本项目定义的复合指标。
+      文档里最有趣的部分大多落在 C 级，但只有那 7 项 A 级，才让剩下的 8 项 C 级有资格被称作"量化方案"而不是"一套说法"。
+    </p>
+  </div>
+</div>
+
+<div class="end-note" style="max-width:940px;margin:20px auto 80px;padding:0 28px;">
+  DOG API · 静态站点，无构建步骤，无外部依赖 · 打开 index.html 即可阅读
+</div>
+
+<script src="assets/js/render.js"></script>
+<script>SpecSite.mountChrome({ root: "", active: "home" });</script>
+
+</body>
+</html>

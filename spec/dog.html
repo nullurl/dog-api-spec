@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOG API — 狗狗接口规范 | DOG API</title>
+<meta name="description" content="以工程规范文体撰写的狗狗接口规范，含实测数据、运维手册与公开信源。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+</head>
+<body>
+
+<div class="layout">
+  <aside id="sidebar"></aside>
+  <main id="content"></main>
+</div>
+
+<script src="../assets/js/data-dog.js"></script>
+<script src="../assets/js/appendices.js"></script>
+<script src="../assets/js/render.js"></script>
+<script>
+  SpecSite.render({
+    root: "../",
+    active: "dog",
+    data: window.DOG_DOC,
+    appendices: window.DOG_APPENDICES,
+    heading: "DOG API — 狗狗接口规范",
+    sideSubtitle: "v0.12 · 34 章 + 18 附录",
+    endNote: "本文档不声明任何一只具体的狗等于「默认实例」。它们都远远超出本规范。"
+  });
+</script>
+
+</body>
+</html>

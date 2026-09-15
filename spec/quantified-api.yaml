@@ -1,0 +1,495 @@
+openapi: 3.1.0
+info:
+  title: DOG API — Quantified Endpoints
+  version: 1.0.0
+  description: |
+    §29 量化接口定义的机器可读描述。
+
+    本文件的三个设计原则（与正文一致）：
+      1. 每个指标必须声明 单位 / 取值范围 / 采样频率 / 报警阈值
+      2. 每个指标必须标注来源等级 A（同行评议）· B（指南共识）· C（经验或本项目定义）
+      3. 分诊优先级高于一切评分 —— P0 / P1 时所有评分端点短路返回 451
+
+    计算内核实现：assets/js/quantify.js
+    场景数据实现：assets/js/scenarios.js
+    交互式评估器：tools/quantifier.html
+
+    注意：本文件描述的系统不接受参数调优。所有数值是偏差提示，不是诊断。
+  contact:
+    name: DOG API
+    url: ../index.html
+  license:
+    name: 本文档为玩笑文体项目，参数均标注公开出处
+
+servers:
+  - url: /
+    description: 本项目不提供真实服务。以下端点由 assets/js/quantify.js 在浏览器内实算。
+
+tags:
+  - name: metrics
+    description: 派生指标
+  - name: assess
+    description: 评分模型
+  - name: plan
+    description: 排程生成
+  - name: scenario
+    description: 标准场景库
+
+paths:
+  /api/v1/metrics/derive:
+    post:
+      tags: [metrics]
+      summary: 由 profile 派生全部基础指标
+      description: |
+        返回 RER / DER / 饮水区间 / 嗅闻与运动配额 / 人类年龄 / 预期寿命 /
+        老年期起点 / 生命阶段 / 年体检次数。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProfileRequest' }
+      responses:
+        '200':
+          description: 派生成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DerivedMetrics' }
+        '422':
+          $ref: '#/components/responses/UnprocessableProfile'
+        '409':
+          $ref: '#/components/responses/StaleBaseline'
+
+  /api/v1/assess/daily-needs:
+    post:
+      tags: [assess]
+      summary: DNS 日常需求达成度（0–100）
+      description: |
+        五维加权：运动 25% · 嗅闻 20% · 社交 20% · 休息 20% · 认知 15%。
+        短板封顶规则：任一维度 < 60 时总分封顶 79。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ProfileRequest'
+                - type: object
+                  properties:
+                    activity: { $ref: '#/components/schemas/Activity' }
+      responses:
+        '200':
+          description: 评分结果
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DnsResponse' }
+        '451':
+          $ref: '#/components/responses/VetVisitRequired'
+
+  /api/v1/assess/heat-risk:
+    post:
+      tags: [assess]
+      summary: HRI 热风险指数（无量纲，本项目定义）
+      description: |
+        气温项、湿度项、日照、短鼻结构、被毛、体重、年龄极端与热适应状态逐项累加。
+        硬性规则：气温 ≥ 32 °C 或 HRI ≥ 10 时取消户外运动。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ProfileRequest'
+                - type: object
+                  properties:
+                    environment: { $ref: '#/components/schemas/Environment' }
+      responses:
+        '200':
+          description: 指数与因子明细
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HriResponse' }
+
+  /api/v1/assess/vet-stress:
+    post:
+      tags: [assess]
+      summary: VSI 就诊应激指数（0–10，本项目定义）
+      description: 分数只决定流程强度，不决定去不去。分数高不代表可以不去看病。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/ProfileRequest'
+                - type: object
+                  properties:
+                    vetConditions: { $ref: '#/components/schemas/VetConditions' }
+      responses:
+        '200':
+          description: 指数与建议流程
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VsiResponse' }
+
+  /api/v1/triage:
+    post:
+      tags: [assess]
+      summary: 急诊分诊（P0–P3）
+      description: |
+        取最高优先级，不平均。P0 时最有效的处置通常只有一个动作：开车。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TriageRequest' }
+      responses:
+        '200':
+          description: 分诊结论
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TriageResponse' }
+
+  /api/v1/plan/feeding:
+    get:
+      tags: [plan]
+      summary: 喂食计划
+      parameters:
+        - $ref: '#/components/parameters/WeightKg'
+        - $ref: '#/components/parameters/Neutered'
+        - $ref: '#/components/parameters/Goal'
+      responses:
+        '200':
+          description: DER 区间与 k 值
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FeedingPlan' }
+
+  /api/v1/plan/vaccination:
+    get:
+      tags: [plan]
+      summary: 免疫序列（按出生日期生成窗口）
+      parameters:
+        - name: birth
+          in: query
+          required: true
+          description: 出生日期。这一项不可选 —— 没有它，整条时间轴无法计算。
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: 序列窗口与当前状态
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ScheduleItem' }
+
+  /api/v1/plan/parasite:
+    get:
+      tags: [plan]
+      summary: 寄生虫预防排程
+      responses:
+        '200':
+          description: 体内 / 体外 / 心丝虫 / 粪便检查周期
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        item: { type: string }
+                        freq: { type: string }
+                        note: { type: string }
+
+  /api/v1/plan/exam-schedule:
+    get:
+      tags: [plan]
+      summary: 体检频次
+      description: 幼犬由免疫序列决定 / 成犬 1 次 / 老年 2 次 / 慢病 4 次（每年）。
+      responses:
+        '200':
+          description: 年体检次数与生命阶段门槛
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  perYear: { type: integer }
+                  seniorAtYears: { type: number }
+                  geriatricAtYears: { type: number }
+                  lifeStage: { type: string, enum: [puppy, junior, adult, senior, geriatric] }
+
+  /api/v1/scenario/{id}:
+    get:
+      tags: [scenario]
+      summary: 取一个标准场景
+      description: 场景 = 触发条件 + 量化门槛 + 时序动作 + 升级规则。共 14 个。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, example: SCN-E2 }
+      responses:
+        '200':
+          description: 场景定义
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Scenario' }
+        '404':
+          description: 未收录该场景。可能性有两种：它没发生，或者它发生了但没人写下来。
+
+components:
+  parameters:
+    WeightKg:
+      name: weightKg
+      in: query
+      required: true
+      description: 体重。所有能量指标的输入，不接受估算值。
+      schema: { type: number, minimum: 0.3, maximum: 120 }
+    Neutered:
+      name: neutered
+      in: query
+      schema: { type: boolean }
+    Goal:
+      name: goal
+      in: query
+      schema: { type: string, enum: [maintain, lose, gain], default: maintain }
+
+  responses:
+    UnprocessableProfile:
+      description: |
+        422 UNPROCESSABLE PROFILE —— 体重缺失或单位错误。
+        体重是所有能量指标的输入，它不可选，也不接受「大概是十几斤吧」。
+    StaleBaseline:
+      description: |
+        409 STALE BASELINE —— 基线超过 12 个月未更新。
+        系统可以继续算，但算出来的东西描述的是去年那只狗。
+    VetVisitRequired:
+      description: |
+        451 VET VISIT REQUIRED —— 分诊返回 P0 / P1 时，所有评分端点短路返回此码。
+        这是本方案唯一一条强制性设计：量化的第一原则，是知道什么情况下应该停止量化。
+
+  schemas:
+    ProfileRequest:
+      type: object
+      required: [weightKg]
+      properties:
+        name: { type: string }
+        birth: { type: string, format: date }
+        weightKg: { type: number, description: '单位 kg。MUST' }
+        ageYears: { type: number }
+        breedClass:
+          type: string
+          enum: [herding, sporting, hound, terrier, working, toy, nonsporting, mixed]
+          description: 品种类，决定运动与嗅闻配额的基数
+        coat: { type: string, enum: [short, double, thick, hairless] }
+        darkCoat: { type: boolean, description: 深色被毛，热风险 +0.5 }
+        brachycephalic: { type: boolean, description: 短鼻结构，热风险 +4 }
+        neutered: { type: boolean }
+        working: { type: boolean, description: 高强度工作犬，DER 系数可达 5.0–11.0 }
+        goal: { type: string, enum: [maintain, lose, gain] }
+        condition: { type: string, enum: [none, arthritis, heart, kidney, obesity] }
+
+    Activity:
+      type: object
+      description: 当日实际值。单位统一为分钟，睡眠为小时。
+      properties:
+        walkMin: { type: number, default: 0 }
+        playMin: { type: number, default: 0 }
+        sniffMin: { type: number, default: 0 }
+        socialMin: { type: number, default: 0, description: 直接互动。共处一室不计入 }
+        chewMin: { type: number, default: 0 }
+        sleepHours: { type: number, default: 13 }
+
+    Environment:
+      type: object
+      properties:
+        tempC: { type: number, default: 22 }
+        humidityPct: { type: number, default: 50 }
+        sun: { type: boolean, description: 日光直射，+3 }
+        acclimatedDays: { type: number, description: 近 7 日户外适应天数；≥7 记 −2，否则 +2 }
+
+    VetConditions:
+      type: object
+      properties:
+        rideMinutes: { type: number, default: 15 }
+        priorNegative: { type: boolean }
+        baselineAnxiety: { type: boolean }
+        happyVisits: { type: boolean }
+        muzzleTrained: { type: boolean }
+        pheromone: { type: boolean }
+        ownerTense: { type: boolean }
+        pvp: { type: boolean, description: 已使用就诊前药物（须兽医处方） }
+        fastedForTreats: { type: boolean }
+        carWait: { type: boolean }
+
+    TriageRequest:
+      type: object
+      description: |
+        症状标记的布尔集合。可选项来自 assets/js/quantify.js 的 TRIAGE_DEFS。
+        分诊规则：取最高优先级，不平均。
+      properties:
+        gdv: { type: boolean, description: 'P0 · 腹部膨隆 + 干呕无物' }
+        heatstroke: { type: boolean, description: 'P0 · 高温暴露 + 体温 ≥41 °C' }
+        dyspnea: { type: boolean, description: 'P0 · 张口呼吸伴用力 / 静息呼吸 >40' }
+        seizure: { type: boolean, description: 'P0 · 抽搐' }
+        collapse: { type: boolean, description: 'P0 · 虚脱 / 无法站立' }
+        paleGums: { type: boolean, description: 'P0 · 牙龈苍白或发绀' }
+        poison: { type: boolean, description: 'P0 · 误食毒物' }
+        urineBlock: { type: boolean, description: 'P0 · 公犬无尿' }
+        rrElevated: { type: boolean, description: 'P1 · 静息呼吸 30–40' }
+        anorexia24: { type: boolean, description: 'P1 · 拒食 >24 小时' }
+        pain6: { type: boolean, description: 'P1 · 疼痛评分 ≥6/24' }
+        behaviorSudden: { type: boolean, description: 'P1 · 突然变安静' }
+        lamenessMild: { type: boolean, description: 'P2 · 轻度跛行' }
+        weightLoss: { type: boolean, description: 'P2 · 体重下降 >5%' }
+        routine: { type: boolean, description: 'P3 · 常规项目到期' }
+
+    DerivedMetrics:
+      type: object
+      properties:
+        rerKcal: { type: number, description: '70 × BW^0.75' }
+        derKcal:
+          type: object
+          properties:
+            lo: { type: number }
+            hi: { type: number }
+            k: { type: string, description: '系数区间，如 1.4–1.6' }
+            kLabel: { type: string }
+        waterMl:
+          type: object
+          properties:
+            lo: { type: number }
+            hi: { type: number }
+            check: { type: string, description: '1 mL ≈ 1 kcal，用于与喂食量互校' }
+        sniffTargetMin: { type: number }
+        exerciseTargetMin: { type: number }
+        puppyWalkCap: { type: object, nullable: true }
+        humanYears: { type: number, description: '16·ln(a)+31' }
+        lifeExpectancyYears: { type: number, description: '16.7 − 2.17·ln(BW)' }
+        seniorAtYears: { type: number, description: '预期寿命 × 0.75' }
+        geriatricAtYears: { type: number, description: '预期寿命 × 0.90' }
+        examPerYear: { type: integer }
+
+    DnsResponse:
+      type: object
+      properties:
+        score: { type: integer, minimum: 0, maximum: 100 }
+        raw: { type: integer, description: 封顶前的加权分 }
+        capped: { type: boolean, description: 短板封顶是否生效 }
+        floor: { type: integer, description: 最低维度得分 }
+        band: { type: string, enum: [达标, 轻度不足, 明显不足, 结构性不足] }
+        rule: { type: string }
+        dims:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string, enum: [exercise, sniff, social, rest, cognitive] }
+              weight: { type: number }
+              target: { type: number }
+              actual: { type: number }
+              unit: { type: string }
+              score: { type: integer }
+              deficit: { type: number }
+        gap: { type: object, description: 得分最低的维度，即优先补齐项 }
+
+    HriResponse:
+      type: object
+      properties:
+        score: { type: number, description: 指数点，可为负 }
+        band: { type: string, enum: [安全, 注意, 警告, 危险, 极端] }
+        note: { type: string }
+        walkFactor: { type: number, description: 'clamp(1 − HRI/20, 0, 1)' }
+        outdoorAllowed: { type: boolean }
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              label: { type: string }
+              points: { type: number }
+        grade: { type: string, const: C }
+
+    VsiResponse:
+      type: object
+      properties:
+        score: { type: number, minimum: 0, maximum: 10 }
+        band: { type: string, enum: [常规, 偏高, 高, 极高] }
+        note: { type: string, description: 分数对应的流程强度 }
+        factors: { type: array, items: { type: object } }
+
+    TriageResponse:
+      type: object
+      properties:
+        priority: { type: integer, minimum: 0, maximum: 3 }
+        code: { type: string, enum: ['P0', 'P1', 'P2', 'P3'] }
+        label: { type: string }
+        note: { type: string }
+        hits:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              label: { type: string }
+              priority: { type: string }
+
+    FeedingPlan:
+      type: object
+      properties:
+        rerKcal: { type: number }
+        derKcal: { type: object }
+        waterMl: { type: object }
+        bcsTarget: { type: string, const: '4–5 / 9' }
+
+    ScheduleItem:
+      type: object
+      properties:
+        name: { type: string }
+        weeks: { type: string, example: '16–18 周' }
+        windowStart: { type: string, format: date }
+        windowEnd: { type: string, format: date }
+        status: { type: string, enum: [未到期, 在窗口内, 窗口已过] }
+        must: { type: boolean, description: 'MUST 标记。犬免疫序列中唯一不可提前的一针是 ≥16 周的 DHPP 末剂' }
+
+    Scenario:
+      type: object
+      required: [id, name, trigger, gate, steps, escalate]
+      properties:
+        id: { type: string, example: SCN-E2 }
+        cls: { type: string, enum: [daily, medical, emergency] }
+        name: { type: string }
+        trigger: { type: string }
+        gate: { type: string, description: 量化门槛 }
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              t: { type: string, description: 时点 }
+              a: { type: string, description: 动作 }
+        quant:
+          type: array
+          items:
+            type: object
+            properties:
+              k: { type: string }
+              v: { type: string }
+              note: { type: string }
+        escalate: { type: string }
+
+    Grade:
+      type: string
+      enum: [A, B, C]
+      description: |
+        来源等级。
+        A = 同行评议文献或大规模实测数据
+        B = 临床指南或专业机构共识
+        C = 社区经验或本项目定义的复合指标

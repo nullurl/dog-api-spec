@@ -1,0 +1,20 @@
+# 本地协作过程记录（agent 记忆笔记与项目 skill），不进版本库
+.workbuddy/
+
+# 系统垃圾
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+
+# 编辑器 / 工具
+.vscode/
+.idea/
+*.swp
+*~
+
+# 依赖与构建产物（本项目零依赖、零构建，仅作兜底）
+node_modules/
+dist/
+build/
+*.log

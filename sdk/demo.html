@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDK 控制台 — 调用 DOG API 接口 | DOG API</title>
+<meta name="description" content="点击即可调用 DOG API 的模拟接口，观察状态码与返回话术。纯本地模拟，无网络请求。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .console-wrap h3 { margin-top: 26px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 10px 0 4px; }
+  .row input {
+    font-family: inherit; font-size: 14px; padding: 8px 12px;
+    border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink);
+    min-width: 180px;
+  }
+  .hint { font-size: 13px; color: var(--faint); }
+</style>
+</head>
+<body>
+
+<div class="console-wrap">
+  <span class="doc-tag">SDK / LIVE CONSOLE</span>
+  <h1>SDK 控制台</h1>
+  <div class="subtitle">
+    点击任一接口，观察它返回什么。纯本地模拟 —— 不发起网络请求，不收集任何数据，也不会真的去遛狗。
+  </div>
+
+  <div class="row">
+    <label class="hint" for="dogname">实例命名：</label>
+    <input id="dogname" value="你的狗" autocomplete="off">
+    <button class="btn ghost" id="clear">清空输出</button>
+  </div>
+
+  <h3>DOG API</h3>
+  <div class="endpoint-list" id="dog-list"></div>
+
+  <h3>响应</h3>
+  <div class="console-out" id="out"><div class="line note">// 等待调用。提示：可以试试连点两次 POST /api/bath。</div></div>
+</div>
+
+<script src="../assets/js/render.js"></script>
+<script src="dog-api-client.js"></script>
+<script>
+  SpecSite.mountChrome({ root: "../", active: "sdk" });
+
+  var out = document.getElementById("out");
+  var dog;
+
+  function build() {
+    dog = new DogClient({ name: document.getElementById("dogname").value || "你的狗" });
+  }
+  build();
+
+  function log(cls, text) {
+    var d = document.createElement("div");
+    d.className = "line " + cls;
+    d.textContent = text;
+    out.appendChild(d);
+    out.scrollTop = out.scrollHeight;
+  }
+
+  function paint(listEl, client, endpoints) {
+    endpoints.forEach(function (e) {
+      var b = document.createElement("button");
+      b.className = "endpoint";
+      b.innerHTML = '<span class="m">' + e.method + '</span><span class="path">' + e.path +
+        '</span><span class="desc">' + (e.method === "GET" ? "读取" : "写入") + '</span>';
+      b.title = e.note;
+      b.onclick = function () { invoke(client, e); };
+      listEl.appendChild(b);
+    });
+  }
+
+  function invoke(client, e) {
+    log("req", "\n→ " + e.method + " " + e.path + "   [" + client.name + "]");
+    client.call(e.method, e.path).then(function (r) {
+      var ok = r.status >= 200 && r.status < 300;
+      log(ok ? "status-ok" : "status-bad", "← " + r.status + (ok ? " (OK)" : " (异常)"));
+      r.body.forEach(function (l) { log("res", "  " + l); });
+      log("note", "  # " + r.note);
+    });
+  }
+
+  paint(document.getElementById("dog-list"), dog, DogClient.ENDPOINTS);
+
+  document.getElementById("clear").onclick = function () { out.innerHTML = ""; };
+  document.getElementById("dogname").onchange = function () {
+    build();
+    log("note", "// 实例已重命名为：" + dog.name + "（注意：它对此没有异议）");
+  };
+</script>
+
+</body>
+</html>

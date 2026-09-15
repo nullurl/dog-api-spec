@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>量化评估器 — DOG API | DOG API</title>
+<meta name="description" content="可交互的 DOG API 量化评估器：日常需求达成度、热风险指数、就诊应激指数与急诊分诊，全部由 assets/js/quantify.js 实算。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .qwrap { max-width: 1180px; margin: 0 auto; padding: 36px 28px 120px; }
+  .qhead { border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 26px; }
+  .qhead h1 { font-size: 30px; }
+  .qhead p { color: var(--muted); font-size: 15px; max-width: 760px; }
+  .qcols { display: grid; grid-template-columns: 360px 1fr; gap: 26px; align-items: start; }
+  @media (max-width: 1000px) { .qcols { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .panel > h3 { margin: 0 0 14px; font-size: 14px; letter-spacing: .06em; color: var(--accent); text-transform: uppercase; }
+  .fld { display: grid; grid-template-columns: 1fr 108px; gap: 10px; align-items: center; margin: 9px 0; }
+  .fld label { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  .fld input, .fld select { width: 100%; padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px; font-family: inherit; font-size: 13.5px; background: #fff; color: var(--ink); }
+  .fld input[type=checkbox] { width: auto; justify-self: start; width: 16px; height: 16px; }
+  .fld.wide { grid-template-columns: 1fr; }
+  .subhead { font-size: 12px; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; margin: 16px 0 6px; }
+  .chk { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start; margin: 6px 0; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+  .chk input { margin-top: 4px; width: 15px; height: 15px; }
+  .chk.p0 { color: #b91c1c; }
+  .chk.p1 { color: #b45309; }
+  .scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 720px) { .scores { grid-template-columns: repeat(2, 1fr); } }
+  .sc { border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; background: var(--panel); }
+  .sc .k { font-size: 11.5px; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+  .sc .v { font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.25; }
+  .sc .b { font-size: 12.5px; color: var(--muted); }
+  .sc.good .v { color: var(--ok); }
+  .sc.warn .v { color: var(--warn); }
+  .sc.bad .v { color: #b91c1c; }
+  .sc.dim { opacity: .42; }
+  .banner { border-radius: 10px; padding: 15px 20px; margin-bottom: 16px; font-size: 14.5px; line-height: 1.8; }
+  .banner.p0 { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+  .banner.p1 { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+  .banner code { background: rgba(0,0,0,.06); padding: 1px 6px; border-radius: 4px; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(184px, 1fr)); gap: 10px; }
+  .mt { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--panel); }
+  .mt .k { font-size: 12px; color: var(--faint); }
+  .mt .v { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .mt .n { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .bar { display: grid; grid-template-columns: 92px 1fr 118px; gap: 10px; align-items: center; font-size: 13px; margin: 7px 0; }
+  .bar .track { background: var(--code-bg); border-radius: 5px; height: 9px; overflow: hidden; }
+  .bar .fill { height: 100%; background: var(--accent); border-radius: 5px; }
+  .bar .fill.low { background: #b91c1c; }
+  .bar .num { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+  .fac { font-size: 13px; color: var(--muted); display: flex; gap: 10px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+  .fac .p { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); }
+  .grade { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: var(--code-bg); color: var(--code-ink); }
+  .grade.A { background: #dcfce7; color: #15803d; }
+  .grade.B { background: #fef3c7; color: #92400e; }
+  .grade.C { background: #f1f2f4; color: #4b5563; }
+  .jsonout { background: #1f2430; border-radius: 10px; padding: 15px 18px; max-height: 420px; overflow: auto; }
+  .jsonout pre { background: none; border: none; padding: 0; margin: 0; color: #d1d5db; font-size: 12.5px; }
+  .scn { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); margin-bottom: 10px; overflow: hidden; }
+  .scn > summary { cursor: pointer; padding: 12px 16px; font-weight: 600; font-size: 14.5px; list-style: none; }
+  .scn > summary::-webkit-details-marker { display: none; }
+  .scn > summary .id { font-family: "SF Mono", Menlo, monospace; font-size: 12px; color: var(--accent); margin-right: 9px; }
+  .scn > summary .cls { float: right; font-size: 11.5px; color: var(--faint); font-weight: 400; }
+  .scn .body { padding: 0 16px 16px; border-top: 1px solid var(--line); }
+  .scn .body p { font-size: 13.5px; margin: 10px 0; }
+  .scn .body h4 { font-size: 12.5px; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; margin: 14px 0 4px; }
+  .scn .body pre { font-size: 12.5px; padding: 11px 14px; }
+  .scn .body table { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="qwrap">
+  <div class="qhead">
+    <span class="doc-tag">TOOL / 实算</span>
+    <h1>DOG API 量化评估器</h1>
+    <p>
+      左侧填入一份 profile 与当日实际值，右侧立刻产出 §29 定义的全部派生指标、三项评分与分诊结论。
+      计算全部由 <code>assets/js/quantify.js</code> 完成 —— 页面上没有任何写死的数字。
+    </p>
+    <p style="font-size:13.5px;color:var(--faint);margin-top:12px;">
+      全部评分为<strong>偏差提示</strong>，不是诊断，也不得用于横向比较不同的狗。分诊结论为 P0 / P1 时，本页会自动触发短路规则。
+    </p>
+  </div>
+
+  <div class="qcols">
+    <div>
+      <div class="panel">
+        <h3>① 档案 Profile</h3>
+        <div class="fld"><label>名字</label><input id="f-name" type="text" value="豆豆"></div>
+        <div class="fld"><label>出生日期</label><input id="f-birth" type="date" value="2022-05-01"></div>
+        <div class="fld"><label>体重（kg）<span style="color:#b91c1c">*</span></label><input id="f-weight" type="number" step="0.1" value="12.5"></div>
+        <div class="fld"><label>品种类</label>
+          <select id="f-breed">
+            <option value="herding">牧羊 / 工作型</option>
+            <option value="sporting">运动型</option>
+            <option value="hound">猎犬型</option>
+            <option value="terrier">梗类</option>
+            <option value="working">工作犬</option>
+            <option value="toy">小型 / 玩赏</option>
+            <option value="nonsporting">非运动型</option>
+            <option value="mixed" selected>混种</option>
+          </select>
+        </div>
+        <div class="fld"><label>被毛</label>
+          <select id="f-coat">
+            <option value="short">短毛</option>
+            <option value="double" selected>双层 / 厚被毛</option>
+            <option value="thick">厚密</option>
+            <option value="hairless">无毛 / 极短</option>
+          </select>
+        </div>
+        <div class="fld"><label>体况评分 BCS（1–9）</label><input id="f-bcs" type="number" min="1" max="9" value="5"></div>
+        <div class="fld"><label>目标</label>
+          <select id="f-goal">
+            <option value="maintain" selected>维持体重</option>
+            <option value="lose">减重</option>
+            <option value="gain">增重</option>
+          </select>
+        </div>
+        <div class="fld"><label>既往状况</label>
+          <select id="f-cond">
+            <option value="none" selected>无</option>
+            <option value="arthritis">关节炎 / 骨科</option>
+            <option value="heart">心脏</option>
+            <option value="kidney">肾</option>
+            <option value="obesity">肥胖管理</option>
+          </select>
+        </div>
+        <label class="chk"><input id="f-neutered" type="checkbox" checked><span>已绝育</span></label>
+        <label class="chk"><input id="f-brachy" type="checkbox"><span>短鼻品种（法斗 / 巴哥 / 英斗等）</span></label>
+        <label class="chk"><input id="f-dark" type="checkbox"><span>深色被毛</span></label>
+        <label class="chk"><input id="f-work" type="checkbox"><span>高强度工作犬（雪橇等）</span></label>
+      </div>
+
+      <div class="panel">
+        <h3>② 今日实际 Activity</h3>
+        <div class="fld"><label>步行（分钟）</label><input id="f-walk" type="number" value="40"></div>
+        <div class="fld"><label>额外游戏（分钟）</label><input id="f-play" type="number" value="0"></div>
+        <div class="fld"><label>嗅闻（分钟）</label><input id="f-sniff" type="number" value="10"></div>
+        <div class="fld"><label>直接互动（分钟）</label><input id="f-social" type="number" value="30"></div>
+        <div class="fld"><label>认知 / 咀嚼（分钟）</label><input id="f-chew" type="number" value="5"></div>
+        <div class="fld"><label>睡眠（小时）</label><input id="f-sleep" type="number" step="0.5" value="12"></div>
+      </div>
+
+      <div class="panel">
+        <h3>③ 环境 Environment</h3>
+        <div class="fld"><label>气温（°C）</label><input id="f-temp" type="number" value="34"></div>
+        <div class="fld"><label>相对湿度（%）</label><input id="f-rh" type="number" value="70"></div>
+        <div class="fld"><label>近 7 日户外适应（日）</label><input id="f-accl" type="number" value="3"></div>
+        <label class="chk"><input id="f-sun" type="checkbox" checked><span>日光直射</span></label>
+      </div>
+
+      <div class="panel">
+        <h3>④ 就诊条件 Vet Visit</h3>
+        <div class="fld"><label>车程（分钟）</label><input id="f-ride" type="number" value="35"></div>
+        <label class="chk"><input id="v-prior" type="checkbox" checked><span>既往就诊有负性经历</span></label>
+        <label class="chk"><input id="v-anx" type="checkbox"><span>基线焦虑（分离 / 噪音恐惧史）</span></label>
+        <label class="chk"><input id="v-happy" type="checkbox"><span>做过「快乐到访」</span></label>
+        <label class="chk"><input id="v-muzzle" type="checkbox"><span>做过嘴套预适应</span></label>
+        <label class="chk"><input id="v-pher" type="checkbox"><span>使用信息素干预</span></label>
+        <label class="chk"><input id="v-tense" type="checkbox" checked><span>我自己现在很紧张</span></label>
+        <label class="chk"><input id="v-pvp" type="checkbox"><span>已使用就诊前药物（处方）</span></label>
+        <label class="chk"><input id="v-fast" type="checkbox"><span>空腹到院（以零食换强化）</span></label>
+        <label class="chk"><input id="v-car" type="checkbox"><span>车内等待，避开候诊区</span></label>
+      </div>
+
+      <div class="panel">
+        <h3>⑤ 分诊标记 Triage</h3>
+        <div class="subhead">P0 · 立即（分钟级）</div>
+        <div id="tri-p0"></div>
+        <div class="subhead">P1 · 当日（小时级）</div>
+        <div id="tri-p1"></div>
+        <div class="subhead">P2 · 72 小时内</div>
+        <div id="tri-p2"></div>
+        <div class="subhead">P3 · 常规</div>
+        <div id="tri-p3"></div>
+      </div>
+    </div>
+
+    <div>
+      <div id="short"></div>
+      <div class="panel">
+        <h3>评分结果</h3>
+        <div class="scores" id="scores"></div>
+      </div>
+
+      <div class="panel">
+        <h3>派生指标</h3>
+        <div class="metrics" id="metrics"></div>
+      </div>
+
+      <div class="panel">
+        <h3>DNS 五维明细</h3>
+        <div id="dns-bars"></div>
+        <div id="dns-note" style="font-size:13px;color:var(--muted);margin-top:10px;"></div>
+      </div>
+
+      <div class="panel">
+        <h3>因子明细</h3>
+        <div class="subhead">HRI 热风险因子</div>
+        <div id="hri-fac"></div>
+        <div class="subhead">VSI 就诊应激因子</div>
+        <div id="vsi-fac"></div>
+      </div>
+
+      <div class="panel">
+        <h3>排程计划</h3>
+        <div class="subhead">免疫序列</div>
+        <div id="vac"></div>
+        <div class="subhead">寄生虫预防</div>
+        <div id="par"></div>
+      </div>
+
+      <div class="panel">
+        <h3>输出 JSON（对应 POST /api/v1/metrics/derive 的响应）</h3>
+        <button class="btn" id="copy">复制 JSON</button>
+        <span id="copy-msg" style="font-size:13px;color:var(--ok);margin-left:10px;"></span>
+        <div class="jsonout" style="margin-top:12px;"><pre id="json"></pre></div>
+      </div>
+
+      <div class="panel">
+        <h3>参数注册表（引擎实读）</h3>
+        <div id="params"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="padding:0;margin:44px 0 10px;">标准场景库 · 14 个场景 / 69 个步骤</div>
+  <div id="scenarios"></div>
+
+  <div class="end-note">
+    本页不发送任何网络请求，不保存任何数据 · 计算内核 assets/js/quantify.js · 场景数据 assets/js/scenarios.js
+  </div>
+</div>
+
+<script src="../assets/js/quantify.js"></script>
+<script src="../assets/js/scenarios.js"></script>
+<script src="../assets/js/render.js"></script>
+<script>
+(function () {
+  var Q = window.DogQuant, S = window.DOG_SCENARIOS;
+  var $ = function (id) { return document.getElementById(id); };
+  var num = function (id) { var v = parseFloat($(id).value); return isNaN(v) ? 0 : v; };
+  var chk = function (id) { return $(id).checked; };
+  var esc = function (s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  };
+
+  SpecSite.mountChrome({ root: "../", active: "quantifier" });
+
+  /* ---------- 分诊清单由引擎的 TRIAGE_DEFS 生成 ---------- */
+  var triBoxes = {};
+  Q.TRIAGE_DEFS.forEach(function (d) {
+    var host = $("tri-p" + d.p);
+    var lab = document.createElement("label");
+    lab.className = "chk p" + d.p;
+    var box = document.createElement("input");
+    box.type = "checkbox";
+    box.addEventListener("change", run);
+    lab.appendChild(box);
+    var sp = document.createElement("span");
+    sp.textContent = d.label;
+    lab.appendChild(sp);
+    host.appendChild(lab);
+    triBoxes[d.key] = box;
+  });
+
+  /* ---------- 参数注册表渲染 ---------- */
+  $("params").innerHTML =
+    '<table><tr><th>参数</th><th>范围 / 公式</th><th>单位</th><th>采样</th><th>报警阈值</th><th>等级</th></tr>' +
+    Q.PARAMS.map(function (p) {
+      return "<tr><td>" + esc(p.label) + "</td><td>" + esc(p.range) + "</td><td>" + esc(p.unit) +
+        "</td><td>" + esc(p.sample) + "</td><td>" + esc(p.alarm) + "</td>" +
+        '<td><span class="grade ' + p.grade[0] + '">' + p.grade + "</span></td></tr>";
+    }).join("") + "</table>";
+
+  /* ---------- 场景库渲染 ---------- */
+  var clsLabel = { daily: "日常行为", medical: "医疗", emergency: "应急" };
+  $("scenarios").innerHTML = S.map(function (s) {
+    var steps = s.steps.map(function (x) {
+      return "<tr><td>" + esc(x.t) + "</td><td>" + esc(x.a) + "</td></tr>";
+    }).join("");
+    var quant = s.quant.map(function (x) {
+      return "<tr><td>" + esc(x.k) + "</td><td>" + esc(x.v) + "</td><td>" + esc(x.note) + "</td></tr>";
+    }).join("");
+    return '<details class="scn"><summary><span class="id">' + s.id + "</span>" + esc(s.name) +
+      '<span class="cls">' + (clsLabel[s.cls] || s.cls) + "</span></summary>" +
+      '<div class="body"><p><strong>触发：</strong>' + esc(s.trigger) + "</p>" +
+      '<p><strong>量化门槛：</strong>' + esc(s.gate) + "</p>" +
+      "<h4>时序步骤</h4><table><tr><th>时点</th><th>动作</th></tr>" + steps + "</table>" +
+      "<h4>量化门槛明细</h4><table><tr><th>指标</th><th>阈值 / 取值</th><th>说明</th></tr>" + quant + "</table>" +
+      '<p><strong>升级规则：</strong>' + esc(s.escalate) + "</p></div></details>";
+  }).join("");
+
+  /* ---------- 主循环 ---------- */
+  function collect() {
+    var profile = {
+      name: $("f-name").value, birth: $("f-birth").value || null,
+      weightKg: num("f-weight"), breedClass: $("f-breed").value, coat: $("f-coat").value,
+      bcs: num("f-bcs"), goal: $("f-goal").value, condition: $("f-cond").value,
+      neutered: chk("f-neutered"), brachycephalic: chk("f-brachy"),
+      darkCoat: chk("f-dark"), working: chk("f-work")
+    };
+    var env = { tempC: num("f-temp"), humidityPct: num("f-rh"), sun: chk("f-sun"), acclimatedDays: num("f-accl") };
+    var act = {
+      walkMin: num("f-walk"), playMin: num("f-play"), sniffMin: num("f-sniff"),
+      socialMin: num("f-social"), chewMin: num("f-chew"), sleepHours: num("f-sleep")
+    };
+    var vet = {
+      rideMinutes: num("f-ride"), priorNegative: chk("v-prior"), baselineAnxiety: chk("v-anx"),
+      happyVisits: chk("v-happy"), muzzleTrained: chk("v-muzzle"), pheromone: chk("v-pher"),
+      ownerTense: chk("v-tense"), pvp: chk("v-pvp"), fastedForTreats: chk("v-fast"), carWait: chk("v-car")
+    };
+    var flags = {};
+    Object.keys(triBoxes).forEach(function (k) { flags[k] = triBoxes[k].checked; });
+    return { profile: profile, env: env, act: act, vet: vet, flags: flags };
+  }
+
+  function tone(band) {
+    if (/达标|安全|常规/.test(band)) return "good";
+    if (/不足|注意|偏高|警告/.test(band)) return "warn";
+    return "bad";
+  }
+
+  function run() {
+    var inp = collect();
+    if (!inp.profile.weightKg) {
+      $("short").innerHTML = '<div class="banner p1"><strong>422 UNPROCESSABLE PROFILE</strong> —— 体重是所有能量指标的输入，它不可选，也不接受「大概是十几斤吧」。请在左侧填入体重。</div>';
+      $("scores").innerHTML = ""; $("metrics").innerHTML = "";
+      $("dns-bars").innerHTML = ""; $("hri-fac").innerHTML = ""; $("vsi-fac").innerHTML = "";
+      $("vac").innerHTML = ""; $("par").innerHTML = ""; $("json").textContent = "";
+      return;
+    }
+    var r = Q.evaluate(inp.profile, inp.env, inp.act, inp.vet, inp.flags);
+    var sc = r.shortCircuit;
+
+    /* 短路横幅 */
+    if (sc) {
+      $("short").innerHTML = '<div class="banner ' + r.assessments.triage.code.toLowerCase() +
+        '"><strong>451 VET VISIT REQUIRED</strong><br>分诊结论：<strong>' + r.assessments.triage.code + " " +
+        r.assessments.triage.label + "</strong> —— " + esc(r.assessments.triage.note) +
+        "<br>命中条目：" + r.assessments.triage.hits.map(function (h) { return esc(h.label); }).join("；") +
+        "<br><em>按 §29 的短路规则，其余评分接口在此状态下不再有意义，下方分数已置灰。</em></div>";
+    } else if (r.assessments.triage.code === "P2") {
+      $("short").innerHTML = '<div class="banner p1"><strong>' + r.assessments.triage.code + " " +
+        r.assessments.triage.label + "</strong> —— " + esc(r.assessments.triage.note) +
+        "<br>命中条目：" + r.assessments.triage.hits.map(function (h) { return esc(h.label); }).join("；") + "</div>";
+    } else {
+      $("short").innerHTML = "";
+    }
+
+    /* 四个分数 */
+    function chip(k, v, b, t, dim) {
+      return '<div class="sc ' + t + (dim ? " dim" : "") + '"><div class="k">' + k + '</div><div class="v">' + v +
+        '</div><div class="b">' + esc(b) + "</div></div>";
+    }
+    $("scores").innerHTML =
+      chip("DNS 日常需求", r.assessments.dns.score, r.assessments.dns.band, tone(r.assessments.dns.band), sc) +
+      chip("HRI 热风险", r.assessments.hri.score, r.assessments.hri.band, tone(r.assessments.hri.band), sc) +
+      chip("VSI 就诊应激", r.assessments.vsi.score, r.assessments.vsi.band, tone(r.assessments.vsi.band), sc) +
+      chip("分诊", r.assessments.triage.code, r.assessments.triage.label,
+        r.assessments.triage.priority <= 1 ? "bad" : r.assessments.triage.priority === 2 ? "warn" : "good", false);
+
+    /* 派生指标 */
+    var m = r.metrics;
+    var cells = [
+      ["静息能量 RER", m.rerKcal + " kcal", "70 × BW^0.75", ""],
+      ["维持能量 DER", m.derKcal.lo + "–" + m.derKcal.hi + " kcal", "k = " + m.derKcal.k + "（" + m.derKcal.kLabel + "）", ""],
+      ["每日饮水", m.waterMl.lo + "–" + m.waterMl.hi + " mL", "1 mL ≈ 1 kcal，可与喂食量互校", ""],
+      ["运动配额", m.exerciseTargetMin + " min/日", "品种类分档 + 体况修正", ""],
+      ["嗅闻配额", m.sniffTargetMin + " min/日", "SEE 1:3 —— 15 min 嗅闻 ≈ 45 min 奔跑", ""],
+      ["热调整后步行", r.plan.heatAdjustedWalkMin + " min/日", "配额 × clamp(1 − HRI/20)", ""],
+      ["人类年龄换算", m.humanYears + " 人年", "16·ln(a)+31", ""],
+      ["预期寿命", m.lifeExpectancyYears + " 年", "16.7 − 2.17·ln(BW)", ""],
+      ["老年期起点", m.seniorAtYears + " 岁", "预期寿命 × 0.75", ""],
+      ["终末期起点", m.geriatricAtYears + " 岁", "预期寿命 × 0.90", ""],
+      ["生命阶段", r.lifeStage.stage, "幼犬 / 青年 / 成年 / 老年 / 终末", ""],
+      ["年体检次数", m.examPerYear + " 次/年", m.examPerYear === 0 ? "幼犬期由免疫序列决定" : "成犬 1 / 老年 2 / 慢病 4", ""]
+    ];
+    if (m.puppyWalkCap) {
+      cells.splice(5, 0, ["幼犬单次上限", m.puppyWalkCap.minutes + " min/次", m.puppyWalkCap.note, ""]);
+    }
+    $("metrics").innerHTML = cells.map(function (c) {
+      return '<div class="mt"><div class="k">' + c[0] + '</div><div class="v">' + esc(c[1]) +
+        '</div><div class="n">' + esc(c[2]) + "</div></div>";
+    }).join("");
+
+    /* DNS 明细 */
+    $("dns-bars").innerHTML =
+      '<div class="bar"><span>总分</span><div class="track"><div class="fill' +
+      (r.assessments.dns.score < 70 ? " low" : "") + '" style="width:' + r.assessments.dns.score + '%"></div></div>' +
+      '<span class="num">' + r.assessments.dns.score + " / 100</span></div>" +
+      r.assessments.dns.dims.map(function (d) {
+        return '<div class="bar"><span>' + d.label + ' <span class="grade C">' + Math.round(d.weight * 100) + '%</span></span>' +
+          '<div class="track"><div class="fill' + (d.score < 60 ? " low" : "") + '" style="width:' + d.score + '%"></div></div>' +
+          '<span class="num">' + d.actual + " / " + d.target + " " + d.unit + "</span></div>";
+      }).join("");
+    $("dns-note").innerHTML =
+      "原始分 " + r.assessments.dns.raw + " ｜ " + esc(r.assessments.dns.rule) +
+      (r.assessments.dns.capped ? " ｜ 短板项：<strong>" + esc(r.assessments.dns.gap.label) +
+        "（缺口 " + r.assessments.dns.gap.deficit + " " + r.assessments.dns.gap.unit + "）</strong>" : "");
+
+    /* 因子明细 */
+    function facs(list) {
+      return list.map(function (f) {
+        return '<div class="fac"><span>' + esc(f.label) + '</span><span class="p">' +
+          (f.points > 0 ? "+" : "") + f.points + "</span></div>";
+      }).join("") || '<div class="fac"><span>无命中因子</span><span class="p">0</span></div>';
+    }
+    $("hri-fac").innerHTML = facs(r.assessments.hri.factors) +
+      '<div class="fac"><span><strong>合计</strong>　' + esc(r.assessments.hri.note) + '</span><span class="p">' +
+      r.assessments.hri.score + "</span></div>" +
+      (r.assessments.hri.outdoorAllowed ? "" :
+        '<div class="fac"><span style="color:#b91c1c">' + esc(r.assessments.hri.rule) + "</span><span class=\"p\">硬停</span></div>");
+    $("vsi-fac").innerHTML = facs(r.assessments.vsi.factors) +
+      '<div class="fac"><span><strong>合计</strong>　' + esc(r.assessments.vsi.note) + '</span><span class="p">' +
+      r.assessments.vsi.score + "</span></div>";
+
+    /* 排程 */
+    function tbl(head, rows) {
+      return "<table>" + head + rows.join("") + "</table>";
+    }
+    $("vac").innerHTML = r.plan.vaccine.length
+      ? tbl("<tr><th>项目</th><th>周龄</th><th>窗口</th><th>状态</th></tr>", r.plan.vaccine.map(function (v) {
+          var st = v.status === "在窗口内" ? '<span class="grade B">在窗口内</span>'
+            : v.status === "窗口已过" ? '<span class="grade C">窗口已过</span>' : "未到期";
+          return "<tr><td>" + esc(v.name) + (v.must ? ' <span class="grade A">MUST</span>' : "") +
+            "</td><td>" + esc(v.weeks) + "</td><td>" + v.windowStart + " ~ " + v.windowEnd +
+            "</td><td>" + st + "</td></tr>";
+        }))
+      : '<p style="font-size:13px;color:var(--faint)">未填写出生日期，免疫序列无法计算。</p>';
+    $("par").innerHTML = tbl("<tr><th>项目</th><th>频率</th><th>说明</th></tr>", r.plan.parasite.map(function (p) {
+      return "<tr><td>" + esc(p.item) + "</td><td>" + esc(p.freq) + "</td><td>" + esc(p.note) + "</td></tr>";
+    }));
+
+    /* JSON */
+    $("json").textContent = JSON.stringify(r, null, 2);
+  }
+
+  $("copy").addEventListener("click", function () {
+    var txt = $("json").textContent;
+    if (!txt) return;
+    var done = function () {
+      $("copy-msg").textContent = "已复制";
+      setTimeout(function () { $("copy-msg").textContent = ""; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, function () { fallback(txt, done); });
+    } else { fallback(txt, done); }
+  });
+  function fallback(txt, done) {
+    var ta = document.createElement("textarea");
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { $("copy-msg").textContent = "复制失败，请手动选择"; }
+    document.body.removeChild(ta);
+  }
+
+  document.querySelectorAll("input, select").forEach(function (el) {
+    el.addEventListener("change", run);
+    el.addEventListener("input", run);
+  });
+  run();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>错误码对照 — DOG API</title>
+<meta name="description" content="DOG API 的 13 个状态码逐条对照：异常几乎全部发生在你这一侧，它只是在超发服务。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .single main { max-width: 900px; margin: 0 auto; padding: 44px 28px 140px; }
+  td.c { text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="single">
+  <main id="content">
+    <span class="doc-tag">REFERENCE / STATUS CODES</span>
+    <h1>错误码对照</h1>
+    <div class="subtitle">同一个状态码，在这套规范里说的其实是同一件事：异常几乎全部发生在你这一侧。</div>
+
+    <h2>逐条对照</h2>
+    <table>
+      <tr><th>码</th><th>DOG</th></tr>
+      <tr>
+        <td><code>200</code></td>
+        <td>可信。<strong>本系统不具备撒谎功能</strong>，外部输出与内部状态一致。</td>
+      </tr>
+      <tr>
+        <td><code>204</code></td>
+        <td>不出现。它连沉默都是有声的。</td>
+      </tr>
+      <tr>
+        <td><code>401</code></td>
+        <td>不使用。对全人类默认授权 —— 本系统最大的安全设计缺陷，也是最著名的设计特性。</td>
+      </tr>
+      <tr>
+        <td><code>403</code></td>
+        <td>不使用。它不懂得拒绝你。</td>
+      </tr>
+      <tr>
+        <td><code>404</code></td>
+        <td>不使用。它一定在，只是可能在睡觉。</td>
+      </tr>
+      <tr>
+        <td><code>405</code></td>
+        <td>洗澡接口。所有 method 均为 Not Allowed。</td>
+      </tr>
+      <tr>
+        <td><code>409</code></td>
+        <td>同一资源（球）被两只狗同时请求。不升级为冲突，只表现为更用力地叹气。</td>
+      </tr>
+      <tr>
+        <td><code>418</code></td>
+        <td>I AM A DOG — 拒绝被当作任何别的系统。</td>
+      </tr>
+      <tr>
+        <td><code>429</code></td>
+        <td>不拦截。今天已第二十次握手，第廿一次仍然会成功。</td>
+      </tr>
+      <tr>
+        <td><code>451</code></td>
+        <td>BATH UNAVAILABLE — 法律与秩序都拦不住这次洗澡，但它自己可以。</td>
+      </tr>
+      <tr>
+        <td><code>500</code></td>
+        <td>仅在兽医院门口出现，伴随全身可达震颤。已归档问题 #1994。</td>
+      </tr>
+      <tr>
+        <td><code>503</code></td>
+        <td>暂时自我下线（躲进毯子），约 10 分钟自动恢复。</td>
+      </tr>
+      <tr>
+        <td><code>504</code></td>
+        <td>不出现。它只会一直等 —— 且从不计算等待是否划算。</td>
+      </tr>
+    </table>
+
+    <h2>读法总结</h2>
+    <div class="quick" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+      <blockquote>DOG 的错误码，多数是<strong>给你的说明书</strong>：异常几乎全部发生在你这一侧，它只是在超发服务。</blockquote>
+      <blockquote>真正的例外是 <code>451</code> 与 <code>500</code>：不是你的请求有问题，是它替你做了决定。</blockquote>
+      <blockquote>分诊矩阵里的 P0 / P1 不走状态码。那是<strong>直接联系执业兽医</strong>，不是重试。</blockquote>
+    </div>
+
+    <hr class="divider">
+    <div class="end-note">本页为速查视图，正文中的版本为权威。</div>
+  </main>
+</div>
+
+<script src="../assets/js/render.js"></script>
+<script>SpecSite.mountChrome({ root: "../", active: "errors" });</script>
+
+</body>
+</html>

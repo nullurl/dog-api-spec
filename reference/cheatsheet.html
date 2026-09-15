@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>速查卡 — 接口 · 参数 · 维护周期 | DOG API</title>
+<meta name="description" content="DOG API 一页速查：接口清单、关键参数、喂食公式、维护周期、告警阈值。支持打印。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .single main { max-width: 900px; margin: 0 auto; padding: 44px 28px 140px; }
+  .quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 20px 0; }
+  .quick .box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .quick .box h3 { margin: 0 0 8px; font-size: 14.5px; }
+  .quick .box pre { margin: 0; background: transparent; border: none; padding: 0; font-size: 12.5px; }
+  .code-inline { font-family: "SF Mono", Menlo, monospace; font-size: 12.5px; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="single">
+  <main id="content">
+    <span class="doc-tag">REFERENCE / CHEATSHEET</span>
+    <h1>速查卡</h1>
+    <div class="subtitle">一页看完：接口、参数、公式、周期、阈值。建议打印后贴在冰箱上 —— 这一页里有几条属于 MUST 级。</div>
+
+    <h2>接口清单</h2>
+    <table>
+      <tr><th>接口</th><th>行为</th><th>备注</th></tr>
+      <tr><td><code>GET /api/walk</code></td><td>期望值极高，不衰减</td><td>无 rate limit，历史调用越多响应越激烈</td></tr>
+      <tr><td><code>POST /api/treat</code></td><td>立即 <code>200</code>，约 5 秒后清空记录</td><td>可无限重复调用，每次同样热情</td></tr>
+      <tr><td><code>GET /api/who-is-a-good-boy</code></td><td>恒为 <code>true</code></td><td>唯一保证幂等且永不降级的接口</td></tr>
+      <tr><td><code>GET /api/comfort</code></td><td>服务端主动推送</td><td>SLA 100%，历史上从未失败</td></tr>
+      <tr><td><code>POST /api/bath</code></td><td><code>405</code></td><td>所有 method 均为 Not Allowed</td></tr>
+      <tr><td><code>POST /api/vet</code></td><td>本地 <code>200</code> → 现场 <code>500</code></td><td>已归档问题 #1994</td></tr>
+    </table>
+
+    <h2>关键参数</h2>
+    <div class="quick">
+      <div class="box">
+        <h3>喂食计算</h3>
+        <pre>RER = 70 × BW^0.75
+简化式（2–30 kg）= 30 × BW + 70
+DER = k × RER
+
+k：绝育 1.4–1.6 ｜ 未绝育 1.6–1.8
+   不活跃 1.0–1.4 ｜ &lt;4月 3.0 ｜ &gt;4月 2.0
+   工作犬 1.6–11.0 ｜ 减重 1.0</pre>
+      </div>
+      <div class="box">
+        <h3>体型与寿命</h3>
+        <pre>寿命 ≈ 16.7 − 2.17 × ln(体重 kg)
+2 kg  ≈ 15–16 年
+30 kg ≈ 9–10 年
+60 kg ≈ 7–8 年
+
+人年换算（表观遗传钟）：
+human = 16 × ln(age) + 31</pre>
+      </div>
+      <div class="box">
+        <h3>饮水与体况</h3>
+        <pre>饮水 50–60 ml / kg / 天
+经验等价：1 mL ≈ 1 kcal
+
+BCS 9 分制：
+犬 4/9 – 5/9 为理想
+1–3 偏瘦 ｜ 6–9 偏肥</pre>
+      </div>
+      <div class="box">
+        <h3>维护周期</h3>
+        <pre>刷牙      每天（最低每周 3 次）
+耳道      2–4 周
+指甲      3–4 周
+洗澡      短毛 4–6 周 / 长毛 2–4 周
+          双层毛 1–2 个月
+驱虫      体内 1–3 月（室内 3–6 月）
+体检      每年（老年段每年两次）</pre>
+      </div>
+      <div class="box">
+        <h3>皮肤与洗护</h3>
+        <pre>犬皮肤 pH 6.2–7.4（人 5.5）
+犬皮肤 3–5 层（人 10–15 层）
+→ 禁用人用洗护产品
+水温 38–40 °C
+洗后必须彻底吹干底毛</pre>
+      </div>
+      <div class="box">
+        <h3>环境阈值</h3>
+        <pre>步行前：手背贴地 5 秒
+  不能忍 → 爪垫不能忍
+车辆：任何天气都不得作为暂存环境
+爪垫：融雪盐需擦拭</pre>
+      </div>
+      <div class="box">
+        <h3>必须就医</h3>
+        <pre>静息呼吸 &gt; 30 次/分
+拒食 &gt; 24 小时
+呕吐/腹泻 &gt; 2 次/日 或带血
+牙龈苍白/灰蓝
+腹部膨隆 + 干呕（分钟级急诊）
+无法站立 / 抽搐
+核心体温 ≥ 40 °C</pre>
+      </div>
+      <div class="box">
+        <h3>关键发育窗口</h3>
+        <pre>社会化窗口   3–14 周
+理想入户     8 周
+第一恐惧期   8–11 周
+第二恐惧期   6–14 月
+→ 错过窗口不会致命，只是更费力</pre>
+      </div>
+    </div>
+
+    <h2>三条最常被忽略的 MUST</h2>
+    <blockquote>
+      <strong>MUST</strong> 每天用完它的运动配额 —— 未消费的算力会在晚间 20:00 以 Zoomies 形式溢出。<br>
+      <strong>MUST</strong> 由维护者充当监控系统 —— 它不会主动上报自身故障，疼痛时仍在摇尾巴。<br>
+      <strong>MUST</strong> 在进兽医院之前先让自己平静 —— 你的心率会通过上行通道传给被检查对象。
+    </blockquote>
+
+    <hr class="divider">
+    <div class="end-note">
+      速查卡省略了全部前提与例外。条款冲突时，以正文为准。<br>
+      需要算式而不是数字？→ <a href="../tools/quantifier.html">量化评估器</a> ·
+      需要正常范围与报警阈值？→ <a href="vitals.html">生理指标速查</a> ·
+      需要可打印的记录格式？→ 附录 N 家庭监测记录表
+    </div>
+  </main>
+</div>
+
+<script src="../assets/js/render.js"></script>
+<script>SpecSite.mountChrome({ root: "../", active: "cheatsheet" });</script>
+
+</body>
+</html>

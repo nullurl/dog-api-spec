@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生理指标速查 — DOG API | DOG API</title>
+<meta name="description" content="犬的可测量基线：TPR、黏膜与脱水评估、血液 95% 参考区间、家庭监测频率与报警阈值一张纸看完。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .single main { max-width: 960px; margin: 0 auto; padding: 44px 28px 140px; }
+  .grade { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: var(--code-bg); color: var(--code-ink); }
+  .grade.A { background: #dcfce7; color: #15803d; }
+  .grade.B { background: #fef3c7; color: #92400e; }
+  .grade.C { background: #f1f2f4; color: #4b5563; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+</style>
+</head>
+<body>
+
+<div class="single">
+  <main id="content">
+    <span class="doc-tag">REFERENCE / VITALS</span>
+    <h1>生理指标速查</h1>
+    <div class="subtitle">正常范围、测量手法、报警阈值 —— 一页看完。全部数值可在 §26 找到出处与读法。</div>
+
+    <div class="legend">
+      <span><span class="grade A">A</span> 同行评议 / 大规模实测</span>
+      <span><span class="grade B">B</span> 临床指南 / 机构共识</span>
+      <span><span class="grade C">C</span> 社区经验 / 本项目定义</span>
+    </div>
+
+    <h2>基础生命体征（TPR 及扩展）</h2>
+    <table>
+      <tr><th>条目</th><th>正常范围</th><th>怎么测</th><th>报警阈值</th><th>等级</th></tr>
+      <tr>
+        <td>体温（核心）</td><td>38.0–39.2 °C</td>
+        <td>直肠温度计，斜向贴住黏膜，需润滑；必要时测两次</td>
+        <td>≥39.5 发热；≥41 热射病高危；&lt;37 失温</td><td><span class="grade B">B</span></td>
+      </tr>
+      <tr>
+        <td>静息心率 · 大型犬</td><td>60–100 次/分</td>
+        <td>股动脉触诊或肘后听诊，计数 15 秒 ×4</td>
+        <td>持续 &gt;140 或 &lt;50</td><td><span class="grade B">B</span></td>
+      </tr>
+      <tr>
+        <td>静息心率 · 小型犬</td><td>100–140 次/分</td>
+        <td>同上</td>
+        <td>持续 &gt;180 或 &lt;70</td><td><span class="grade B">B</span></td>
+      </tr>
+      <tr>
+        <td>静息呼吸频率</td><td>10–30 次/分</td>
+        <td>睡眠或完全安静时数胸廓起伏，计数 30 秒 ×2</td>
+        <td>&gt;30 持续 3 日；&gt;40 立即就医</td><td><span class="grade A">A</span></td>
+      </tr>
+      <tr>
+        <td>毛细血管再充盈时间</td><td>&lt;2 秒</td>
+        <td>按压牙龈至发白，松开计时</td>
+        <td>&gt;2 秒提示灌注不良</td><td><span class="grade B">B</span></td>
+      </tr>
+      <tr>
+        <td>黏膜颜色</td><td>粉红、湿润</td>
+        <td>翻开嘴唇观察牙龈</td>
+        <td>苍白（失血 / 休克）、发绀（缺氧）、砖红（高热 / 感染）、发黄（肝胆）</td><td><span class="grade B">B</span></td>
+      </tr>
+      <tr>
+        <td>皮肤回弹</td><td>1–2 秒</td>
+        <td>提起颈背皮肤后松开</td>
+        <td>&gt;2 秒或呈「帐篷状」提示脱水</td><td><span class="grade B">B</span></td>
+      </tr>
+      <tr>
+        <td>收缩压（诊室）</td><td>80–150 mmHg</td>
+        <td>由医院测量；诊室偏高是常见现象</td>
+        <td>&gt;160 或 &lt;90</td><td><span class="grade B">B</span></td>
+      </tr>
+      <tr>
+        <td>体况评分 BCS</td><td>4–5 / 9（理想）</td>
+        <td>触诊肋骨与腰线，俯视看腰窝</td>
+        <td>≤3 偏瘦；≥7 肥胖</td><td><span class="grade B">B</span></td>
+      </tr>
+    </table>
+
+    <blockquote>为什么这些数字要在家里测：<strong>在受控环境之外测得的不是基线，是被测对象对测量本身的反应。</strong>诊室的陌生气味与金属台面会同时抬升心率与呼吸，所以「它今天在医院心率 160」这句话几乎不含信息。</blockquote>
+
+    <h2>血液 95% 参考区间</h2>
+    <p>数值取自一项 4,804 只犬、历时七年的实测队列（雪橇犬）与大学兽医实验室的对照区间。不同实验室的设备与试剂不同，<strong>请以你手里那份报告上的区间为准</strong>。</p>
+    <table>
+      <tr><th>项目</th><th>参考区间</th><th>单位</th><th>读法</th></tr>
+      <tr><td>白细胞 WBC</td><td>6.0–17.0</td><td>×10⁹/L</td><td>升高多为感染或炎症；应激也会轻度抬高</td></tr>
+      <tr><td>红细胞压积 HCT</td><td>0.35–0.52</td><td>L/L</td><td>偏低提示贫血；偏高常为脱水。灵缇类天然偏高</td></tr>
+      <tr><td>血红蛋白 HGB</td><td>120–180</td><td>g/L</td><td>与 HCT 同向解读</td></tr>
+      <tr><td>血小板 PLT</td><td>200–700</td><td>×10⁹/L</td><td>偏低需排查凝血问题与采样因素</td></tr>
+      <tr><td>钠 / 钾 / 氯</td><td>141–152 / 3.9–5.5 / 107–118</td><td>mmol/L</td><td>异常常见于呕吐、腹泻、肾病</td></tr>
+      <tr><td>总蛋白 / 白蛋白</td><td>51–70 / 25–38</td><td>g/L</td><td>白蛋白与球蛋白分开看，比值有意义</td></tr>
+      <tr><td>尿素氮 BUN</td><td>2.1–10.7</td><td>mmol/L</td><td>必须与肌酐同看；单独升高可能只是高蛋白或脱水</td></tr>
+      <tr><td>肌酐</td><td>44.2–132.6</td><td>µmol/L</td><td>升高提示肾滤过下降；但需损失约 2/3 才显形，SDMA 更早</td></tr>
+      <tr><td>血糖</td><td>3.8–7.0</td><td>mmol/L</td><td>应激可暂时升高；持续升高伴多饮多尿需查糖尿病</td></tr>
+      <tr><td>总胆红素</td><td>1.7–5.1</td><td>µmol/L</td><td>升高需结合肝胆影像</td></tr>
+      <tr><td>碱性磷酸酶 ALP</td><td>7–92</td><td>U/L</td><td>犬常见升高且不一定是肝病：类固醇、部分药物、生长期都会抬升</td></tr>
+      <tr><td>丙氨酸氨基转移酶 ALT</td><td>8–65</td><td>U/L</td><td>相对更肝特异；看趋势比看单点有用</td></tr>
+      <tr><td>肌酸激酶 CK</td><td>26–310</td><td>U/L</td><td>剧烈运动与肌肉损伤后升高（雪橇犬队列为 68–565）</td></tr>
+    </table>
+
+    <blockquote>统计学提醒：95% 参考区间意味着<em>健康的个体也有约 5% 的概率落在区间之外</em>。因此读法只有一句 —— 单点看是否越界，趋势看是否漂移。后者往往更早报警。</blockquote>
+
+    <h2>家庭监测频率与报警阈值</h2>
+    <table>
+      <tr><th>频率</th><th>项目</th></tr>
+      <tr><td>每日</td><td>饮水、进食、排泄、精神（兴奋度 1–5）</td></tr>
+      <tr><td>每周</td><td>体重、BCS 触诊、睡眠时静息呼吸、口腔与爪垫外观</td></tr>
+      <tr><td>每月</td><td>体温、心率、耳道与皮肤检查</td></tr>
+      <tr><td>每 6–12 个月</td><td>血液（血常规 + 生化）、尿检、血压、粪便；报告全部归档</td></tr>
+    </table>
+    <pre>静息呼吸 &gt; 30 次/分 且持续 ≥5 分钟   → 记一条；累计 3 条预约就诊
+静息呼吸 &gt; 40 次/分                  → P0，立即就医
+30 日内体重下降 &gt; 5%（非减重计划）    → 72 小时内就诊
+饮水  &gt; 100 mL/kg/日                 → 72 小时内就诊
+疼痛评分 ≥ 6/24（CMPS-SF）            → 当日联系医院
+拒食  &gt; 24 小时                       → 当日就诊
+体温 ≥ 39.5 °C 或 &lt; 37 °C             → 当日就诊
+「今天不太一样」且说不出哪里          → 直接预约。本条优先级高于以上所有条目</pre>
+
+    <hr class="divider">
+    <div class="end-note">
+      本页为 §26 生理基线与家庭监测 的合并速查视图 · 正文中的版本为权威 ·
+      所有评分为偏差提示，不是诊断 · 就医决策请遵循执业兽医意见
+    </div>
+  </main>
+</div>
+
+<script src="../assets/js/render.js"></script>
+<script>SpecSite.mountChrome({ root: "../", active: "vitals" });</script>
+
+</body>
+</html>

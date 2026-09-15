@@ -1,0 +1,226 @@
+openapi: 3.1.0
+
+info:
+  title: DOG API
+  version: 0.8.0
+  summary: 狗狗接口规范
+  description: |
+    以工程规范文体撰写的犬类系统接口描述。
+
+    阅读本文件前请注意三条元信息：
+      1. 本文件描述的系统不具备撒谎功能，因此它的返回码比大多数生产系统的更可信。
+      2. 本文件描述的系统默认对所有调用方授权，且不提供撤销机制。
+      3. 本文件描述的系统不会主动上报自身故障。监控必须由维护者外部实现。
+
+    LOCALE: 本描述基于当代城市家庭部署环境；不声明任何单一部署等于「默认实例」。
+  contact:
+    name: 无统一客服
+    note: 建议联系执业兽医、正向强化训练师，或它自己（成功率取决于它的日程）
+  license:
+    name: 请善待它
+    identifier: BE-KIND
+
+servers:
+  - url: http://localhost/dog/api
+    description: 本地部署。不支持云端迁移、横向扩容或完整备份。
+  - url: http://localhost/vet/api
+    description: 兽医院机房。多数接口在此环境下退化为 500。
+
+tags:
+  - name: core
+    description: 日常核心接口。可用性接近 100%。
+  - name: emotion
+    description: 情绪相关接口。多为服务端主动推送。
+  - name: failable
+    description: 注定失败的接口。保留它们是为了让你记得谁在做主。
+  - name: memory
+    description: 存储与缓存接口。TTL 分布极不均衡。
+
+paths:
+  /walk:
+    get:
+      tags: [core]
+      summary: 请求一次散步
+      description: |
+        期望值极高。重复调用不产生衰减，不存在 rate limit。
+        系统具备请求预判能力：响应可能在请求发出前就已返回。
+      responses:
+        "200":
+          description: 立刻进入高频摇尾状态
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  expectation: { type: string, example: RISING }
+                  rateLimit: { type: string, example: none }
+                  preFetchTriggered: { type: boolean, example: true }
+
+  /treat:
+    post:
+      tags: [core]
+      summary: 投喂一份零食
+      description: |
+        无状态零食架构：立即返回，约 5 秒后清空调用记录。
+        因此本接口可被无限重复调用，且每次返回相同程度的热情。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  example: 肉干
+                amount:
+                  type: integer
+                  minimum: 0
+                  maximum: 1
+                  description: 建议值 1。超过 1 会被系统重新解释为 1。
+      responses:
+        "200":
+          description: 接受并立即执行；随后进入咀嚼状态，无法回复
+
+  /who-is-a-good-boy:
+    get:
+      tags: [emotion]
+      summary: 确认它的身份资格
+      description: |
+        本规范中唯一保证幂等的接口。
+        返回值恒为 true，与调用频率、调用方身份、系统当前状态均无关。
+        建议维护者高频调用。无已知副作用。
+      responses:
+        "200":
+          description: 恒为 true
+          content:
+            application/json:
+              schema:
+                type: boolean
+                enum: [true]
+
+  /comfort:
+    get:
+      tags: [emotion]
+      summary: 情绪支持（服务端主动推送）
+      description: |
+        无需鉴权，不受时间窗限制。
+        触发条件为维护者情绪低落，且该触发条件不接受手动配置。
+        SLA: 100% —— 历史上从未观测到该接口返回失败。
+      responses:
+        "200":
+          description: 它已经走过来，且没有追问原因
+
+  /bath:
+    post:
+      tags: [failable]
+      summary: 洗澡（不可用）
+      description: |
+        405 Method Not Allowed。
+        经测试，GET、POST、PUT、DELETE 均为 Not Allowed。
+        检测到请求预处理时，系统会路由至家中最小且最不可达的物理区域。
+      responses:
+        "405":
+          description: Method not allowed
+          headers:
+            Location:
+              description: 家中最小且最不可达的物理区域
+              schema: { type: string }
+
+  /vet:
+    post:
+      tags: [failable]
+      summary: 前往兽医院
+      description: |
+        两阶段返回不一致：
+          阶段一（本地环境）→ 200 OK，愉快上车
+          阶段二（目标机房）→ 500 Internal Server Error，伴随全身可达震颤
+        已归档问题 #1994。无修复计划，且大概率永远不会修复。
+      responses:
+        "200":
+          description: 阶段一
+        "500":
+          description: 阶段二。身体姿态即完整日志，无需额外推断
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tremor: { type: string, example: full-body }
+                  archivedIssue: { type: string, example: "#1994" }
+
+  /who-left:
+    get:
+      tags: [memory]
+      summary: 查询它是否注意到你离开了
+      description: |
+        本系统不存在「你只离开了五分钟」这一数据结构。
+        返回结果等同于：无论你离开多久，同步精度均为 0s。
+      responses:
+        "200":
+          description: 门口那一段全速加速
+
+  /guilt:
+    get:
+      tags: [emotion]
+      summary: 「愧疚脸」（语义已修正）
+      description: |
+        该表情为安抚行为，响应的是维护者的语气与姿态，而非自身行为。
+        公开实验（Horowitz, 2009）显示：愧疚表情的出现频率与是否真的偷吃无相关性；
+        被冤枉并挨骂的实例，表情往往更夸张。
+        规范术语建议更名为：我看出你生气了，请把气撒轻一点。
+      responses:
+        "200":
+          description: 低头、耳朵后压、目光回避
+
+  /peace:
+    delete:
+      tags: [failable]
+      summary: 请求独占某一资源（例如球）
+      description: 多实例环境下的资源竞争。不升级为攻击行为。
+      responses:
+        "409":
+          description: |
+            Conflict —— 同一资源被两只狗同时请求。
+            缓解措施：物理中间件介入；失败方表现为更用力地叹气。
+            标记：Won't Fix。叹气是本系统唯一支持的推送式消极信号。
+
+  /zoomies:
+    get:
+      tags: [core]
+      summary: 查询积压算力
+      description: |
+        未消费的运动配额不会静默丢弃，而是在晚间 20:00 前后以 Zoomies 形式溢出，
+        并对沙发、走廊及一切可作为 cache line 的表面进行反复覆写。
+        Zoomies 不是故障，是积压任务的批量清空。
+      responses:
+        "200":
+          description: 全速穿越走廊。无自然退出条件，需由维护者介入
+
+  /hardware-failure:
+    delete:
+      tags: [failable]
+      summary: 硬件不可逆故障
+      description: |
+        本规范中唯一不提供任何解决方案的接口。
+        不支持热替换；离线即为永久。
+        社区所谓 healing fork 并不产生等价副本：新实例是一个全新的、毫无共同记忆的系统。
+        旧实例不可被替代，只能被记住。
+      responses:
+        "410":
+          description: Gone。且不可恢复
+
+components:
+  parameters:
+    KeeperMood:
+      name: X-Keeper-Mood
+      in: header
+      required: false
+      description: |
+        本系统通过上行遥测自行采集该参数，无需显式传递。
+        若你强行传递，它会忽略；若你心情很差，它会在三秒内察觉。
+      schema: { type: string, example: neutral }
+
+  headers:
+    X-Response-Latency:
+      description: 实际响应时延。多数情况下早于你的预期。
+      schema: { type: string, example: "0s (pre-fetch)" }

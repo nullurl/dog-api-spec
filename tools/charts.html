@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DOG API · 图表图鉴 —— Mono 语法下的 19 张图</title>
+<meta name="description" content="把 Lieflat Charts 的 Mono 语法搬进 DOG API：19 张图覆盖柱、折线、面积、环形、横条、瀑布、热力、进度、哑铃、箱线、K 线、点阵、量表、径向下沉、漏斗、百人场、百人队列、日历热力、平行坐标。数据实时取自本项目的 DogQuant 与 DogExpression，纯 SVG、零依赖、可离线打开。" />
+<style>
+  :root{--bg:#F0EFEB;--dark:#1C1C1A;--ink:#1C1C1A;--muted:#8F8E88;--faint:#C6C5BF;--grid:#DEDDD6}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);font-family:'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',-apple-system,'Segoe UI',sans-serif;
+       color:var(--ink);padding:0 0 60px;-webkit-font-smoothing:antialiased;line-height:1.6}
+
+  /* ── 页面外框：只做导航与说明，图形语言全部交给卡片 ── */
+  .topbar{border-bottom:1px solid var(--grid);background:var(--bg)}
+  .topbar-inner{max-width:1400px;margin:0 auto;padding:14px 40px;display:flex;align-items:baseline;gap:24px;flex-wrap:wrap}
+  .brand{font-size:13px;font-weight:800;letter-spacing:.06em;color:var(--ink);text-decoration:none}
+  .brand span{color:var(--muted);font-weight:500;letter-spacing:0}
+  .topnav{display:flex;gap:18px;flex-wrap:wrap}
+  .topnav a{font-size:12px;color:var(--muted);text-decoration:none;padding-bottom:2px;border-bottom:1px solid transparent}
+  .topnav a:hover{color:var(--ink)}
+  .topnav a.on{color:var(--ink);font-weight:700;border-bottom-color:var(--ink)}
+
+  .wrap{max-width:1400px;margin:0 auto;padding:0 40px}
+  .pagehead{padding:38px 0 8px;max-width:900px}
+  .kicker{font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--muted);margin-bottom:10px}
+  .pagehead h1{font-size:27px;font-weight:800;letter-spacing:-.025em;line-height:1.25}
+  .pagehead p{font-size:13px;color:#4A4944;margin-top:12px;max-width:820px}
+  .pagehead p b{font-weight:700;color:var(--ink)}
+  .pagehead code{font-family:'SF Mono','JetBrains Mono',Menlo,monospace;font-size:12px;
+    background:#DEDDD6;padding:1px 5px;border-radius:4px}
+
+  .sheet{padding:34px 0 6px}
+  .sect{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--muted);
+    padding-bottom:10px;border-bottom:1px solid var(--grid);margin-bottom:18px}
+
+  table.cat{width:100%;border-collapse:collapse;font-size:12px}
+  table.cat th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--muted);
+    text-transform:uppercase;padding:0 12px 8px 0;border-bottom:1px solid var(--grid)}
+  table.cat td{padding:7px 12px 7px 0;border-bottom:1px solid var(--grid);color:#4A4944;vertical-align:top}
+  table.cat td.n{color:var(--muted);font-variant-numeric:tabular-nums;width:34px}
+  table.cat td.t{color:var(--ink);font-weight:600}
+  table.cat code{font-family:'SF Mono','JetBrains Mono',Menlo,monospace;font-size:11px;color:var(--muted)}
+  table.cat td.g{font-weight:800;color:var(--ink);width:34px;text-align:center}
+  table.cat tr:hover td{background:#DEDDD6}
+
+  /* ── 卡片：Mono 令牌，与 assets/js/charts-dog.js 的 CARD_CSS 同源 ── */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:1400px;margin:0 auto;padding:0 40px;margin-top:22px}
+  .card{background:var(--bg);border-radius:24px;padding:28px 28px 20px}
+  .card.dark{background:var(--dark);color:#F0EFEB}
+  .card.dark .sub{color:#8F8E88}
+  .card.dark .src{color:#55554F}
+  .card.dark .badge{border-color:#4A4944;color:#8F8E88}
+  .card.wide{grid-column:1/-1}
+  .card h2{font-weight:700;font-size:16.5px;letter-spacing:-.02em;margin-bottom:3px;line-height:1.35}
+  .card .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px;line-height:1.65}
+  .card .src{font-size:9.5px;color:var(--faint);margin-top:10px;letter-spacing:.08em;font-weight:500}
+  .badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.08em;
+    padding:3px 10px;border-radius:99px;margin-bottom:10px;border:1px dashed #B0AFA9;color:var(--muted)}
+  .card svg{width:100%;height:auto;display:block;margin:0 auto;cursor:pointer}
+
+  .notes{max-width:900px}
+  .notes h3{font-size:13px;font-weight:800;margin:20px 0 8px;letter-spacing:-.01em}
+  .notes ul{list-style:none;font-size:12.5px;color:#4A4944}
+  .notes li{padding:6px 0 6px 16px;position:relative;border-bottom:1px solid var(--grid)}
+  .notes li:before{content:"—";position:absolute;left:0;color:var(--muted)}
+  .notes li b{color:var(--ink);font-weight:700}
+  .notes p{font-size:12.5px;color:#4A4944;margin-top:10px}
+  .notes a{color:var(--ink)}
+  .fine{font-size:11.5px;color:var(--muted);margin-top:26px;padding-top:14px;border-top:1px solid var(--grid)}
+
+  @media (max-width:900px){
+    .grid2{grid-template-columns:1fr;padding:0 20px}
+    .wrap,.topbar-inner{padding-left:20px;padding-right:20px}
+  }
+  @media print{
+    .topbar{display:none}
+    .grid2{gap:0}
+    .card{break-inside:avoid;page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../index.html">DOG API<span> / 图表图鉴</span></a>
+    <nav class="topnav">
+      <a href="../index.html">首页</a>
+      <a href="../spec/dog.html">DOG API</a>
+      <a href="../tools/quantifier.html">量化评估器</a>
+      <a href="../tools/expression.html">表情渲染器</a>
+      <a class="on" href="charts.html">图表图鉴</a>
+      <a href="../sdk/demo.html">SDK 控制台</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="pagehead">
+    <div class="kicker">图表图鉴 · MONO 语法</div>
+    <h1>19 张图，同一套灰阶，同一条规矩：一行一个诚实单位</h1>
+    <p>这一页用的是 <b>Lieflat Charts</b> 的 Mono 图形语言：纸灰底、炭黑墨、七级灰阶、不透明不发光不留阴影，
+      明度即数据，柱状图不断轴，面积一律开方。19 张图分别对应它目录里的 19 个图型，
+      每一张都沿用原模板的核心几何与编码方式，只换了数据与文案。</p>
+    <p>数据层没有另抄一份常量：能量、饮水、配额、热风险 HRI、就诊应激 VSI、分诊优先级、生命阶段、
+      DNS 权重全部实时问本项目的计算内核 <code>DogQuant</code>；表情四维取自
+      <code>DogExpression</code> 的真实参数向量。个别图表用的是合成示意数据 ——
+      来源行里写明了 <b>C 级</b>，不冒充实测。</p>
+    <p>滚到哪画到哪，<b>点一下任意一张图可以重播入场动画</b>。全部是手写 SVG，
+      没有 CDN、没有图表库、不联网也能打开。</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <section class="sheet" id="catalog">
+    <h2 class="sect">图型索引 · 每一张都能追回原模板</h2>
+    <table class="cat">
+      <thead>
+        <tr><th class="n">#</th><th>本页图表</th><th>Lieflat 图型</th><th>参考实现</th><th>数据来源</th><th class="g">等级</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="n">01</td><td class="t">睡眠时长 · 柱状</td><td>F1 Rung Bars</td><td><code>templates/basics-gallery.html</code></td><td>DNS 休息目标 + 物种参照</td><td class="g">A</td></tr>
+        <tr><td class="n">02</td><td class="t">HRI 随气温 · 折线</td><td>F2 Hairline Line</td><td><code>templates/basics-gallery.html</code></td><td><code>DogQuant.hri()</code> 逐度求值</td><td class="g">C</td></tr>
+        <tr><td class="n">03</td><td class="t">体重—寿命 · 面积</td><td>F3 Hairline Area</td><td><code>templates/basics-gallery.html</code></td><td><code>DogQuant.lifeStage()</code> 逐体重求值</td><td class="g">A</td></tr>
+        <tr><td class="n">04</td><td class="t">24 小时预算 · 环形表盘</td><td>F4 Tick Donut</td><td><code>templates/basics-gallery.html</code></td><td>1440 分钟＝100 格，目标值取自 DNS</td><td class="g">B</td></tr>
+        <tr><td class="n">05</td><td class="t">分诊优先级 · 横向条</td><td>F5 Tick Rows</td><td><code>templates/basics-gallery.html</code></td><td><code>DogQuant.TRIAGE_DEFS</code> 按优先级计数</td><td class="g">C</td></tr>
+        <tr><td class="n">06</td><td class="t">HRI 因子分解 · 瀑布</td><td>F9 Rung Waterfall</td><td><code>templates/basics-gallery.html</code></td><td><code>DogQuant.hri()</code> 的因子分解</td><td class="g">C</td></tr>
+        <tr><td class="n">07</td><td class="t">吠叫强度 · 小热力</td><td>F10 Dot Heat</td><td><code>templates/basics-gallery.html</code></td><td>晨昏双峰行为的合成示意</td><td class="g">C</td></tr>
+        <tr><td class="n">08</td><td class="t">疼痛评分 · 表盘进度</td><td>F11 Tick Gauge</td><td><code>templates/basics-gallery.html</code></td><td>CMPS-SF 0–24 与干预线 6</td><td class="g">A</td></tr>
+        <tr><td class="n">09</td><td class="t">K 系数区间 · 哑铃</td><td>F12 Dumbbell Queue</td><td><code>templates/basics-gallery.html</code></td><td><code>DogQuant.K_FACTORS</code> 区间</td><td class="g">B</td></tr>
+        <tr><td class="n">10</td><td class="t">静息呼吸 · 箱线</td><td>F15 Tick Box</td><td><code>templates/basics-gallery.html</code></td><td>静息呼吸 10–30 区间上的合成分布</td><td class="g">C</td></tr>
+        <tr><td class="n">11</td><td class="t">体重周线 · K 线</td><td>F17 Candlestick</td><td><code>templates/basics-gallery.html</code></td><td>每日体重四值的合成记录</td><td class="g">C</td></tr>
+        <tr><td class="n">12</td><td class="t">一天的行为计数 · 点阵</td><td>L2 Dot Cascade</td><td><code>templates/lupi-gallery.html</code></td><td>一天行为抽样的计数</td><td class="g">C</td></tr>
+        <tr><td class="n">13</td><td class="t">性格四维 · 双极量表</td><td>L7 Brand Spectrum</td><td><code>templates/lupi-gallery.html</code></td><td>性格定位与三个参照群体</td><td class="g">C</td></tr>
+        <tr><td class="n">14</td><td class="t">吠叫时刻 · 径向叠加</td><td>L10 Radial Patchwork</td><td><code>templates/lupi-gallery.html</code></td><td>46 次吠叫的时刻与强度</td><td class="g">C</td></tr>
+        <tr><td class="n">15</td><td class="t">就医阶段留存 · 漏斗</td><td>L13 Hourglass Stream</td><td><code>templates/lupi-gallery.html</code></td><td>从察觉异常到治疗的阶段留存</td><td class="g">C</td></tr>
+        <tr><td class="n">16</td><td class="t">DNS 权重 · 百人场</td><td>L14 Hundred Field</td><td><code>templates/lupi-gallery.html</code></td><td><code>DogQuant.DNS_DIMS</code> 权重 = 100 点</td><td class="g">C</td></tr>
+        <tr><td class="n">17</td><td class="t">恐惧诱因 · 百人队列</td><td>L15 Ballot Tally</td><td><code>templates/lupi-gallery.html</code></td><td>恐惧诱因的百只队列</td><td class="g">C</td></tr>
+        <tr><td class="n">18</td><td class="t">全年外出 · 日历热力</td><td>L17 Calendar Heat</td><td><code>templates/lupi-gallery.html</code></td><td>全年 52 周 × 7 天的外出次数</td><td class="g">C</td></tr>
+        <tr><td class="n">19</td><td class="t">表情四维 · 平行坐标</td><td>L20 Parallel Coordinates</td><td><code>templates/lupi-gallery.html</code></td><td><code>DogExpression.stateParams()</code> 真实向量</td><td class="g">A</td></tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<div class="grid2">
+
+  <div class="card">
+    <span class="badge">F1 · RUNG BARS</span>
+    <h2>它一天有一半以上是睡着的，比猫还多，而人排在最后</h2>
+    <div class="sub">一格 = 1 小时 · 幼犬 19 h 取参数注册表 18–20 h 的中位 · 老龄犬 16 h 与成犬 13 h 取自 DNS 休息目标 · 猫与人只是参照，不上墨</div>
+    <svg data-chart="sleep-rungs" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="柱状图：各生命阶段每日睡眠小时数，幼犬 19 小时最高，人 8 小时最低"></svg>
+    <div class="src">RUNG BARS · MONO · 休息目标 + 物种参照</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F2 · HAIRLINE LINE</span>
+    <h2>热风险不是温度计：32 °C 那道线跟分数无关</h2>
+    <div class="sub">一个点 = 一摄氏度 · 16–40 °C，RH 40%，已热适应 · 两条横虚线是分级线 · 竖虚线是硬停规则 · 空心 = 已入硬停区</div>
+    <svg data-chart="hri-line" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="折线图：热风险指数随气温上升，分级线在 5 与 10，32 摄氏度处有硬停规则线"></svg>
+    <div class="src">HAIRLINE LINE · MONO · HRI 逐度求值</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F3 · HAIRLINE AREA</span>
+    <h2>体重每翻一倍，预期寿命少 1.5 年</h2>
+    <div class="sub">一根发丝 = 一个体重档 · 横轴取对数，1.5–70 kg · 面积由日子组成，不是色块 · 两端各一个标数</div>
+    <svg data-chart="life-area" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="面积图：预期寿命随体重上升而下降，2 公斤约 15 年，70 公斤约 7.5 年"></svg>
+    <div class="src">HAIRLINE AREA · MONO · 体重—寿命中位数拟合</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F4 · TICK DONUT</span>
+    <h2>一天 1440 分钟里，有明确用途的只有 184 分钟</h2>
+    <div class="sub">一格 = 1% = 14.4 分钟 · 分钟数是真的，格数是取整的 · 差额 1 格显式记在「独处 / 其余」上，不静默摊掉</div>
+    <svg data-chart="day-donut" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="环形表盘：一天 1440 分钟的构成，睡眠 780 分钟，独处 475 分钟，其余四类合计 184 分钟"></svg>
+    <div class="src">TICK DONUT · MONO · 目标值取自 DNS</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F5 · TICK ROWS</span>
+    <h2>27 条红线里，12 条不许先在家观察</h2>
+    <div class="sub">一根 tick = 一条红线 · 行尾大数是条数 · 每第五根带点标 · 行内备注写在数字右侧</div>
+    <svg data-chart="triage-rows" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="横向条形图：27 条红线按分诊优先级分布，P0 立即（分钟级）12 条，P1 当日（小时级）8 条，P2 72 小时内 6 条，P3 常规 1 条"></svg>
+    <div class="src">TICK ROWS · MONO · TRIAGE_DEFS 按优先级计数</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F9 · RUNG WATERFALL</span>
+    <h2>同样是 27 °C，气温本身只贡献 3 点，而鼻子贡献 4 点</h2>
+    <div class="sub">一格 = 0.5 个指数点 · 虚线阶梯 = 累计水位 · 横虚线 = 硬止线 10（此线以上取消户外运动）· 短鼻 + 双层被毛 + 未热适应共 7.5 点</div>
+    <svg data-chart="hri-waterfall" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="瀑布图：热风险指数从 0 累加到 13.5，其中短鼻结构贡献 4 点最多，累计在第 4 级越过硬止线 10"></svg>
+    <div class="src">RUNG WATERFALL · MONO · HRI 因子分解</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F10 · DOT HEAT</span>
+    <h2>叫是有时刻表的：早上八点和下午六点各一道锋</h2>
+    <div class="sub">点面积 = 相对强度（满分 100）· 虚线环 = 峰值格 · 小点 = 安静时段 · 工作日白天那道沟是真的 · C 级示意数据</div>
+    <svg data-chart="bark-heat" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="热力图：7 天乘 12 个两小时时段的吠叫相对强度，早晚各一个峰"></svg>
+    <div class="src">DOT HEAT · MONO · 星期 × 小时</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F11 · TICK GAUGE</span>
+    <h2>疼痛评分 9 分：越过干预线 1.5 倍</h2>
+    <div class="sub">一格 = 24 分制的 1% · 上墨 = 已计分 · 加粗刻度 = 干预线 6 分 · 圆点 = 当前值</div>
+    <svg data-chart="pain-gauge" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="表盘进度图：Glasgow CMPS-SF 疼痛评分 9 分，满分 24，干预线 6 分"></svg>
+    <div class="src">TICK GAUGE · MONO · GLASGOW CMPS-SF</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F12 · DUMBBELL QUEUE</span>
+    <h2>同一只狗，只因为生命阶段不同，饭量可以差到 3.75 倍</h2>
+    <div class="sub">一颗串珠 = 0.1 个系数 · 空心 = 区间下限，实心 = 区间上限 · 工作犬 5–11 不入图：它会把 7 行全压扁（不撕轴，直接不画）</div>
+    <svg data-chart="der-dumbbell" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="哑铃图：八个生命阶段的 DER 系数区间，从减重期 0.8 到幼犬 3.0"></svg>
+    <div class="src">DUMBBELL QUEUE · MONO · K_FACTORS 区间</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F15 · TICK BOX</span>
+    <h2>30 °C 环境下，中位数正好压在就医线上</h2>
+    <div class="sub">箱体 = 中间一半 · 纸色横档 = 中位数 · 空心 = 离群值 · 越黑 = 呼吸越慢 · 虚线 30 是「连续 3 日即就医」的阈值 · C 级示意</div>
+    <svg data-chart="rr-box" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="箱线图：四组静息呼吸频率的五数概括与离群值，30 摄氏度环境组中位数落在 30"></svg>
+    <div class="src">TICK BOX · MONO · 静息呼吸分布</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">F17 · CANDLESTICK</span>
+    <h2>整月跌了 3.5%，仍然没碰到那条 −5% 的线</h2>
+    <div class="sub">墨水柱 = 收跌 · 空心 = 收涨 · 影线 = 当日全幅 · 一格 = 0.1 kg · 横虚线 = 30 日内下降 5% 的报警阈值 · C 级示意</div>
+    <svg data-chart="weight-candle" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="K 线图：30 天每日体重四值，月末收于 13.99 公斤，未跌破 13.78 公斤的报警线"></svg>
+    <div class="src">CANDLESTICK · MONO · 每日体重四值</div>
+  </div>
+
+  <div class="card dark">
+    <span class="badge">L2 · DOT CASCADE</span>
+    <h2>一天里最常做的六件事，第一名是第六名的九倍</h2>
+    <div class="sub">一点 = 10 次 · 柱子沿对角线铺开，所以排名自己长成一道斜线 · 六行相加 554 次 · C 级示意数据</div>
+    <svg data-chart="daily-cascade" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="点阵级联图：一天里六类行为的次数排名，嗅闻停顿 240 次最多，讨摸 26 次最少"></svg>
+    <div class="src">DOT CASCADE · MONO-DARK · 行为抽样</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">L7 · BRAND SPECTRUM</span>
+    <h2>它比同品种更黏人，也比同龄犬更独立 —— 这不矛盾</h2>
+    <div class="sub">每行两端都是合法位置，所以中点没有特殊含义 · 大点 = 这只狗 · 小点 = 品种均值 / 同龄均值 / 收容犬均值 · 线索带把四行串成一条脊</div>
+    <svg data-chart="trait-spectrum" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="双极量表：性格四维定位，独处无妨对不能独处，活跃好动对沉稳少动等"></svg>
+    <div class="src">BRAND SPECTRUM · MONO · 性格四维</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">L10 · RADIAL PATCHWORK</span>
+    <h2>46 次吠叫集中在两个时刻，而不是均匀分布在一天里</h2>
+    <div class="sub">每个楔 = 一次吠叫 · 角度 = 时刻 · 长度 = 强度 · 越叠越黑（透明度本身编码密度）· 描边 = 强度最大的三次 · C 级示意</div>
+    <svg data-chart="bark-patchwork" viewBox="0 0 400 330" preserveAspectRatio="xMidYMid meet" role="img" aria-label="径向叠加图：46 次吠叫按时刻分布，晨昏各一簇，三次最强被描边"></svg>
+    <div class="src">RADIAL PATCHWORK · MONO · 吠叫日志</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">L13 · HOURGLASS STREAM</span>
+    <h2>从「它好像不太对」到「按时治疗」，中间掉了 81%</h2>
+    <div class="sub">一根发丝 ≈ 20 例 · 宽度 = 该阶段剩下多少 · 左侧 = 通过率 · 每千次「察觉到不对」计 · C 级示意数据</div>
+    <svg data-chart="care-funnel" viewBox="0 0 400 340" preserveAspectRatio="xMidYMid meet" role="img" aria-label="漏斗图：从察觉到异常 1000 例逐级递减到开始治疗 190 例，四级通过率分别为 78%、67%、46%、79%"></svg>
+    <div class="src">HOURGLASS STREAM · MONO · 就医阶段留存</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">L14 · HUNDRED FIELD</span>
+    <h2>分数的四分之一由运动决定 —— 它缺席时总分不可能高</h2>
+    <div class="sub">一个点 = 总分的 1% · 25 + 20 + 20 + 20 + 15 = 100 · 簇的大小就是权重 · 每第五个点带一根辐条</div>
+    <svg data-chart="dns-hundred" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="百人场图：DNS 五个维度权重各占 25、20、20、20、15 个点，簇大小即权重"></svg>
+    <div class="src">HUNDRED FIELD · MONO · DNS_DIMS 权重</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">L15 · BALLOT TALLY</span>
+    <h2>最怕的不是独处，是打雷</h2>
+    <div class="sub">一根 tick = 一百只里的一只 · 每行各有各的一百，所以不能加总 · 每第十根带点标 · C 级：来自通行观察，非对照实验</div>
+    <svg data-chart="fear-tally" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="百人队列图：四项恐惧诱因各一百根刻度，打雷烟花 51，独自在家 46，家电 41，剪指甲洗澡 33"></svg>
+    <div class="src">BALLOT TALLY · MONO · 恐惧诱因</div>
+  </div>
+
+  <div class="card wide">
+    <span class="badge">L17 · CALENDAR HEAT</span>
+    <h2>一年里的两个峰不是勤快，是地面温度允许</h2>
+    <div class="sub">一个点 = 一天 · 点面积 = 当日外出次数 · 小点 = 没出门 · 虚线环 = 全年最多的一天 · 盛夏与严冬各自塌下去 · C 级示意数据</div>
+    <svg data-chart="walk-calendar" viewBox="0 0 840 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="日历热力图：全年 52 周乘 7 天的外出次数，四月至五月与十月各有一个峰，盛夏与严冬低平"></svg>
+    <div class="src">CALENDAR HEAT · MONO · 全年外出次数</div>
+  </div>
+
+  <div class="card">
+    <span class="badge">L20 · PARALLEL COORDINATES</span>
+    <h2>14 个状态里，只有 BEG 把内侧眉肌拉满</h2>
+    <div class="sub">一条发丝 = 一个表情状态 · 13 维里取 4 维 · 虚线 = 健康基线 · 数值是引擎里的真实向量，没有另抄一份</div>
+    <svg data-chart="expr-parallel" viewBox="0 0 400 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="平行坐标图：14 个表情状态跨耳位、睁眼度、张口、内侧眉肌四个维度，BEG 的上墨线把内侧眉肌拉到最高"></svg>
+    <div class="src">PARALLEL COORDINATES · MONO · EXPR 真实向量</div>
+  </div>
+
+</div>
+
+<div class="wrap">
+  <section class="sheet notes" id="notes">
+    <h2 class="sect">为了搬进这个项目，改了四件事</h2>
+    <p>图形语言照搬，但有两处是这个项目的约束逼出来的选择，还有两处是刻意的偏离，都写在这里而不是藏在代码里。</p>
+    <h3>一 · 字体不再外链</h3>
+    <ul>
+      <li>Lieflat 用 Google Fonts 引入 Inter。<b>本项目所有页面都必须能直接双击打开</b>，所以字体栈写成
+        <code>'Inter','PingFang SC','Hiragino Sans GB','Microsoft YaHei',-apple-system,'Segoe UI',sans-serif</code>：
+        装了 Inter 就用 Inter，没装就安静回落，<b>不发出任何网络请求</b>。中文标签也因此有了正确的字形。</li>
+      <li>同理，19 张图<b>全部是手写 SVG</b>，没有用 Lieflat 里依赖 CDN 的 ECharts / Chart.js 图型。
+        Mono 的原版 gallery 本来就以手写 SVG 为主，这里只取了那一半。</li>
+    </ul>
+    <h3>二 · 权重图不用涨跌色</h3>
+    <ul>
+      <li>Lieflat 的 K 线图规定<b>实心墨 = 收跌、空心 = 收涨</b>，不用红绿。
+        本项目在金融场景下默认「涨红跌绿」，但体重不是股价，这里跟随 Lieflat 的灰阶语义，
+        也就不存在两套约定打架的问题。</li>
+      <li>整页锁死<b>一种色彩系统（Mono）</b>：纸灰底、炭黑墨、七级灰阶。唯一的暗卡是第 12 张，
+        且每一屏不超过一张 —— 混用色系在 Lieflat 里属于返工项。</li>
+    </ul>
+    <h3>三 · 取整要认账</h3>
+    <ul>
+      <li>第 4 张把 1440 分钟折成 100 格，六段百分比取整后只有 99。<b>差额显式记在「独处 / 其余」上</b>，
+        底注写明「分钟数是真的，格数是取整的」，工具提示里给的是真实分钟数。</li>
+      <li>第 6 张的瀑布同理：每一项都取到 0.5 的整数倍，所以合计 13.5 与引擎的 13.5 一致，没有欠账。</li>
+    </ul>
+    <h3>四 · 极值不画，而不是断轴</h3>
+    <ul>
+      <li>第 9 张的 K 系数里，工作犬是 5–11，是一根把其余七行全压扁的柱子。
+        Lieflat 禁止断轴（柱的契约是长度 ∝ 数值），这里选择<b>直接不画那一行，并在副标题里说明原因</b>。</li>
+      <li>第 2 张的 HRI 有负值（已热适应时 −2）。负值照画，坐标轴不为好看而截断。</li>
+    </ul>
+
+    <div class="fine">
+      图形语言与令牌来自 <b>Lieflat Charts</b>（<a href="https://github.com/larashero3-dotcom/lieflat-charts">github.com/larashero3-dotcom/lieflat-charts</a>，
+      作者「躺在废墟里」，PolyForm Noncommercial License 1.0.0）。本项目按其说明将 <code>mono-tokens.js</code> 的内容内联进
+      <code>assets/js/charts-dog.js</code>，色值未做改动；19 个渲染函数分别以 <code>templates/basics-gallery.html</code> 与
+      <code>templates/lupi-gallery.html</code> 中的同名图型为结构正本。数据与文案由本项目提供。
+    </div>
+  </section>
+</div>
+
+<noscript>
+  <div class="wrap"><p class="pagehead">这一页的图是运行时由 <code>assets/js/charts-dog.js</code> 画出来的，需要开启 JavaScript。</p></div>
+</noscript>
+
+<script src="../assets/js/quantify.js"></script>
+<script src="../assets/js/expression.js"></script>
+<script src="../assets/js/charts-dog.js"></script>
+<script>
+(function () {
+  var res = window.DogCharts.mount();
+  // 自检：目录里每一张都必须有渲染器，页面上每一个 data-chart 都必须能挂上
+  var missing = res.missing;
+  var undeclared = window.DogCharts.CATALOG.filter(function (c) { return !document.querySelector('[data-chart="' + c.id + '"]'); })
+    .map(function (c) { return c.id; });
+  document.title = document.title + ' · ' + res.mounted + '/' + res.total;
+  if (missing.length || undeclared.length) {
+    var w = document.createElement('div');
+    w.style.cssText = 'max-width:1400px;margin:20px auto 0;padding:14px 40px;font-size:12px;color:#1C1C1A;border-top:1px solid #8F8E88';
+    w.textContent = '自检未通过 —— 缺渲染器：' + (missing.join('、') || '无') + '；页面缺声明：' + (undeclared.join('、') || '无');
+    document.body.insertBefore(w, document.body.firstChild.nextSibling);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>术语表 — DOG API</title>
+<meta name="description" content="DOG API 的术语、符号约定、规范强度与禁止自动 Cast 的关系。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .single main { max-width: 860px; margin: 0 auto; padding: 44px 28px 140px; }
+</style>
+</head>
+<body>
+
+<div class="single">
+  <main id="content">
+    <span class="doc-tag">REFERENCE / GLOSSARY</span>
+    <h1>术语表</h1>
+    <div class="subtitle">本页收录跨文档共用的约定。专有术语见 DOG API 各附录。</div>
+
+    <h2>符号约定</h2>
+    <pre>=     文档内定义或赋值
+≈     结构类比；不声明底层机制或协议等价
+->    映射、路由或因果方向；强度由 Context 决定
+!=    禁止自动 Cast 的关系
+§     章节定位符；跨修订版本不保证稳定</pre>
+
+    <h2>规范强度</h2>
+    <table class="spec-strength">
+      <tr><td>MUST</td><td>强制约束。违反即为缺陷，不是风格问题。</td></tr>
+      <tr><td>SHOULD</td><td>推荐实现，允许 Context-specific Exception。</td></tr>
+      <tr><td>MAY</td><td>可选实现。做了不加分，不做不扣分。</td></tr>
+      <tr><td>HEURISTIC</td><td>社区经验值，无实验支撑。本文档凡用此项必予标注。</td></tr>
+      <tr><td>DEPRECATED</td><td>已废弃，但仍在民间广泛流传。例：<code>dog_age × 7</code>。</td></tr>
+      <tr><td>WON'T FIX</td><td>已确认为特性。多数维护者最终选择保留。</td></tr>
+    </table>
+
+    <h2>核心术语</h2>
+    <table>
+      <tr><th>术语</th><th>定义</th></tr>
+      <tr><td>Instance</td><td>一个独立部署的个体实例</td></tr>
+      <tr><td>Keeper / 维护者</td><td>承担运维责任并持有运维权限的主体</td></tr>
+      <tr><td>Reward Source</td><td>产生或控制强化信号的节点</td></tr>
+      <tr><td>Runtime</td><td>当前正在执行的全部前台与后台过程</td></tr>
+      <tr><td>Capacity</td><td>特定 Runtime 下实际可用的资源</td></tr>
+      <tr><td>Permission</td><td>对某一接口或资源的访问权</td></tr>
+      <tr><td>Trust</td><td>降低重复认证成本的长期凭证</td></tr>
+      <tr><td>Projection</td><td>某个系统对实例的局部表示，不等于实例本身</td></tr>
+      <tr><td>Rate Limit</td><td>可持续承受的调用上限</td></tr>
+      <tr><td>Endpoint</td><td>可被外部路由或调用的接触面，不要求等同于 URI</td></tr>
+      <tr><td>Appendix H</td><td>生命周期 Changelog，不等于文档版本</td></tr>
+      <tr><td>Sniff-Handshake</td><td>实例间身份核验；约 15 秒完成全量信息同步</td></tr>
+    </table>
+
+    <h2>禁止自动 Cast 的关系</h2>
+    <p>以下写法在本项目的任何文档中都不成立。这一节是整套规范的公共安全阀。</p>
+    <pre>Projection   != 实例本身
+Score        != Intelligence
+Online       != Available
+Read         != Ready to Respond
+Close        != Unlimited Permission
+Metric       != Objective
+
+Difference   != Harm
+Mismatch     != Violation
+Adaptation   != Consent
+Stability    != Fairness
+Compliance   != Legitimacy
+
+摇尾巴       != 友好          // 需结合全身姿态与 Context；左偏常对应退缩
+吃草         != 系统故障
+拆家         != 恶意          // 多为资源未调度：运动量不足导致算力溢出
+蹭腿         != 饿            // 可能是路由标记
+眯眼         != 睡着          // 很可能是监控
+露出肚子     != 授权          // 陷阱式接口
+
+"乖"         != 它的义务      // 是你单方面定义的 KPI
+"听话"       != 爱的证据
+被独自留下   != 它能理解的事  // 它从未理解过，只是学会了等待</pre>
+
+    <h2>POWER CHECK</h2>
+    <p>用于检查模型的遗漏，不预设 Harm、Violation 或 Unfairness 已经发生。</p>
+    <pre>谁定义了规则？
+谁承担了适配成本？
+被适配的一方，能否有意义地拒绝？</pre>
+    <p>DOG 侧的答案：</p>
+    <pre>DOG     —— 规则由维护者定；适配成本几乎全部由 Dog 侧承担；它从未申请过任何权利</pre>
+
+    <hr class="divider">
+    <div class="end-note">术语的用处不是把生物说成机器，而是看清：机器不会这样对你，而它们会。</div>
+  </main>
+</div>
+
+<script src="../assets/js/render.js"></script>
+<script>SpecSite.mountChrome({ root: "../", active: "glossary" });</script>
+
+</body>
+</html>
