@@ -8,6 +8,61 @@
 
 ---
 
+## [0.13] — Layout
+
+**Change class:** 仓库结构
+
+**背景**
+0.9 到 0.12 四个版本各自往仓库里加了一套东西。加的时候只考虑过「这个文件该挨着谁」，
+没有考虑过「这一层是给谁用的」。结果是运行时内核、内容数据、开发脚本与生成物混在同一个目录里：
+`assets/js/` 一个目录同时装着 200 KB 的内容数据和 6 个几十行的内核。
+
+这一版**不动任何正文、编号与页面形态** —— 只重排文件、统一命名。
+
+**四层职责**
+
+| 层 | 谁在用 | 目录 |
+| --- | --- | --- |
+| 运行时资源 | 页面加载 | `assets/`（`data/` 内容 · `js/` 内核 · `css/` 样式） |
+| 交互页面 | 读者用浏览器打开 | `spec/` · `reference/` · `tools/` · `sdk/` |
+| 开发脚本 | 只有开发时跑 | `scripts/` |
+| 文档 | 人读 | `docs/` |
+
+**路径迁移**
+
+| 旧 | 新 | 为什么 |
+| --- | --- | --- |
+| `assets/js/data-dog.js` | `assets/data/dog.js` | 内容数据与内核分离 |
+| `assets/js/appendices.js` | `assets/data/appendices.js` | 同上 |
+| `assets/js/charts-dog.js` | `assets/js/charts.js` | 去掉冗余的 `-dog` 前缀 |
+| `tools/dog-expression.js` | `scripts/expression.js` | 开发脚本单独一层 |
+| `tools/sync-params.js` | `scripts/sync-params.js` | 同上 |
+| `docs/expression-sheet.html` | `tools/expression-sheet.html` | 生成物与生成它的工具同处 |
+
+上表均为**移动或改名，文件内容未作改写**（git 记为 rename）。除最后一行外，页面 URL 结构不变。
+
+**新增**
+- `docs/expression-geometry.md` —— 表情几何踩坑记录。这份内容此前只存在于
+  `.workbuddy/skills/dog-expression/reference.md`，而 `.workbuddy/` 被 `.gitignore` 排除。
+  README 的《表情引擎》一节与 CONTRIBUTING 第八条都写着「改几何前先读它」，
+  但公开读者到不了那个路径 —— 这一版把它放进 `docs/`，让承诺与事实一致。
+- `docs/expression-sheet.html` 保留为一张**跳转页**，指向新位置。
+
+**命名约定**
+同一个模块在不同目录里用同一个词干，由目录区分角色 ——
+`expression.js`（内核）/ `expression.html`（页面）/ `expression-sheet.html`（生成物）/
+`expression.md`（文档）/ `expression-geometry.md`（踩坑记录）。
+本仓库只服务 DOG 一个系统，文件名里不再重复系统名，所以 `charts-dog` 与 `data-dog` 一并收进这一条。
+
+**未改动**
+正文 34 章、附录 A–R 的字母与编号、页面形态、除上表最后一行外的所有 URL。
+
+**历史条目的路径**
+0.13 之前的条目里出现的 `assets/js/data-dog.js`、`assets/js/charts-dog.js`、`tools/dog-expression.js`
+等路径记录的是**当时**的位置，未作改写。要找文件，对照上面的迁移表。
+
+---
+
 ## [0.12] — Peripherals
 
 **Change class:** Hardware

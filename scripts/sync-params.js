@@ -7,7 +7,7 @@
  *
  * 目的：让参数只有一份事实源。改参数请只改 quantify.js，然后跑本脚本。
  *
- *   用法：  node tools/sync-params.js
+ *   用法：  node scripts/sync-params.js
  */
 const fs = require("fs");
 const path = require("path");
@@ -35,7 +35,7 @@ const block =
   "A 级可以直接引用\nB 级可以引用并注明指南出处\nC 级可以照做，但请不要说「研究发现」</pre>\n";
 
 /* ---------- 1. 附录 P ---------- */
-const ap = ROOT + "assets/js/appendices.js";
+const ap = ROOT + "assets/data/appendices.js";
 let src = fs.readFileSync(ap, "utf8");
 const startMark = "      <table>\n        <tr><th>参数</th><th>范围 / 公式</th><th>单位</th><th>采样</th><th>报警阈值</th><th>等级</th></tr>";
 const endMark = "      <blockquote>本文档对自己的评价是诚实的";
@@ -89,7 +89,7 @@ edits.forEach(([file, pairs]) => {
 });
 
 /* ---------- 3. §29 内部的等级分布代码块 ---------- */
-const dd = ROOT + "assets/js/data-dog.js";
+const dd = ROOT + "assets/data/dog.js";
 const raw = fs.readFileSync(dd, "utf8");
 const doc = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
 const s29 = doc.sections.find((x) => x.id === "quant");

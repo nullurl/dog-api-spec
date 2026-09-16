@@ -34,51 +34,71 @@ python3 -m http.server 8000
 ```
 .
 ├── index.html                    项目首页
-├── spec/
+├── spec/                         规范正文与机器可读定义
 │   ├── dog.html                  DOG API（34 章 + 附录 A–R）
 │   ├── openapi.yaml              OpenAPI 3.1 结构描述
 │   └── quantified-api.yaml       量化接口描述（§29 的 10 个端点）
-├── reference/
-│   ├── cheatsheet.html           速查卡（可打印）
+├── reference/                    速查页（可打印）
+│   ├── cheatsheet.html           速查卡
 │   ├── errors.html               错误码对照（13 个状态码）
 │   ├── glossary.html             术语表与公共约定
-│   └── vitals.html               生理指标速查（可打印）
-├── tools/
-│   ├── quantifier.html           交互式量化评估器（调用引擎算真数）
-│   ├── expression.html           表情画廊 + 参数台 + 混合台（调用引擎渲染）
+│   └── vitals.html               生理指标速查
+├── tools/                        交互页面（用浏览器打开）
+│   ├── quantifier.html           量化评估器（调用引擎算真数）
+│   ├── expression.html           表情画廊 + 参数台 + 混合台
+│   ├── expression-sheet.html     表情联系表（由 scripts/expression.js --sheet 生成）
 │   ├── charts.html               图表图鉴（19 张手写 SVG）
-│   ├── peripherals.html          外设控制台（调用引擎算门槛与磨损）
-│   ├── dog-expression.js         表情命令行（svg / ascii / json / snippet / sheet）
-│   └── sync-params.js            由引擎注册表反向同步附录 P 与各文档计数
-├── sdk/
-│   ├── dog-api-client.js         参考客户端（DogClient，含量化端点）
+│   └── peripherals.html          外设控制台
+├── sdk/                          参考客户端
+│   ├── dog-api-client.js         DogClient（含量化端点）
 │   ├── demo.html                 交互式接口控制台
 │   ├── curl.md                   curl 示例
 │   └── README.md                 接入说明
-├── assets/
+├── assets/                       运行时资源 —— 页面加载的就是这些
 │   ├── css/spec.css              共享样式（浅色主题，支持打印）
-│   └── js/
-│       ├── data-dog.js           DOG 规范正文数据
-│       ├── appendices.js         附录内容（独立模块，A–R）
+│   ├── data/                     内容数据（内联在 JS 里，不用 fetch）
+│   │   ├── dog.js                规范正文 34 章
+│   │   └── appendices.js         附录 A–R
+│   └── js/                       运行时内核（纯计算 / 纯渲染，零依赖）
+│       ├── render.js             共享渲染器（导航 / 目录 / 正文）
 │       ├── quantify.js           量化引擎（参数注册表 / 公式 / 评分模型 / 分诊）
-│       ├── expression.js         表情渲染引擎（13 维向量 → 24×24 像素 SVG）
-│       ├── charts-dog.js         图表渲染引擎（19 个图型 → 手写 SVG，内联 Mono 令牌）
-│       ├── peripherals.js        外设内核（14 类 / 13 门槛 / 序列闭合 / 磨损预测）
 │       ├── scenarios.js          标准场景库（D 日常 / M 医疗 / E 应急，14 个）
-│       └── render.js             共享渲染器（导航 / 目录 / 正文）
-├── docs/
-│   ├── CHANGELOG.md              修订历史
-│   ├── CONTRIBUTING.md           贡献指南
-│   ├── quantification.md         量化模型说明（来源等级 / 公式 / 评分）
-│   └── expression.md             像素表情渲染说明（几何 / 体积 / 混合语义）
+│       ├── expression.js         表情渲染引擎（13 维向量 → 24×24 像素 SVG）
+│       ├── charts.js             图表渲染引擎（19 个图型 → 手写 SVG，内联 Mono 令牌）
+│       └── peripherals.js        外设内核（14 类 / 13 门槛 / 序列闭合 / 磨损预测）
+├── scripts/                      开发脚本 —— 页面不加载
+│   ├── expression.js             表情命令行（svg / ascii / json / snippet / sheet）
+│   └── sync-params.js            由引擎注册表反向同步附录 P 与各文档计数
+└── docs/                         人读文档
+    ├── CHANGELOG.md              修订历史
+    ├── CONTRIBUTING.md           贡献指南
+    ├── quantification.md         量化模型说明（来源等级 / 公式 / 评分）
+    ├── expression.md             像素表情渲染说明（几何 / 体积 / 混合语义）
+    └── expression-geometry.md    表情几何踩坑记录（改几何前先读）
 ```
+
+四层的职责边界是硬的：**`assets/` 是页面运行时要加载的，`scripts/` 只有开发时跑，
+`docs/` 是给人读的，其余目录是给人看的页面。** 加文件之前先问一句它属于哪一层。
+
+同一个模块在不同目录里用**同一个词干**，由目录区分角色：
+
+| 角色 | 文件 |
+| --- | --- |
+| 运行时内核 | `assets/js/expression.js` |
+| 交互页面 | `tools/expression.html` |
+| 生成物（由脚本写出） | `tools/expression-sheet.html` |
+| 开发脚本 | `scripts/expression.js` |
+| 说明文档 | `docs/expression.md` · `docs/expression-geometry.md` |
+
+本仓库里**不会**再有 `charts-dog.js`、`data-dog.js` 这类文件名 —— 整个站点只服务 DOG 一个系统，
+在文件名里重复系统名是多余的。看到 `charts.js`、`dog.js` 就是了。
 
 ## 内容架构
 
 项目刻意把**正文**与**附录**拆成两个模块：
 
-- `assets/js/data-dog.js` —— 规范正文，由最早的单一 HTML 文件提取而来。改动正文等于改规范。
-- `assets/js/appendices.js` —— 附录：术语表、品种档案、SLA、错误码全表、迁移指南、值班手册、隐私审计、问题清单、SDK 指引、支持渠道。新增附录只需在数组里追加一个对象，**导航与编号会自动生成**。
+- `assets/data/dog.js` —— 规范正文，由最早的单一 HTML 文件提取而来。改动正文等于改规范。
+- `assets/data/appendices.js` —— 附录：术语表、品种档案、SLA、错误码全表、迁移指南、值班手册、隐私审计、问题清单、SDK 指引、支持渠道。新增附录只需在数组里追加一个对象，**导航与编号会自动生成**。
 
 `render.js` 负责注入顶部导航、侧栏目录（编号自动生成，附录用 A/B/C 标号）、正文与滚动高亮。
 
@@ -89,7 +109,7 @@ python3 -m http.server 8000
 - `assets/js/quantify.js` —— 计算内核。26 项参数注册表（含单位 / 范围 / 采样 / 报警阈值 / 来源等级）、11 条派生公式、3 个评分模型、分诊矩阵、免疫与驱虫排程生成。
 - `assets/js/scenarios.js` —— 14 个标准场景（日常 4 · 医疗 6 · 应急 4），共 69 个时序步骤与 38 条量化门槛。
 - `tools/quantifier.html` —— 交互式评估器。页面上的每个数字都来自内核，无一处硬编码。
-- `tools/sync-params.js` —— 单一事实源脚本。由注册表反向生成附录 P 的表格与各文档里的参数计数。
+- `scripts/sync-params.js` —— 单一事实源脚本。由注册表反向生成附录 P 的表格与各文档里的参数计数。
 - `spec/quantified-api.yaml` —— 端点与数据结构的机器可读描述。
 
 三个评分模型：
@@ -121,19 +141,19 @@ console.log(Q.triage({gdv:true}).code);    // P0
 
 - `assets/js/expression.js` —— 渲染内核。13 维参数向量、14 个可观测状态、24×24 栅格 → 像素 SVG。纯函数，浏览器与 Node 通用，零依赖、零网络。
 - `tools/expression.html` —— 交互画廊 + 参数台 + 混合台。页面上的图形全部由内核实算。
-- `tools/dog-expression.js` —— 命令行，见下。
-- `.workbuddy/skills/dog-expression/` —— 供智能体调用的 skill 包，含几何调试笔记。
+- `scripts/expression.js` —— 命令行，见下。
+- `docs/expression-geometry.md` —— 几何踩坑记录。**改 `expression.js` 里的坐标之前先读它。**
 
 设计前提只有一句：**接口不生成表情，只编码表情。** 输入相同则输出逐像素相同。
 
 ```bash
-node tools/dog-expression.js --selftest            # 引擎断言（含 SICK=基线、UNKNOWN=剪影、compose 200/409/422）
-node tools/dog-expression.js --list                # 14 个状态
-node tools/dog-expression.js --ascii JOY           # 点阵，终端里最快看清一帧
-node tools/dog-expression.js --all --out ./expr    # 导出全部帧
-node tools/dog-expression.js --sheet ./expr/sheet.html
-node tools/dog-expression.js --snippet "JOY,GAZE"   # 可直接粘贴的 HTML 片段（内联 data URI）
-node tools/dog-expression.js --compose "JOY:0.75,BEG:0.25" --persist   # 最高权重 <0.60 时返回 409
+node scripts/expression.js --selftest            # 引擎断言（含 SICK=基线、UNKNOWN=剪影、compose 200/409/422）
+node scripts/expression.js --list                # 14 个状态
+node scripts/expression.js --ascii JOY           # 点阵，终端里最快看清一帧
+node scripts/expression.js --all --out ./expr    # 导出全部帧
+node scripts/expression.js --sheet ./expr/sheet.html
+node scripts/expression.js --snippet "JOY,GAZE"   # 可直接粘贴的 HTML 片段（内联 data URI）
+node scripts/expression.js --compose "JOY:0.75,BEG:0.25" --persist   # 最高权重 <0.60 时返回 409
 ```
 
 它同时也是**这条规范与人类耦合最具体的一处**：`browInner` 就是内侧眉肌 AU101
@@ -141,7 +161,7 @@ node tools/dog-expression.js --compose "JOY:0.75,BEG:0.25" --persist   # 最高�
 而尾巴、体态与发声不在画面里，它们是响应头 `X-Dog-Tail` / `X-Dog-Body` / `X-Dog-Vocal`。
 
 14 帧实测体积 **757 B – 2 372 B（均值约 1 785 B）**，每色合并为一条 `path`。详见 `docs/expression.md`。
-一次性看完全部 14 帧的静态版本在 `docs/expression-sheet.html`（由 `--sheet` 生成，可重新生成）。
+一次性看完全部 14 帧的静态版本在 `tools/expression-sheet.html`（由 `--sheet` 生成，可重新生成）。
 
 ## 图表图鉴
 
@@ -153,7 +173,7 @@ node tools/dog-expression.js --compose "JOY:0.75,BEG:0.25" --persist   # 最高�
 1. **明度即数据。** 不用颜色、不用渐变、不用阴影来区分系列；同一张图里只有一层色彩系统。
 2. **柱的契约是长度 ∝ 数值。** 所以柱状图**不断轴**；遇到会把其余数据压扁的极值，宁可**不画**那一行并说明原因，也不截断坐标轴。
 
-- `assets/js/charts-dog.js` —— 渲染内核。19 个图型（柱 / 折线 / 面积 / 环形 / 横条 / 瀑布 / 热力 / 量表 / 哑铃 / 箱线 / K 线 / 点阵 / 双极量表 / 径向叠加 / 漏斗 / 百人场 / 百人队列 / 日历热力 / 平行坐标），手写 SVG，零依赖、零网络。
+- `assets/js/charts.js` —— 渲染内核。19 个图型（柱 / 折线 / 面积 / 环形 / 横条 / 瀑布 / 热力 / 量表 / 哑铃 / 箱线 / K 线 / 点阵 / 双极量表 / 径向叠加 / 漏斗 / 百人场 / 百人队列 / 日历热力 / 平行坐标），手写 SVG，零依赖、零网络。
 - `tools/charts.html` —— 图鉴页。19 张卡片 + 一张「图型索引」表（标明每一张对应 Lieflat 目录里的哪个图型、参考实现是哪个模板文件、数据来自内核还是合成示意、来源等级是 A / B / C）。
 - 数据层**不另抄一份常量**：能量、饮水、配额、热风险 HRI、就诊应激 VSI、分诊优先级、生命阶段、DNS 权重全部实时问 `DogQuant`；表情四维取自 `DogExpression.stateParams()` 的真实向量。合成示意数据一律在来源行标注为 **C 级**。
 
@@ -230,11 +250,11 @@ node -e 'require("./assets/js/quantify.js"); var P=require("./assets/js/peripher
 - 所有评分为**偏差提示**，不是诊断。复合指标（DNS / HRI / VSI）不得用于横向比较不同的狗，只用于同一只狗的纵向趋势。
 - 出现 §28 分诊矩阵中的 P0 / P1 条目时，不要先算分 —— 直接联系执业兽医。
 - `sdk/` 下所有代码均为行为模拟，不发起网络请求，不收集数据。
-- `tools/expression.html` 与 `tools/dog-expression.js` 生成的 SVG 是**观测的编码，不是照片或插画**，请不要当作素材库使用。
+- `tools/expression.html` 与 `scripts/expression.js` 生成的 SVG 是**观测的编码，不是照片或插画**，请不要当作素材库使用。
   其中 `SICK` 状态的像素与健康基线完全一致 —— 这不是 bug，是那份规范里最严肃的一条。
 - 图表使用的 Mono 图形语言与设计令牌来自 **Lieflat Charts**（作者「躺在废墟里」），
   授权为 **PolyForm Noncommercial License 1.0.0**，**仅限非商业用途**。
-  本项目按其说明将 `mono-tokens.js` 的内容内联进 `assets/js/charts-dog.js`，色值未做改动；
+  本项目按其说明将 `mono-tokens.js` 的内容内联进 `assets/js/charts.js`，色值未做改动；
   19 个渲染函数以 `templates/basics-gallery.html` 与 `templates/lupi-gallery.html` 中的同名图型为结构正本，数据与文案由本项目提供。
   如需商业使用，请自行取得 Lieflat Charts 作者的授权。
 - 图表以本项目的数据为准；其中标注为 **C 级示意**的图（合成示例数据）不声称来自实测，请勿用于任何真实个体的判断。
@@ -248,7 +268,7 @@ node -e 'require("./assets/js/quantify.js"); var P=require("./assets/js/peripher
 ## 添加一个附录
 
 ```js
-// assets/js/appendices.js
+// assets/data/appendices.js
 window.DOG_APPENDICES.push({
   id: "apx-example",
   title: "示例附录",
@@ -263,7 +283,7 @@ window.DOG_APPENDICES.push({
 参数**只在** `assets/js/quantify.js` 的 `PARAMS` 里定义，之后交给脚本同步下游：
 
 ```bash
-node tools/sync-params.js
+node scripts/sync-params.js
 ```
 
 它会按注册表重写附录 P 的表格与等级分布，并更新 README / `docs/quantification.md` / `index.html` / CHANGELOG 里的参数计数。
@@ -288,15 +308,15 @@ node tools/sync-params.js
 要求只有三条：与既有状态**足够远**（否则那是既有状态的一种写法）、对应一个**可被外部观测**的场景、
 `confidence` 如实填 —— 如果这个状态是人类的误读，就把分数压低（`GUILTY` 的 0.22 是范例，不是错误）。
 
-改完必须跑 `node tools/dog-expression.js --selftest` 并肉眼过一遍 `--ascii`。
+改完必须跑 `node scripts/expression.js --selftest` 并肉眼过一遍 `--ascii`。
 附录 Q 的状态表是手工维护的，记得同步。
 
 ## 添加一张图表
 
-图表与表情状态一样，**没有第二份副本**：图型只在 `assets/js/charts-dog.js` 里定义一次，页面上的卡片是唯一消费者。
+图表与表情状态一样，**没有第二份副本**：图型只在 `assets/js/charts.js` 里定义一次，页面上的卡片是唯一消费者。
 
 ```js
-// assets/js/charts-dog.js —— ① 写一个渲染函数，往传进来的 <svg> 节点里塞元素
+// assets/js/charts.js —— ① 写一个渲染函数，往传进来的 <svg> 节点里塞元素
 RENDER['my-chart'] = function (s) {                     // s = 该图的 <svg>
   var base = 264, x = function (i) { return 40 + i * 48; };
   el(s, 'line', { x1: 24, y1: base, x2: 376, y2: base, stroke: GRID, 'stroke-width': .8 });
@@ -327,10 +347,10 @@ CATALOG.push({ id: 'my-chart', li: 'F5 Tick Rows', file: 'templates/basics-galle
 改完必须自检：
 
 ```bash
-node --check assets/js/charts-dog.js
+node --check assets/js/charts.js
 node -e '
 require("./assets/js/quantify.js");
-require("./assets/js/charts-dog.js");
+require("./assets/js/charts.js");
 // 在无浏览器环境里跑一遍全部图型，确认没有 NaN / undefined / 越界
 ' 
 # 然后用浏览器打开 tools/charts.html，页脚会自动显示「mounted/total」；两者不等就是有图表没挂上

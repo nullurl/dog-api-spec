@@ -6,15 +6,15 @@
 
 | 类型 | 说明 | 落点 |
 | --- | --- | --- |
-| 新附录 | 运维、行为、医疗、营养、合规等方向 | `assets/js/appendices.js` |
-| 正文勘误 | 参数错误、信源失效、逻辑矛盾 | `assets/js/data-dog.js` |
-| 新信源 | 附期刊名与 DOI，或权威机构指南编号 | `assets/js/data-dog.js` 的《公开信源》一章 |
+| 新附录 | 运维、行为、医疗、营养、合规等方向 | `assets/data/appendices.js` |
+| 正文勘误 | 参数错误、信源失效、逻辑矛盾 | `assets/data/dog.js` |
+| 新信源 | 附期刊名与 DOI，或权威机构指南编号 | `assets/data/dog.js` 的《公开信源》一章 |
 | 新接口 | 新增 `endpoint` 条目即可，控制台会自动列出 | `sdk/dog-api-client.js` |
 | 新表情状态 | 在 13 维参数空间里新增一个采样点（见第八条） | `assets/js/expression.js` |
-| 新图表 | 在 Mono 灰阶语法里新增一个图型（见第九条） | `assets/js/charts-dog.js` |
+| 新图表 | 在 Mono 灰阶语法里新增一个图型（见第九条） | `assets/js/charts.js` |
 | 新设备类 | 在外设总线里新增一类玩具 / 装备（见第十条） | `assets/js/peripherals.js` |
 | 新门槛 | 新增一条安全判据（必须同时给出依据与放宽条款） | `assets/js/peripherals.js` |
-| 图形修正 | 渲染几何、调色板、体积 | `assets/js/expression.js` / `charts-dog.js` |
+| 图形修正 | 渲染几何、调色板、体积 | `assets/js/expression.js` / `assets/js/charts.js` |
 | 界面修正 | 排版、可读性、打印效果 | `assets/` |
 
 ## 硬性约定
@@ -55,7 +55,7 @@
 
 ```bash
 # 改完 PARAMS 后必须跑一次（幂等，可反复执行）
-node tools/sync-params.js
+node scripts/sync-params.js
 ```
 
 **不要手工编辑附录 P 的表格**，也不要手工改文档里的参数计数 —— 下次同步就会把你覆盖掉。
@@ -73,15 +73,15 @@ node tools/sync-params.js
 改完图形或状态后必须跑：
 
 ```bash
-node tools/dog-expression.js --selftest          # 引擎断言，含 SICK=基线、UNKNOWN=剪影、compose 的 200/409/422
-node tools/dog-expression.js --ascii <ID>        # 24px 下相邻特征会互相吞掉，肉眼看一遍
-node tools/dog-expression.js --all --out /tmp/x  # 再用 XML 解析器校验导出结果
+node scripts/expression.js --selftest          # 引擎断言，含 SICK=基线、UNKNOWN=剪影、compose 的 200/409/422
+node scripts/expression.js --ascii <ID>        # 24px 下相邻特征会互相吞掉，肉眼看一遍
+node scripts/expression.js --all --out /tmp/x  # 再用 XML 解析器校验导出结果
 ```
 
-几何调试的踩坑记录在 `.workbuddy/skills/dog-expression/reference.md`，改之前请先读。
+几何调试的踩坑记录在 `docs/expression-geometry.md`，改之前请先读。
 
 **9. 图表只锁一种色彩系统。**
-`assets/js/charts-dog.js` 用的是 Lieflat Charts 的 **Mono** 灰阶语法，这几条是硬的：
+`assets/js/charts.js` 用的是 Lieflat Charts 的 **Mono** 灰阶语法，这几条是硬的：
 
 - **只用声明的令牌。** 浅卡用 `INK` / `PAPER` / `MUTED` / `FAINT` / `GRID` 与七级 `L` 阶梯，暗卡用 `DARK` 的对应项。
   **不要写阶梯外的十六进制灰**（写够十张图之后，你会不自觉造出 `#CFCEC7` 这种「差一点的灰」—— 那是本文件教训之一），
@@ -96,7 +96,7 @@ node tools/dog-expression.js --all --out /tmp/x  # 再用 XML 解析器校验导
   以及页面里的 `<svg data-chart="id">`。`vb` 放在 `CATALOG` 里就是为了不让这三处各自漂移。
 
 ```bash
-node --check assets/js/charts-dog.js
+node --check assets/js/charts.js
 
 # 把 19 张（或更多）图全部渲染一遍，检查 NaN / 越界 / 字号 / 确定性
 # 参考 README 的《添加一张图表》一节
@@ -143,23 +143,23 @@ node -e 'require("./assets/js/quantify.js"); var P=require("./assets/js/peripher
 
 ```bash
 # 若改过 quantify.js 的参数注册表，先同步下游
-node tools/sync-params.js
+node scripts/sync-params.js
 
 # JS 语法（无构建步骤，语法错误会直接让页面白屏）
 node --check assets/js/render.js
-node --check assets/js/appendices.js
-node --check assets/js/data-dog.js
+node --check assets/data/appendices.js
+node --check assets/data/dog.js
 node --check assets/js/quantify.js
 node --check assets/js/scenarios.js
 node --check assets/js/expression.js
-node --check assets/js/charts-dog.js
+node --check assets/js/charts.js
 node --check assets/js/peripherals.js
 node --check sdk/dog-api-client.js
-node --check tools/sync-params.js
-node --check tools/dog-expression.js
+node --check scripts/sync-params.js
+node --check scripts/expression.js
 
 # 表情引擎断言（若改过 expression.js）
-node tools/dog-expression.js --selftest
+node scripts/expression.js --selftest
 
 # 页面自检：直接用浏览器打开这些文件，确认导航、目录、正文均正常
 #   index.html  spec/dog.html  reference/cheatsheet.html

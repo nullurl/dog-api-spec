@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 /* ============================================================
-   dog-expression — DOG API 表情渲染器命令行
+   expression — DOG API 表情渲染器命令行
    ------------------------------------------------------------
    零依赖。把 §30 的 13 维参数向量渲染成像素 SVG / 点阵 / JSON。
 
-     node tools/dog-expression.js --list
-     node tools/dog-expression.js --state JOY                    # SVG → stdout
-     node tools/dog-expression.js --ascii JOY                    # 点阵 → stdout
-     node tools/dog-expression.js --json JOY                     # 参数向量 → stdout
-     node tools/dog-expression.js --compose "JOY:0.75,BEG:0.25" --persist
-     node tools/dog-expression.js --all --out ./expressions
-     node tools/dog-expression.js --sheet ./expressions/sheet.html
-     node tools/dog-expression.js --params
-     node tools/dog-expression.js --selftest
+     node scripts/expression.js --list
+     node scripts/expression.js --state JOY                    # SVG → stdout
+     node scripts/expression.js --ascii JOY                    # 点阵 → stdout
+     node scripts/expression.js --json JOY                     # 参数向量 → stdout
+     node scripts/expression.js --compose "JOY:0.75,BEG:0.25" --persist
+     node scripts/expression.js --all --out ./expressions
+     node scripts/expression.js --sheet ./expressions/sheet.html
+     node scripts/expression.js --params
+     node scripts/expression.js --selftest
 
    退出码（shell 只支持 0–255，故不与 HTTP 码同值）：
      0 = 200 OK · 1 = 用法错误 · 2 = 422 UNPROCESSABLE · 9 = 409 CONFLICT
@@ -233,7 +233,7 @@ function cmdSheet(outFile, opts) {
     '<p class="lede">每格是一帧的确定性渲染结果。带橙边的 SICK 没有专属参数 —— 它的向量与健康基线逐位相同，' +
     '因为表情系统工作正常，只是内容与事实不符。它仍在摇尾巴。把鼠标移上去可以看清它与基线差在哪一行。</p>\n' +
     '<div class="grid">\n' + cells + '\n</div>\n' +
-    '<footer>由 <code>tools/dog-expression.js --sheet</code> 生成。渲染内核：<code>assets/js/expression.js</code>。' +
+    '<footer>由 <code>scripts/expression.js --sheet</code> 生成。渲染内核：<code>assets/js/expression.js</code>。' +
     '规格正文：DOG API §30 表情接口定义（Expression API v1）。点阵版可用 <code>--all --ascii</code> 导出。</footer>\n' +
     '</body></html>\n';
 
@@ -341,7 +341,7 @@ function cmdSelftest() {
   ok(E.ENDPOINTS.length === 7, "端点数应为 7");
   ok(E.STATUS_CODES.length === 9, "状态码数应为 9");
 
-  process.stdout.write("dog-expression 自检\n" + "-".repeat(44) + "\n");
+  process.stdout.write("expression 自检\n" + "-".repeat(44) + "\n");
   process.stdout.write("  状态        " + E.STATE_IDS.length + "\n");
   process.stdout.write("  参数        " + E.PARAM_KEYS.length + "（A 1 / B 5 / C 7）\n");
   process.stdout.write("  SVG 体积    均值 " + Math.round(total / E.STATES.length) + " B（" + minB + "–" + maxB + "）\n");
@@ -372,7 +372,7 @@ function main() {
 
   if (has("help") || process.argv.length <= 2) {
     process.stdout.write(
-      "dog-expression — DOG API 表情渲染器\n\n" +
+      "expression — DOG API 表情渲染器\n\n" +
       "  --list                     列出 14 个状态\n" +
       "  --params                   列出 13 维参数与来源等级\n" +
       "  --endpoints                列出端点与状态码\n" +

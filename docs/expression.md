@@ -8,8 +8,8 @@
 | --- | --- |
 | `assets/js/expression.js` | 渲染内核。纯函数，浏览器与 Node 通用，**零依赖、零网络** |
 | `tools/expression.html` | 交互画廊 + 参数台 + 混合台。页面上的图形全部由内核实算，无硬编码 |
-| `tools/dog-expression.js` | 命令行。导出 SVG / 点阵 / JSON / HTML 片段 / 联系表 |
-| `.workbuddy/skills/dog-expression/` | 供智能体调用的 skill 包（含几何调试笔记） |
+| `scripts/expression.js` | 命令行。导出 SVG / 点阵 / JSON / HTML 片段 / 联系表 |
+| `docs/expression-geometry.md` | 几何踩坑记录。改坐标之前先读 |
 
 ---
 
@@ -42,9 +42,9 @@
 ### 三种 `Accept`
 
 ```bash
-node tools/dog-expression.js --json  JOY     # application/json —— 权威
-node tools/dog-expression.js --ascii JOY     # text/plain       —— 点阵
-node tools/dog-expression.js --state JOY     # image/svg+xml    —— 渲染
+node scripts/expression.js --json  JOY     # application/json —— 权威
+node scripts/expression.js --ascii JOY     # text/plain       —— 点阵
+node scripts/expression.js --state JOY     # image/svg+xml    —— 渲染
 ```
 
 ---
@@ -171,7 +171,7 @@ M{x} {y} h{w} v1 h-{w} z
 最轻的接法（不需要构建、不需要网络、不需要跨域）：
 
 ```bash
-node tools/dog-expression.js --snippet "JOY,GAZE,SICK" > expressions.html
+node scripts/expression.js --snippet "JOY,GAZE,SICK" > expressions.html
 ```
 
 片段带 `data-state` / `data-tail` / `data-body` / `data-confidence`，`SICK` 另带 `data-suppressed="true"`。
@@ -193,10 +193,10 @@ node tools/dog-expression.js --snippet "JOY,GAZE,SICK" > expressions.html
 
 ```bash
 # 引擎断言（含 SICK=基线、UNKNOWN=剪影、compose 的 200/409/422）
-node tools/dog-expression.js --selftest
+node scripts/expression.js --selftest
 
 # 导出全部帧，再用 XML 解析器校验
-node tools/dog-expression.js --all --out /tmp/x
+node scripts/expression.js --all --out /tmp/x
 python3 - <<'PY'
 import glob, xml.etree.ElementTree as ET
 for f in sorted(glob.glob('/tmp/x/*.svg')):
@@ -218,7 +218,7 @@ PY
 ## 10. 改图形之前
 
 24×24 的网格上，相邻特征会互相吞掉。改动前请先读
-`.workbuddy/skills/dog-expression/reference.md` —— 那里记着已踩过的坑：
+`docs/expression-geometry.md` —— 那里记着已踩过的坑：
 超椭圆优先级写错、旋转用未旋转坐标、眉毛撞进耳廓、`SLEEP` 的眼睑与眉毛基线重合、
 嘴弧断成不连的墨点、耳根楔形缺口、残影双描边。
 

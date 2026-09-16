@@ -44,7 +44,7 @@
   table.cat td.g{font-weight:800;color:var(--ink);width:34px;text-align:center}
   table.cat tr:hover td{background:#DEDDD6}
 
-  /* ── 卡片：Mono 令牌，与 assets/js/charts-dog.js 的 CARD_CSS 同源 ── */
+  /* ── 卡片：Mono 令牌，与 assets/js/charts.js 的 CARD_CSS 同源 ── */
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:1400px;margin:0 auto;padding:0 40px;margin-top:22px}
   .card{background:var(--bg);border-radius:24px;padding:28px 28px 20px}
   .card.dark{background:var(--dark);color:#F0EFEB}
@@ -336,19 +336,19 @@
     <div class="fine">
       图形语言与令牌来自 <b>Lieflat Charts</b>（<a href="https://github.com/larashero3-dotcom/lieflat-charts">github.com/larashero3-dotcom/lieflat-charts</a>，
       作者「躺在废墟里」，PolyForm Noncommercial License 1.0.0）。本项目按其说明将 <code>mono-tokens.js</code> 的内容内联进
-      <code>assets/js/charts-dog.js</code>，色值未做改动；19 个渲染函数分别以 <code>templates/basics-gallery.html</code> 与
+      <code>assets/js/charts.js</code>，色值未做改动；19 个渲染函数分别以 <code>templates/basics-gallery.html</code> 与
       <code>templates/lupi-gallery.html</code> 中的同名图型为结构正本。数据与文案由本项目提供。
     </div>
   </section>
 </div>
 
 <noscript>
-  <div class="wrap"><p class="pagehead">这一页的图是运行时由 <code>assets/js/charts-dog.js</code> 画出来的，需要开启 JavaScript。</p></div>
+  <div class="wrap"><p class="pagehead">这一页的图是运行时由 <code>assets/js/charts.js</code> 画出来的，需要开启 JavaScript。</p></div>
 </noscript>
 
 <script src="../assets/js/quantify.js"></script>
 <script src="../assets/js/expression.js"></script>
-<script src="../assets/js/charts-dog.js"></script>
+<script src="../assets/js/charts.js"></script>
 <script>
 (function () {
   var res = window.DogCharts.mount();
