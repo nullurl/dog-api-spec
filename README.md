@@ -7,7 +7,7 @@
 
 一套静态站点 + 参考客户端，内容是一份"伪技术规范"。文体是故意的：把生物写成系统之后，那些我们习以为常的事会显出原来的形状。
 
-- **DOG API** —— 34 章 + 附录 A–R。嗅觉阵列全双工、摇尾的方向性编码、地磁对齐、全天行为预算、生理基线、就医标准场景、量化接口定义、表情接口定义、外设总线、与人类的互操作。
+- **DOG API** —— 35 章 + 附录 A–R。嗅觉阵列全双工、摇尾的方向性编码、地磁对齐、全天行为预算、生理基线、就医标准场景、量化接口定义、表情接口定义、外设总线、与人类的互操作。
 - **参考页** —— 速查卡、生理指标、错误码对照、术语表。
 - **量化方案** —— 计算内核 + 14 个标准场景 + 交互式评估器。每个参数带单位、取值范围、采样频率、报警阈值与来源等级。
 - **表情引擎** —— 13 维参数向量 + 14 个可观测状态，离线渲染成 24×24 像素 SVG。零依赖、零网络、逐像素确定性。
@@ -36,7 +36,7 @@ python3 -m http.server 8000
 ├── index.html                    项目首页
 ├── versions.html                 历史版本（修订序列 / 版本轴 / 存档入口）
 ├── spec/                         规范正文与机器可读定义
-│   ├── dog.html                  DOG API（34 章 + 附录 A–R）
+│   ├── dog.html                  DOG API（35 章 + 附录 A–R）
 │   ├── norm-ids.json             规范 ID 注册表（由 scripts/sync-norm-ids.js 生成）
 │   ├── openapi.yaml              OpenAPI 3.1 结构描述
 │   └── quantified-api.yaml       量化接口描述（§4.5 的 10 个端点）
@@ -53,7 +53,8 @@ python3 -m http.server 8000
 │   ├── expression.html           表情画廊 + 参数台 + 混合台
 │   ├── expression-sheet.html     表情联系表（由 scripts/expression.js --sheet 生成）
 │   ├── charts.html               图表图鉴（19 张手写 SVG）
-│   └── peripherals.html          外设控制台
+│   ├── peripherals.html          外设控制台
+│   └── adoption.html             领养 KEY（按 §5.3 派生 / 核验 / 查测试向量）
 ├── sdk/                          参考客户端
 │   ├── dog-api-client.js         DogClient（含量化端点）
 │   ├── demo.html                 交互式接口控制台
@@ -62,10 +63,13 @@ python3 -m http.server 8000
 ├── archive/                      冻结的历史形态 —— 只增不改
 │   ├── README.md                 存档说明、版本轴、偏离记录
 │   └── single-file-v0.7.html     0.8.0 之前的单文件版（27 章，自包含可离线打开）
+├── skill/                        DOG API 领养技能 —— 安装即授权，卸载即撤回
+│   ├── SKILL.md                  技能说明与安装命令
+│   └── dog_adopt.py              派生 / 核验领养 KEY（纯标准库，不联网）
 ├── assets/                       运行时资源 —— 页面加载的就是这些
 │   ├── css/spec.css              共享样式（浅色主题，支持打印）
 │   ├── data/                     内容数据（内联在 JS 里，不用 fetch）
-│   │   ├── dog.js                规范正文 34 章
+│   │   ├── dog.js                规范正文 35 章
 │   │   └── appendices.js         附录 A–R
 │   └── js/                       运行时内核（纯计算 / 纯渲染，零依赖）
 │       ├── render.js             共享渲染器（导航 / 目录 / 正文 / 协议约定）
@@ -73,7 +77,8 @@ python3 -m http.server 8000
 │       ├── scenarios.js          标准场景库（D 日常 / M 医疗 / E 应急，14 个）
 │       ├── expression.js         表情渲染引擎（13 维向量 → 24×24 像素 SVG）
 │       ├── charts.js             图表渲染引擎（19 个图型 → 手写 SVG，内联 Mono 令牌）
-│       └── peripherals.js        外设内核（14 类 / 13 门槛 / 序列闭合 / 磨损预测）
+│       ├── peripherals.js        外设内核（14 类 / 13 门槛 / 序列闭合 / 磨损预测）
+│       └── adoption-key.js       领养 KEY 派生内核（零依赖 SHA-256 + Crockford Base32）
 ├── scripts/                      开发脚本 —— 页面不加载
 │   ├── expression.js             表情命令行（svg / ascii / json / snippet / sheet）
 │   ├── sync-params.js            由引擎注册表反向同步附录 P 与各文档计数

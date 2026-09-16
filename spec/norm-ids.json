@@ -274,6 +274,13 @@
       "part": "V",
       "sectionNumber": "5.2",
       "title": "Document Revision History"
+    },
+    {
+      "normId": "DOG-adoption",
+      "anchor": "adoption",
+      "part": "V",
+      "sectionNumber": "5.3",
+      "title": "领养与授权（Adoption API v1）"
     }
   ],
   "appendices": [

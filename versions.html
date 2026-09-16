@@ -30,7 +30,7 @@
     <table>
       <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
       <tr>
-        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.15</td>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.16</td>
         <td><code>docs/CHANGELOG.md</code></td>
         <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
       </tr>
@@ -51,12 +51,18 @@
       </tr>
     </table>
 
-    <blockquote><strong>跨版本引用不能写节号。</strong>这不是一条风格建议，是本项目真实踩过的坑：附录字母按数组位置派生，中间删掉一条会使其后所有字母整体前移，全站十几处「附录 X」引用同时失效。当时的处理方式不是删条目，而是就地改写内容、保持字母不动。同类问题对正文节号一样成立 —— 文本已从 27 章长到 34 章，插入都发生在中间；而在 0.14，正文节号又从两位列号整体改成了 <code>§X.Y</code>，全仓库 141 处引用随之改写。旧条目里写的那个编号（当时叫 <code>23</code>）在现在的站点上既不是 <code>§3.8</code>，也不指向任何章节 —— 除非你手上有那张迁移表。</blockquote>
+    <blockquote><strong>跨版本引用不能写节号。</strong>这不是一条风格建议，是本项目真实踩过的坑：附录字母按数组位置派生，中间删掉一条会使其后所有字母整体前移，全站十几处「附录 X」引用同时失效。当时的处理方式不是删条目，而是就地改写内容、保持字母不动。同类问题对正文节号一样成立 —— 文本已从 27 章长到 35 章，插入都发生在中间；而在 0.14，正文节号又从两位列号整体改成了 <code>§X.Y</code>，全仓库 141 处引用随之改写。旧条目里写的那个编号（当时叫 <code>23</code>）在现在的站点上既不是 <code>§3.8</code>，也不指向任何章节 —— 除非你手上有那张迁移表。</blockquote>
 
     <h2>修订序列</h2>
     <table>
       <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
       <tr class="first">
+        <td class="vnum">0.16</td><td><span class="vcls content">Authorization</span></td>
+        <td>新增 §5.3《领养与授权》：KEY 由四行元组确定性派生，<strong>不发放、不校验、不过期、不回收</strong>；
+        授权三态取自技能商店模型 —— 安装即授权，卸载即撤回。
+        新增 <code>tools/adoption.html</code> 与可安装的技能 <code>skill/</code>。章节追加在末尾，<strong>既有节号零平移。</strong></td>
+      </tr>
+      <tr>
         <td class="vnum">0.15</td><td><span class="vcls content">Content</span></td>
         <td>把口吻写成规范：<strong>双声部模型</strong>与当事人声部的三条装置，
         新增《口吻与文体》与《一只狗的生活意见》两页；

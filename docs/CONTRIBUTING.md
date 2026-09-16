@@ -153,6 +153,20 @@ node scripts/sync-norm-ids.js   # 改过章节 id / 标题，或增删条目之�
 **不要在页面里硬编码版本号**（`spec/dog.html` 的侧栏副标题曾经写死 `v0.12`，到 0.13 就成了错的）。
 发版时改三处：`render.js` 的 `VERSION`、`docs/CHANGELOG.md` 的新条目、`versions.html` 的修订序列表。
 
+**14. 领养 KEY 的两份实现必须同步改。**
+`assets/js/adoption-key.js`（页面用）与 `skill/dog_adopt.py`（命令行用）是同一份规范的两处实现，
+判据是 §5.3 公布的**固定测试向量**。改任何一边之后跑：
+
+```bash
+python3 skill/dog_adopt.py --selftest          # 三组向量 + 规范化示例
+node -e 'require("./assets/js/adoption-key.js")' # 语法
+```
+
+并按第 6 条的规矩核对计数。**两条红线**：KEY 的派生规则 MUST NOT 引入小写折叠或 Unicode 归一化
+（会让同一个元组在两个实现里算出两个 KEY，且不会报错）；MUST NOT 把证书写进技能目录
+（卸载技能不该删掉用户的证书）。
+
+
 **13. 改文字之前先读《口吻与文体》。**
 这套文档只有两个声部，且在 `reference/voice.html` 里有明确规定：
 **规范编写组**（第三人称，事实在前，带出处）与**当事人**（第一人称，没有依据只有结论）。
@@ -176,6 +190,7 @@ node scripts/sync-norm-ids.js
 
 # JS 语法（无构建步骤，语法错误会直接让页面白屏）
 node --check assets/js/render.js
+node --check assets/js/adoption-key.js
 node --check assets/data/appendices.js
 node --check assets/data/dog.js
 node --check assets/js/quantify.js
@@ -191,9 +206,13 @@ node --check scripts/expression.js
 # 表情引擎断言（若改过 expression.js）
 node scripts/expression.js --selftest
 
+# 领养 KEY 自检（若改过 adoption-key.js 或 skill/dog_adopt.py —— 见第 14 条）
+python3 skill/dog_adopt.py --selftest
+
 # 页面自检：直接用浏览器打开这些文件，确认导航、目录、正文均正常
 #   index.html  versions.html  spec/dog.html  reference/cheatsheet.html
 #   reference/voice.html  reference/opinions.html  reference/norm-ids.html
+#   tools/adoption.html  spec/dog.html#adoption（§5.3）
 #   tools/quantifier.html  tools/expression.html
 #   tools/charts.html  tools/peripherals.html  sdk/demo.html
 #   archive/single-file-v0.7.html（自包含，应能离线独立渲染）

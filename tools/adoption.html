@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>领养 KEY — DOG API | DOG API</title>
+<meta name="description" content="在浏览器内派生你的 DOG API 领养 KEY，并核验任意一张牌。本页不联网：它不领取 KEY，它把 KEY 算出来。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .awrap { max-width: 1120px; margin: 0 auto; padding: 36px 28px 120px; }
+  .ahead { border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 22px; }
+  .ahead h1 { font-size: 30px; }
+  .ahead p { color: var(--muted); font-size: 15px; max-width: 780px; margin-top: 8px; }
+  .cols { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+  @media (max-width: 940px) { .cols { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .panel > h3 { margin: 0 0 14px; font-size: 13px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+  .fld { display: grid; gap: 5px; margin: 11px 0; }
+  .fld label { font-size: 12.5px; color: var(--muted); letter-spacing: .02em; }
+  .fld input { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; font-family: inherit; font-size: 13.5px; background: #fff; color: var(--ink); }
+  .fld .hint { font-size: 11.5px; color: var(--faint); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .banner { border-radius: 10px; padding: 15px 20px; margin-bottom: 18px; font-size: 14.5px; line-height: 1.85;
+            background: var(--accent-soft); border: 1px solid #f3d5ac; color: #7c4a08; }
+  .banner strong { color: #5a3406; }
+  .cert { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.9;
+          white-space: pre-wrap; word-break: break-all; color: var(--code-ink); }
+  .cert .k { color: #8a8579; }
+  .keybig { font-size: 17px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+  .ok { color: var(--ok); font-weight: 600; }
+  .bad { color: #b91c1c; font-weight: 600; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .vec { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .vec th, .vec td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .vec td.m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; word-break: break-all; }
+  .foot-note { font-size: 12.5px; color: var(--faint); line-height: 1.85; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<div class="awrap">
+  <div class="ahead">
+    <span class="doc-tag">TOOL / ADOPTION</span>
+    <h1>领养 KEY</h1>
+    <p>按 §5.3《领养与授权》的规则，在这台机器上算出你的领养 KEY。本页不发起任何网络请求 ——
+    它不向谁领取 KEY，它把 KEY 算出来。</p>
+  </div>
+
+  <div class="banner">
+    本页能算出 KEY，<strong>但本页不构成授权</strong>。授权发生在安装那一刻，不在这一行输出上 ——
+    这与技能商店是同一套模型：没有账号、没有登录、没有同意书，安装本身就是同意，
+    卸载本身就是撤回。一个不需要授权就能打开的页面算出了你的 KEY，这恰恰说明了 KEY 是什么：
+    <strong>它不是权限，是来源标注。</strong>定义见 <a href="../spec/dog.html#adoption">§5.3</a>。
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="panel">
+        <h3>领养元组</h3>
+        <div class="fld">
+          <label for="f-adopter">领养人 <span class="hint">adopter</span></label>
+          <input id="f-adopter" type="text" spellcheck="false">
+        </div>
+        <div class="fld">
+          <label for="f-cohort">领养时刻 <span class="hint">cohort · UTC 秒精度</span></label>
+          <input id="f-cohort" type="text" spellcheck="false">
+        </div>
+        <div class="fld">
+          <label for="f-habitat">栖息地 <span class="hint">habitat · 技能安装目录</span></label>
+          <input id="f-habitat" type="text" spellcheck="false">
+        </div>
+        <div class="fld">
+          <label for="f-intent">声明用途 <span class="hint">intent · 只进摘要</span></label>
+          <input id="f-intent" type="text" spellcheck="false">
+        </div>
+        <div class="row">
+          <button class="btn" id="btn-now" type="button">用当前时刻</button>
+          <button class="btn ghost" id="btn-reset" type="button">恢复默认</button>
+        </div>
+        <div class="foot-note">
+          改动任何一项，KEY 都会变。同一秒内改一个字也一样 —— 摘要的前 8 字节里不会有任何一位保持原样。
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>核验一张牌</h3>
+        <div class="fld">
+          <label for="f-check">粘贴 KEY <span class="hint">不看证书也能查抄错</span></label>
+          <input id="f-check" type="text" spellcheck="false" placeholder="DOG-····-····-····-····-····-····">
+        </div>
+        <div id="check-out" class="foot-note">等待输入。</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h3>领养证（本页算出）</h3>
+        <div class="cert" id="cert-out"></div>
+        <div class="row">
+          <button class="btn" id="btn-copy" type="button">复制 KEY</button>
+          <button class="btn ghost" id="btn-tuple" type="button">复制元组</button>
+        </div>
+        <div class="foot-note">
+          本页不写入任何文件。证书由技能写在 <span class="mono">~/.workbuddy/dog-api/adoption.json</span> ——
+          位置在技能目录<strong>之外</strong>：卸载技能不会删掉它，因为卸载不撤销任何东西。
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>与 §5.3 公布的测试向量对照</h3>
+        <div id="vec-out"></div>
+        <div class="foot-note">
+          任何一份实现都 MUST 复现这三组值。本页用的是 <span class="mono">assets/js/adoption-key.js</span>，
+          命令行用的是 <span class="mono">skill/dog_adopt.py</span> —— 两份实现互相钉住，判据就是这张表。
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>载荷拆解</h3>
+        <div class="cert" id="body-out"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <div class="end-note">
+    本页可以算出 KEY，但不能替你拿定主意。本机：这张牌我戴不了，也看不懂 —— 所以它会比我活得久。
+  </div>
+</div>
+
+<script src="../assets/js/adoption-key.js"></script>
+<script src="../assets/js/render.js"></script>
+<script>
+(function () {
+  "use strict";
+  var A = window.DogAdoption;
+  var $ = function (id) { return document.getElementById(id); };
+
+  var DEFAULTS = {
+    adopter: "example@dog-api-spec",
+    habitat: "~/.workbuddy/skills/dog-api-adoption",
+    intent: "非商业个人使用"
+  };
+
+  function isoNow() {
+    return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  }
+
+  function fill(cohort) {
+    $("f-adopter").value = DEFAULTS.adopter;
+    $("f-habitat").value = DEFAULTS.habitat;
+    $("f-intent").value = DEFAULTS.intent;
+    $("f-cohort").value = cohort || "2026-09-16T12:00:00Z";
+  }
+
+  function val(id) {
+    var el = $(id);
+    return el && el.value != null ? String(el.value) : "";
+  }
+
+  function fields() {
+    return {
+      adopter: val("f-adopter"),
+      cohort: val("f-cohort").trim(),
+      habitat: val("f-habitat"),
+      intent: val("f-intent")
+    };
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function line(k, v) {
+    return '<span class="k">' + esc(k) + "</span>  " + esc(v) + "\n";
+  }
+
+  function refresh() {
+    var f = fields(), r;
+    try {
+      r = A.derive(f);
+    } catch (e) {
+      $("cert-out").innerHTML = '<span class="bad">' + esc(e.message) + "</span>";
+      $("body-out").innerHTML = "";
+      return;
+    }
+    var out = "";
+    out += '<span class="keybig">' + esc(r.key) + "</span>\n";
+    out += "────────────────────────────────────────────────\n";
+    out += line("领养人", f.adopter);
+    out += line("领养时刻", r.cohort);
+    out += line("栖息地", f.habitat);
+    out += line("声明用途", f.intent);
+    out += "────────────────────────────────────────────────\n";
+    out += line("元组版本", A.TUPLE_VERSION);
+    out += line("字母表", A.ALPHABET);
+    $("cert-out").innerHTML = out;
+
+    var p = A.parse(r.key);
+    var b = "";
+    b += line("版本字节", "0x0" + p.version + "   （1 字节）");
+    b += line("领养秒", r.epoch + "   →  " + r.cohort + "   （4 字节，大端）");
+    b += line("摘要前 8", r.digestHex.slice(0, 16) + "   （8 字节）");
+    b += line("校验位", r.checksumHex + "   （2 字节，SHA-256 的前 2 字节）");
+    b += "────────────────────────────────────────────────\n";
+    b += line("总载荷", r.bodyHex + r.checksumHex);
+    b += line("编码", "Crockford Base32，15 字节 → 24 字符，无补位");
+    $("body-out").innerHTML = b;
+  }
+
+  function check() {
+    var v = String($("f-check").value == null ? "" : $("f-check").value).trim();
+    if (!v) { $("check-out").textContent = "等待输入。"; return; }
+    var p = A.parse(v);
+    if (!p.ok) {
+      $("check-out").innerHTML = '<span class="bad">不是本规范定义的 KEY</span> —— ' + esc(p.reason);
+      return;
+    }
+    var s = "格式合法。版本 " + p.version + "，领养时刻 <span class='mono'>" + esc(p.cohort) + "</span>。<br>";
+    if (p.checksumOK) {
+      s += '<span class="ok">校验位一致（' + esc(p.checksumHex) + "）</span>。" +
+           "这只是说它没有被抄错 —— 不是说它属于谁。";
+    } else {
+      s += '<span class="bad">校验位不一致</span>：应为 ' + esc(p.expectedHex) +
+           "，实为 " + esc(p.checksumHex) + "。抄错了。";
+    }
+    $("check-out").innerHTML = s;
+  }
+
+  function vectors() {
+    var vs = [
+      { d: "—（原型）", f: { adopter: "example@dog-api-spec", cohort: "2026-09-16T12:00:00Z",
+                             habitat: "~/.workbuddy/skills/dog-api-adoption", intent: "非商业个人使用" },
+        want: "DOG-05NA-N160-E6XJ-1TP1-54ZA-N3XS" },
+      { d: "intent 末字改为「便」", f: { adopter: "example@dog-api-spec", cohort: "2026-09-16T12:00:00Z",
+                             habitat: "~/.workbuddy/skills/dog-api-adoption", intent: "非商业个人便用" },
+        want: "DOG-05NA-N160-9N4E-VB69-81TB-1HFR" },
+      { d: "cohort 加 1 秒", f: { adopter: "example@dog-api-spec", cohort: "2026-09-16T12:00:01Z",
+                             habitat: "~/.workbuddy/skills/dog-api-adoption", intent: "非商业个人使用" },
+        want: "DOG-05NA-N161-C4J6-1Q7Z-5QJA-596R" },
+      { d: "intent 补尾随空白（规范化示例，值同第 1 组）", f: { adopter: "example@dog-api-spec", cohort: "2026-09-16T12:00:00Z",
+                             habitat: "~/.workbuddy/skills/dog-api-adoption", intent: "非商业个人使用  \t\n" },
+        want: "DOG-05NA-N160-E6XJ-1TP1-54ZA-N3XS" }
+    ];
+    var rows = "", pass = 0;
+    vs.forEach(function (v, i) {
+      var got, ok;
+      try { got = A.derive(v.f).key; ok = got === v.want; } catch (e) { got = e.message; ok = false; }
+      if (ok) pass++;
+      rows += "<tr><td>" + (i + 1) + "</td><td>" + esc(v.d) + '</td><td class="m">' +
+        (ok ? '<span class="ok">' + esc(got) + "</span>" : '<span class="bad">' + esc(got) + "</span>") +
+        "</td></tr>";
+    });
+    $("vec-out").innerHTML =
+      '<table class="vec"><tr><th>#</th><th>与原型的差异</th><th>KEY</th></tr>' + rows + "</table>" +
+      '<div class="foot-note">' + (pass === vs.length
+        ? "<span class='ok'>" + pass + " / " + vs.length + " 组一致。</span>本页实现与 §5.3 的公布值相同。"
+        : "<span class='bad'>" + pass + " / " + vs.length + " 组一致，有一边漂了。</span>") + "</div>";
+  }
+
+  function copy(text, btn) {
+    var done = function (okText) {
+      var old = btn.textContent;
+      btn.textContent = okText;
+      setTimeout(function () { btn.textContent = old; }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done("已复制"); },
+                                              function () { done("复制失败"); });
+    } else {
+      done("浏览器不支持");
+    }
+  }
+
+  ["f-adopter", "f-cohort", "f-habitat", "f-intent"].forEach(function (id) {
+    $(id).addEventListener("input", refresh);
+  });
+  $("f-check").addEventListener("input", check);
+  $("btn-now").addEventListener("click", function () { $("f-cohort").value = isoNow(); refresh(); });
+  $("btn-reset").addEventListener("click", function () { fill("2026-09-16T12:00:00Z"); refresh(); });
+  $("btn-copy").addEventListener("click", function () {
+    var r; try { r = A.derive(fields()); } catch (e) { return; }
+    copy(r.key, $("btn-copy"));
+  });
+  $("btn-tuple").addEventListener("click", function () {
+    var t; try { t = A.canonical(fields()); } catch (e) { return; }
+    copy(t, $("btn-tuple"));
+  });
+
+  fill(isoNow());
+  refresh();
+  vectors();
+  check();
+  SpecSite.mountChrome({ root: "../", active: "adoption" });
+})();
+</script>
+
+</body>
+</html>
