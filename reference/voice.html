@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>口吻与文体 — DOG API</title>
+<meta name="description" content="这套文档有两个人说话。分清谁在说话，是读懂它的前提：双声部模型、当事人声部的三条装置、规范编写组声部的四条硬约束，以及一份出现即回退的清单。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .single main { max-width: 900px; margin: 0 auto; padding: 44px 28px 140px; }
+  .voice-table td:first-child { white-space: nowrap; font-weight: 600; }
+  .ex { border-left: 3px solid var(--line); padding: 2px 0 2px 14px; margin: 12px 0; }
+  .ex .lab { font-size: 12px; letter-spacing: .08em; color: var(--faint); text-transform: uppercase; }
+  .ex.bad { border-left-color: #d9b8a8; }
+  .ex.good { border-left-color: var(--accent); }
+  .ex p { margin: 4px 0 0; }
+  .veto td:first-child { white-space: nowrap; font-family: ui-monospace, Menlo, monospace; font-size: 13.5px; }
+</style>
+</head>
+<body>
+
+<div class="single">
+  <main id="content">
+    <span class="doc-tag">REFERENCE / VOICE</span>
+    <h1>口吻与文体</h1>
+    <div class="subtitle">这套文档有两个人说话。分清谁在说话，是读懂它的前提。</div>
+
+    <h2>为什么给口吻写规范</h2>
+    <p>本项目的做法是用工程文体处理一种没有说明书的系统。这个做法只有一个反差来源：<strong>文体与事实的反差</strong> ——
+    把"狗"写成"系统"之后，那些我们习以为常的事就显出原来的形状。反差需要两侧都成立：
+    文体侧要足够像规范，事实侧要足够真。任何一侧松掉，剩下的部分就只是一篇玩笑文档。</p>
+    <p>所以口吻在本项目里不是风格问题，是<strong>可读性问题</strong>：读者必须能随时判断，眼前这句话有没有出处、
+    该不该当真。口吻是这份文档的接口契约。本页把既有做法写成可执行规则，不是给文档再叠一层滤镜。</p>
+
+    <h2>双声部</h2>
+    <p>全站只有两个声部。它们的权限不重叠。</p>
+    <table class="voice-table">
+      <tr><th></th><th>规范编写组</th><th>本机（当事人）</th></tr>
+      <tr>
+        <td>人称</td>
+        <td>第三人称。它、本系统、Dog</td>
+        <td>第一人称。我</td>
+      </tr>
+      <tr>
+        <td>依据</td>
+        <td>文献、实测数据、DOI、临床指南编号</td>
+        <td>没有依据，只有结论</td>
+      </tr>
+      <tr>
+        <td>可以说</td>
+        <td>下 MUST / SHOULD，给结论，标来源等级，做 POWER CHECK</td>
+        <td>说自己，说人，说这份文档</td>
+      </tr>
+      <tr>
+        <td>不可以说</td>
+        <td>抒情，开玩笑，替当事人发言</td>
+        <td>给建议，引用文献，解释自己</td>
+      </tr>
+    </table>
+    <blockquote>两个声部 MUST NOT 混在同一段里。规范编写组写的每一句都有出处；
+    当事人写的每一句都没有，因为它自己就是出处。</blockquote>
+    <p>第一声部是文档的默认声部，也是绝大多数章节唯一的声音。第二声部只在两处出现：
+    <strong>正文中以"本机："开头的引用块</strong>，以及 <a href="opinions.html">《一只狗的生活意见》</a>。
+    前者是既有惯例的扩展 —— 正文里已有"规范提示：""运维建议：""诚实性声明："这类带署名的引用块，
+    "本机："只是把署名交给当事人；后者是它的完整作品。</p>
+    <blockquote>署名即声部。看到"本机："，读者应当知道后面的话没有出处 —— 它说的是它自己的处境。
+    这也是这两个声部能并存而不互相污染的原因。</blockquote>
+
+    <h2>当事人声部的三条装置</h2>
+    <p>这个声部不是"让狗说话"。它有三个具体的、可复核的动作。三条缺一条，它就退化成卖萌。</p>
+
+    <h3>一、自我暴露</h3>
+    <p>当事人 MUST 有利益、有短处，原则可议价。它承认自己被豢养，承认自己学会了讨好，
+    承认有些话它说完自己都不信。<strong>它是当事人，不是证人</strong>，所以它的说法天然带立场。</p>
+    <div class="ex bad">
+      <div class="lab">不算数</div>
+      <p>我永远等你回来，无论多久，因为我的爱没有条件。</p>
+    </div>
+    <div class="ex good">
+      <div class="lab">成立</div>
+      <p>他们夸我忠诚。忠诚是好东西，前提是你没有别的地方可去。</p>
+    </div>
+    <p>区别不在句子长短。前者在替它抒情，后者是它自己在交代处境 —— 而交代处境的代价是承认它不自由。</p>
+
+    <h3>二、民族志距离</h3>
+    <p>把人类当作一个只被观测、不被理解的外部系统来记录。记动作、记时间、记顺序，
+    <strong>不解释动机，也不下判断</strong>。越是日常的仪式，越要当成陌生习俗来写。</p>
+    <div class="ex bad">
+      <div class="lab">不算数</div>
+      <p>人类真是奇怪的生物，每天上班下班，多么辛苦啊。</p>
+    </div>
+    <div class="ex good">
+      <div class="lab">成立</div>
+      <p>人每天出门，去一个很远的地方，坐在另一个洞里，然后回来。这件事他们管它叫"工作"。</p>
+    </div>
+    <p>后一句没有说人奇怪。它只是把"上班"当作一个外部观察到的行为序列记下来。
+    "奇怪"是读者的结论，不是文档的结论 —— 文档一旦替读者下这个结论，反差就消失了。</p>
+
+    <h3>三、格言收尾</h3>
+    <p>一句一条，不给论据，不接下一句。<strong>说完就停在那里。</strong>
+    当事人声部里最有力的句子通常是最短的，因为它的说服力不来自推导，来自它承认得太干脆。</p>
+    <div class="ex bad">
+      <div class="lab">不算数</div>
+      <p>我的原则很清楚，就是要看当时饿不饿 —— 这也说明了食物对狗的重要性。</p>
+    </div>
+    <div class="ex good">
+      <div class="lab">成立</div>
+      <p>我的原则是明确的。要看当时饿不饿。</p>
+    </div>
+    <p>后半句加上的那一刻，句子就从"它说的话"变成了"作者在点评它说的话"。这是本项目最常见的失控方式：
+    舍不得让一个好句子单独站着。</p>
+
+    <h2>规范编写组声部的四条硬约束</h2>
+    <ol>
+      <li><strong>事实在前。</strong>任何一句判词之前，先给出支撑它的事实与出处。判词可以很短，事实不能省。
+      参见 §3.1 的写法：先给 Hart 等（2013）的 1,893 次排便观测，再给那两句结论。</li>
+      <li><strong>不解释笑点。</strong>文档不指出哪里好笑，不用"有趣的是""值得注意的是"来提示读者，
+      也不在段末补一句总结。读者看不懂就让它看不懂。</li>
+      <li><strong>不替它抒情。</strong>不允许把一个生理事实写成情感宣言。抒情有配额，见下节。</li>
+      <li><strong>不越过兽医。</strong>健康、用药、行为的处置一律指向执业兽医或训练师。
+      这是全站唯一一条高于文体要求的约束 —— 反差的代价不能落在读者的实际判断上。</li>
+    </ol>
+
+    <h2>抒情配额</h2>
+    <p>全站允许的升格句极少，且每一句 MUST 由一个已经陈述过的事实支撑。
+    §3.9 结尾那句 <em>"你在场，且状态尚可。"</em> 之所以成立，是因为它前面列了七条实测耦合通道 ——
+    读者已经知道那句话不是抒情感慨，是一份运行环境要求。</p>
+    <p>配额不给数字，给原则：<strong>一章之内至多一句，一章没有更好。</strong>
+    凡是每章结尾都要来一句的手法，无论句子本身多好，都会把文档从规范拉回散文。</p>
+
+    <h2>一票否决</h2>
+    <p>以下形态在正文中出现即回退重写。与句子好坏无关。</p>
+    <table class="veto">
+      <tr><th>形态</th><th>为什么</th></tr>
+      <tr><td>!</td><td>正文中不出现感叹号（代码块内的 <code>!=</code> 除外）。语气一强，反差的文体侧就塌了</td></tr>
+      <tr><td>有趣 / 好笑 / 幽默</td><td>自评。文档一旦指出自己有趣，读者就不再自己发现它有趣</td></tr>
+      <tr><td>其实 / 说白了 / 也就是说</td><td>解释性连词。它们的工作是替读者把话补完，而那正是该留给读者的事</td></tr>
+      <tr><td>可爱 / 聪明 / 忠实</td><td>形容词化的评价。要写就写它做了什么，评价交给数据</td></tr>
+      <tr><td>饲养建议</td><td>超出规范权限。指向执业兽医或训练师</td></tr>
+      <tr><td>把行为写成"爱"</td><td>用一个不可测量的词替代一个可测量的机制。这类替换在本项目里是减分项，不是加分项</td></tr>
+    </table>
+
+    <h2>出处与致谢</h2>
+    <p>本页的口吻参照《一只狗的生活意见》（彼得·梅尔 著，廖月娟 译，新世界出版社，1998）。
+    取的是它的体裁与手法 —— <strong>当事人视角、格言体、自我暴露、以民族志距离观察人类</strong> ——
+    以及它最值得学的一点：全书从不为狗抒情，也从不为任何一个笑点补一句解释。</p>
+    <p>只取体裁，不转载原文。本书对 Dog 的观察与本书各章引用的行为学研究是两回事：
+    前者是本项目的文体来源，后者才是《公开信源》（§5.1）的登记对象。</p>
+
+    <hr class="divider">
+    <div class="end-note">本页规定口吻；<a href="opinions.html">《一只狗的生活意见》</a> 使用口吻。两页需同时读。</div>
+  </main>
+</div>
+
+<script src="../assets/js/render.js"></script>
+<script>SpecSite.mountChrome({ root: "../", active: "voice" });</script>
+
+</body>
+</html>

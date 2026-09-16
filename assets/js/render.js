@@ -8,7 +8,7 @@ window.SpecSite = (function () {
   /* 文档修订号 —— 全站唯一事实源。
      它记录的是这份规范文本的编辑状态，与正文《生命周期》章描述的系统运行版本无关。
      改这里之前请先读 docs/CONTRIBUTING.md 的修订约定：版本号要与 CHANGELOG 的条目同时改。 */
-  const VERSION = "0.14";
+  const VERSION = "0.15";
 
   const NAV = [
     { key: "home", label: "首页", href: "index.html" },
@@ -18,6 +18,8 @@ window.SpecSite = (function () {
     { key: "vitals", label: "生理指标", href: "reference/vitals.html" },
     { key: "errors", label: "错误码", href: "reference/errors.html" },
     { key: "glossary", label: "术语表", href: "reference/glossary.html" },
+    { key: "voice", label: "口吻与文体", href: "reference/voice.html" },
+    { key: "opinions", label: "生活意见", href: "reference/opinions.html" },
     { key: "quantifier", label: "量化评估器", href: "tools/quantifier.html" },
     { key: "expression", label: "表情渲染器", href: "tools/expression.html" },
     { key: "charts", label: "图表图鉴", href: "tools/charts.html" },

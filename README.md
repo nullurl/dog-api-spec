@@ -45,6 +45,8 @@ python3 -m http.server 8000
 │   ├── errors.html               错误码对照（13 个状态码）
 │   ├── glossary.html             术语表与公共约定
 │   ├── norm-ids.html             规范 ID 登记表（由脚本生成）
+│   ├── opinions.html             一只狗的生活意见（第二声部 · 31 条意见）
+│   ├── voice.html                口吻与文体（双声部定义 · 正反示例 · 回退清单）
 │   └── vitals.html               生理指标速查
 ├── tools/                        交互页面（用浏览器打开）
 │   ├── quantifier.html           量化评估器（调用引擎算真数）
@@ -88,6 +90,9 @@ python3 -m http.server 8000
 `docs/` 是给人读的，其余目录是给人看的页面。** 加文件之前先问一句它属于哪一层。
 
 `archive/` 不属于这四层里的任何一层：它是**冻结**的历史产物，只增不改。规则见 `archive/README.md`。
+
+`reference/` 里的 `voice.html` 与 `opinions.html` 是一对：前者**定义**这套文档怎么说话，
+后者**使用**它。正文里以「本机：」开头的引用块属于后者的声部 —— 它没有出处，也不给建议。
 
 同一个模块在不同目录里用**同一个词干**，由目录区分角色：
 

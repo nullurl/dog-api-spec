@@ -153,6 +153,14 @@ node scripts/sync-norm-ids.js   # 改过章节 id / 标题，或增删条目之�
 **不要在页面里硬编码版本号**（`spec/dog.html` 的侧栏副标题曾经写死 `v0.12`，到 0.13 就成了错的）。
 发版时改三处：`render.js` 的 `VERSION`、`docs/CHANGELOG.md` 的新条目、`versions.html` 的修订序列表。
 
+**13. 改文字之前先读《口吻与文体》。**
+这套文档只有两个声部，且在 `reference/voice.html` 里有明确规定：
+**规范编写组**（第三人称，事实在前，带出处）与**当事人**（第一人称，没有依据只有结论）。
+当事人声部**只**以「本机：」开头的引用块出现 —— 不要在正文段落里写成第一人称。
+该页另有一份**一票否决**清单（感叹号、自评有趣、解释性连词、形容词化的评价、饲养建议、
+把行为写成"爱"），出现即回退。`reference/opinions.html` 是当事人声部的完整作品，
+新增条目请加在那里，**不要**往正文各章散落。
+
 ## 提交方式
 
 1. Fork / 建分支
@@ -185,7 +193,8 @@ node scripts/expression.js --selftest
 
 # 页面自检：直接用浏览器打开这些文件，确认导航、目录、正文均正常
 #   index.html  versions.html  spec/dog.html  reference/cheatsheet.html
-#   reference/norm-ids.html  tools/quantifier.html  tools/expression.html
+#   reference/voice.html  reference/opinions.html  reference/norm-ids.html
+#   tools/quantifier.html  tools/expression.html
 #   tools/charts.html  tools/peripherals.html  sdk/demo.html
 #   archive/single-file-v0.7.html（自包含，应能离线独立渲染）
 #
