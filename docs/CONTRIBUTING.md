@@ -161,25 +161,37 @@ node scripts/sync-norm-ids.js   # 改过章节 id / 标题，或增删条目之�
 把行为写成"爱"），出现即回退。`reference/opinions.html` 是当事人声部的完整作品，
 新增条目请加在那里，**不要**往正文各章散落。
 
-**14. 领养 KEY 的两份实现必须同步改。**
-`assets/js/adoption-key.js`（页面用）与 `skill/dog_adopt.py`（命令行用）是同一份规范的两处实现，
-判据是 §5.3 公布的**固定测试向量**。改任何一边之后跑：
+**14. 领养 KEY 与领养名的两份实现必须同步改。**
+`assets/js/adoption-key.js`（页面用）与 `skill/dog_adopt.py`（命令行用）是同一份规范的两处实现 ——
+**包括名字表与犬种表**，那两张表也是规范（顺序有意义，见 §5.3《领养名》）。
+判据是 §5.3 公布的**固定测试向量**（4 组 KEY + 4 组名字）。改任何一边之后跑：
 
 ```bash
 python3 skill/dog_adopt.py --selftest          # 三组向量 + 规范化示例
 node -e 'require("./assets/js/adoption-key.js")' # 语法
 ```
 
-并按第 6 条的规矩核对计数。**两条红线**：KEY 的派生规则 MUST NOT 引入小写折叠或 Unicode 归一化
-（会让同一个元组在两个实现里算出两个 KEY，且不会报错）；MUST NOT 把证书写进技能目录
+并按第 6 条的规矩核对计数。**三条红线**：KEY 的派生规则 MUST NOT 引入小写折叠或 Unicode 归一化
+（会让同一个元组在两个实现里算出两个 KEY，且不会报错）；MUST NOT 把名字放进元组
+（元组是 KEY 的全部输入，塞进去会让所有已发的牌作废）；MUST NOT 把证书写进技能目录
 （卸载技能不该删掉用户的证书）。
 
 **15. 界面上的领养内容只有一份事实源。**
-安装命令、授权三态的文案、出厂元组，只在 `assets/js/adoption-widget.js` 里定义一次
-（`CMD` / `STATES` / `DEFAULTS`）；首页的 `#adoption-widget` 与 `tools/adoption.html` 是它的两个消费者。
-改安装命令时，`skill/SKILL.md` 里那一段必须一起改 —— 那是用户真正复制走的东西，抄错就装不上。
+安装命令的**生成函数**（`installCmd()`）、授权三态的文案、出厂元组，只在
+`assets/js/adoption-widget.js` 里定义一次；首页的 `#adoption-widget` 与 `tools/adoption.html`
+是它的两个消费者 —— 后者直接调前者的函数，不许抄第二份字符串。
+命令的**执行端**是 `skill/install.sh`，两者要一致：改了参数名，`skill/SKILL.md`、§5.3 的命令块、
+README 的那一段必须一起改，抄错就装不上。
 组件默认停在出厂元组上，所以首页一打开就实测了一次「元组相同 → KEY 相同」，并与 §5.3 的测试向量 1
 逐字节比对；改过组件之后，那条自检**必须仍然显示一致**（不一致就是派生链断了，不是文案问题）。
+
+**16. 安装包只对外露一条命令。**
+`skill/install.sh` 是唯一的安装入口：取件、领养、复算、卸载都在它内部。
+两条硬约束：**只在 `/dev/tty` 上提问**（`curl … | sh` 那条路上 stdin 是脚本本身，
+在 stdin 上读一行会把后面的命令一起吃掉）；**卸载要有护栏**（目标目录里必须存在带标记的
+`SKILL.md` 才允许删，且证书在技能目录之外、卸载 MUST NOT 碰它）。
+改过之后跑 `sh -n skill/install.sh`，并确认夹具第 ② 层的「安装包」一节仍然全绿 ——
+那一节跑的是**已发布**的那一份。
 
 ## 提交方式
 
@@ -194,9 +206,13 @@ node scripts/sync-params.js
 # 若改过章节 id / 标题，或增删了章节与附录，重新生成规范 ID 登记表
 node scripts/sync-norm-ids.js
 
+# 安装包语法（POSIX sh）
+sh -n skill/install.sh
+
 # JS 语法（无构建步骤，语法错误会直接让页面白屏）
 node --check assets/js/render.js
 node --check assets/js/adoption-key.js
+node --check assets/js/adoption-widget.js
 node --check assets/data/appendices.js
 node --check assets/data/dog.js
 node --check assets/js/quantify.js
@@ -212,8 +228,12 @@ node --check scripts/expression.js
 # 表情引擎断言（若改过 expression.js）
 node scripts/expression.js --selftest
 
-# 领养 KEY 自检（若改过 adoption-key.js / adoption-widget.js 或 skill/dog_adopt.py —— 见第 14、15 条）
+# 领养 KEY 与领养名自检（若改过 adoption-key.js / adoption-widget.js 或 skill/dog_adopt.py —— 见第 14、15 条）
 python3 skill/dog_adopt.py --selftest
+
+# 安装包自检（发布物之一，不是页面；夹具第 ② 层的「安装包」一节也跑同样两条）
+sh -n skill/install.sh
+sh skill/install.sh --help
 
 # 页面自检：直接用浏览器打开这些文件，确认导航、目录、正文均正常
 #   index.html（含领养组件：命令块有内容、三态可切、KEY 显示 DOG-05NA-N160-…、自检显示一致）

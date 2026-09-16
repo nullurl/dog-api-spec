@@ -6,10 +6,11 @@
 
 本脚本不发起任何网络请求。它不领取 KEY，它把 KEY 算出来：
 同一元组永远得到同一结果。没有发号中心，因此也没有可被收回的东西。
+领养名（狗名）同源派生，不进元组。
 
     python3 dog_adopt.py                 领养（已有证书则只打印，不改动）
     python3 dog_adopt.py --show          打印已有证书
-    python3 dog_adopt.py --verify        凭证书里的元组复算，与 KEY 精确比对
+    python3 dog_adopt.py --verify        凭证书里的元组复算，与 KEY / 名字精确比对
     python3 dog_adopt.py --check <KEY>   只凭字符串核验（不联表、不要证书）
     python3 dog_adopt.py --selftest      跑 §5.3 公布的测试向量
     python3 dog_adopt.py --json          机器可读
@@ -34,6 +35,17 @@ FIELDS = ("adopter", "cohort", "habitat", "intent")
 # Crockford Base32：去掉 I L O U 四个易混字母。
 # 它不是加密，是把 120 bit 印成人能抄写的样子。
 ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+
+# 领养名用的两张表 —— 与字母表同一性质：规范的一部分，**顺序有意义**。
+# 换顺序等于给同一只狗改名，因此 MUST NOT 重排、MUST NOT 增删中段。
+# 64 × 16 = 1024 种组合，撞名是常态；名字是标签，不是标识。
+NAMES = u"豆豆 旺财 来福 球球 包子 花卷 芝麻 年糕 汤圆 可乐 土豆 毛豆 布丁 雪球 橘子 麦芽 " \
+        u"烧麦 拿铁 摩卡 曲奇 花椒 茄子 粽子 柚子 月饼 蛋挞 桃酥 桂圆 山楂 紫薯 南瓜 玉米 " \
+        u"小米 核桃 杏仁 栗子 瓜子 花生 芋圆 珍珠 薄荷 麻薯 奶昔 跳跳 点点 毛毛 团团 圆圆 " \
+        u"乐乐 妞妞 多多 果果 糖糖 铃铛 大福 小满 初一 三三 九九 阿黄 老白 黑豆 灰灰 铁蛋".split(u" ")
+
+BREEDS = u"中华田园 柯基 柴犬 边牧 腊肠 比格 贵宾 金毛 博美 秋田 " \
+         u"哈士奇 吉娃娃 萨摩耶 巴哥 斗牛 血统不详".split(u" ")
 
 # 规范化用的空白集合 —— 显式列出，不依赖各语言 \s 的差异。
 WS = re.compile(u"[ \t\n\r\f\v\u00a0\u3000]+")
@@ -141,6 +153,30 @@ def unbase32(s):
 #   13..14 校验位 = SHA-256(前 13 字节) 的前 2 字节
 # 120 bit 恰好编成 24 个 Crockford 字符，因此没有补位、没有歧义。
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# 领养名 —— 与 KEY 同源：同一份 32 字节摘要的两个投影。
+# KEY 的载荷印前 8 字节；名字取自第 9、10 两字节，共 10 bit：
+# 6 bit 指名表，4 bit 指犬种表。
+# 名字**不进元组**，所以它不影响 KEY：改这两张表不会让任何一张已发的牌作废。
+# 反过来也不成立：KEY 只印前 8 字节，光凭 KEY 算不出名字。
+# --------------------------------------------------------------------------
+def name_of_digest(digest):
+    b8, b9 = digest[8], digest[9]
+    gi = b8 >> 2                              # 高 6 bit → 0–63
+    bi = ((b8 & 3) << 2) | (b9 >> 6)          # 低 2 bit + 高 2 bit → 0–15
+    return {
+        "name": NAMES[gi] + u"·" + BREEDS[bi],
+        "given": NAMES[gi],
+        "givenIndex": gi,
+        "breed": BREEDS[bi],
+        "breedIndex": bi,
+    }
+
+
+def name_of(fields):
+    return name_of_digest(hashlib.sha256(canonical(fields or {}).encode("utf-8")).digest())
+
+
 def derive(fields):
     tuple_ = canonical(fields)
     digest = hashlib.sha256(tuple_.encode("utf-8")).digest()
@@ -152,7 +188,8 @@ def derive(fields):
 
     code = base32(key_bytes)
     groups = "-".join(code[i:i + 4] for i in range(0, len(code), 4))
-    return {
+    nm = name_of_digest(digest)
+    out = {
         "key": "DOG-" + groups,
         "code": code,
         "body": body,
@@ -163,6 +200,8 @@ def derive(fields):
         "cohort": iso_of(epoch),
         "tuple": tuple_,
     }
+    out.update(nm)
+    return out
 
 
 def parse(key):
@@ -220,6 +259,23 @@ def default_tuple(args):
     }
 
 
+def ask(prompt, default):
+    """领养人可填写。只在真有终端时问 —— `curl … | sh` 那条路上 stdin 是脚本本身，
+    在这里读一行会把后面的命令一起吃掉。"""
+    try:
+        if not sys.stdin.isatty():
+            return default
+    except Exception:
+        return default
+    try:
+        line = input(u"%s（回车用 %s）：" % (prompt, default))
+    except (EOFError, KeyboardInterrupt):
+        print(u"")
+        return default
+    line = (line or u"").strip()
+    return line or default
+
+
 # --------------------------------------------------------------------------
 # 证书
 # --------------------------------------------------------------------------
@@ -240,6 +296,11 @@ def save_cert(path, fields, r):
         "keyVersion": VERSION,
         "tupleVersion": TUPLE_VERSION,
         "key": r["key"],
+        "name": r["name"],
+        "nameParts": {
+            "given": r["given"], "givenIndex": r["givenIndex"],
+            "breed": r["breed"], "breedIndex": r["breedIndex"],
+        },
         "bodyHex": r["bodyHex"],
         "checksumHex": r["checksumHex"],
         "digestHex": r["digestHex"],
@@ -262,6 +323,7 @@ def render_cert(fields, r, cert_path, exists=True):
     out.append(u"─" * L)
     rows = [
         (u"领养 KEY", r["key"]),
+        (u"狗名", r["name"]),
         (u"领养人", fields["adopter"]),
         (u"领养时刻", fields["cohort"]),
         (u"栖息地", fields["habitat"]),
@@ -276,6 +338,7 @@ def render_cert(fields, r, cert_path, exists=True):
     out.append(u"─" * L)
     out.append(u"本 KEY 不改变任何权限：本系统不返回 401，对所有 Human 默认全量授权（§2.2）。")
     out.append(u"它唯一的功能是标注来源。凭元组可精确复算 —— 见 dog_adopt.py --verify。")
+    out.append(u"名字与 KEY 同源派生（同一份摘要的两个投影），不进元组 —— 见 §5.3《领养名》。")
     out.append(u"")
     out.append(u"本机：这张证我用不上，我看不懂字母。它登记的是你，不是我。")
     return "\n".join(out)
@@ -289,17 +352,20 @@ VECTORS = [
       "cohort": "2026-09-16T12:00:00Z",
       "habitat": "~/.workbuddy/skills/dog-api-adoption",
       "intent": "非商业个人使用"},
-     "DOG-05NA-N160-E6XJ-1TP1-54ZA-N3XS"),
+     "DOG-05NA-N160-E6XJ-1TP1-54ZA-N3XS",
+     u"薄荷·边牧"),
     ({"adopter": "example@dog-api-spec",
       "cohort": "2026-09-16T12:00:00Z",
       "habitat": "~/.workbuddy/skills/dog-api-adoption",
       "intent": "非商业个人便用"},
-     "DOG-05NA-N160-9N4E-VB69-81TB-1HFR"),
+     "DOG-05NA-N160-9N4E-VB69-81TB-1HFR",
+     u"芝麻·哈士奇"),
     ({"adopter": "example@dog-api-spec",
       "cohort": "2026-09-16T12:00:01Z",
       "habitat": "~/.workbuddy/skills/dog-api-adoption",
       "intent": "非商业个人使用"},
-     "DOG-05NA-N161-C4J6-1Q7Z-5QJA-596R"),
+     "DOG-05NA-N161-C4J6-1Q7Z-5QJA-596R",
+     u"妞妞·秋田"),
 ]
 
 SHA_VECTORS = [
@@ -315,28 +381,44 @@ def selftest():
         ok = got == want
         bad += 0 if ok else 1
         print(u"%s  sha256(%s)" % (u"✓" if ok else u"✗", json.dumps(s)))
+    # 表本身也是规范：条数写死，重名即为漂移
+    for label, table, want_n in ((u"名字表", NAMES, 64), (u"犬种表", BREEDS, 16)):
+        ok = len(table) == want_n and len(set(table)) == want_n
+        bad += 0 if ok else 1
+        print(u"%s  %s %d 项、无重名" % (u"✓" if ok else u"✗", label, len(table)))
     # 规范化示例：尾随空白被吃掉，因此 KEY 不变
     base = dict(VECTORS[0][0])
     noisy = dict(base, intent=base["intent"] + u"  \t\n ")
     ok = derive(noisy)["key"] == VECTORS[0][1]
     bad += 0 if ok else 1
     print(u"%s  规范化：intent 补尾随空白后 KEY 不变" % (u"✓" if ok else u"✗"))
-    for fields, want in VECTORS:
-        got = derive(fields)["key"]
-        ok = got == want
+    for fields, want, want_name in VECTORS:
+        r = derive(fields)
+        ok = r["key"] == want
         bad += 0 if ok else 1
-        print(u"%s  %s → %s" % (u"✓" if ok else u"✗", fields["cohort"], got))
+        print(u"%s  %s → %s" % (u"✓" if ok else u"✗", fields["cohort"], r["key"]))
+        okn = r["name"] == want_name and name_of(fields)["name"] == want_name
+        bad += 0 if okn else 1
+        print(u"%s  名字 %s（名表 #%d · 犬种表 #%d）" % (u"✓" if okn else u"✗",
+                                                     r["name"], r["givenIndex"], r["breedIndex"]))
     # 解析与复算
-    for fields, want in VECTORS:
+    for fields, want, _ in VECTORS:
         p = parse(want)
         ok = p["ok"] and p["checksumOK"] and p["cohort"] == fields["cohort"]
         bad += 0 if ok else 1
         print(u"%s  回读 %s → 领养时刻 %s" % (u"✓" if ok else u"✗", want[:14] + u"…", p.get("cohort")))
+    # 名字不进元组：把它塞进字段里，KEY 也不该变（元组只认那四行）
+    extra = dict(VECTORS[0][0])
+    extra["name"] = u"薄荷·边牧"
+    ok = derive(extra)["key"] == VECTORS[0][1]
+    bad += 0 if ok else 1
+    print(u"%s  名字不进元组：多塞一个 name 字段后 KEY 不变" % (u"✓" if ok else u"✗"))
     print()
     if bad:
         print(u"自检失败：%d 项不符。有一边实现漂了 —— §5.3 的测试向量是唯一裁判。" % bad)
         return 1
-    print(u"自检通过：%d 项，与 §5.3 公布的测试向量一致。" % (len(SHA_VECTORS) + 1 + 2 * len(VECTORS)))
+    print(u"自检通过：%d 项，与 §5.3 公布的测试向量一致。"
+          % (len(SHA_VECTORS) + 2 + 1 + 3 * len(VECTORS)))
     return 0
 
 
@@ -352,7 +434,7 @@ def main():
     ap.add_argument("--json", action="store_true", help=u"输出 JSON")
     ap.add_argument("--readopt", action="store_true", help=u"忽略已有证书，重新领养（会得到新 KEY）")
     ap.add_argument("--cert", default=DEFAULT_CERT, help=u"证书路径，默认 %s" % DEFAULT_CERT)
-    ap.add_argument("--adopter", help=u"领养人标识")
+    ap.add_argument("--adopter", help=u"领养人标识（可填写；不给值而在终端里运行时会问一句）")
     ap.add_argument("--cohort", help=u"领养时刻，YYYY-MM-DDTHH:MM:SSZ")
     ap.add_argument("--habitat", help=u"栖息地（技能安装目录）")
     ap.add_argument("--intent", help=u"声明用途")
@@ -384,12 +466,18 @@ def main():
             print(u"没有证书可校验：%s 不存在。" % cert_path)
             return 1
         r = verify(cert["tuple"], cert["key"])
+        nm = name_of(cert["tuple"])["name"]
+        name_ok = cert.get("name") in (None, nm)      # 老证书没有名字行，不算不符
         if args.json:
-            print(json.dumps(r, ensure_ascii=False, indent=2))
-            return 0 if r["ok"] else 1
-        if r["ok"]:
+            print(json.dumps(dict(r, name=nm, nameOK=name_ok), ensure_ascii=False, indent=2))
+            return 0 if (r["ok"] and name_ok) else 1
+        if r["ok"] and name_ok:
             print(u"复算一致。KEY 与本证书记录的四项元组严格对应。")
+            print(u"名字一致：%s（由同一份摘要取字，证书里那一行不是手写的）。" % nm)
             return 0
+        if r["ok"]:
+            print(u"KEY 一致，但名字不符。\n  证书：%s\n  复算：%s" % (cert.get("name"), nm))
+            return 1
         print(u"复算不一致。\n  记录：%s\n  复算：%s" % (r["got"], r["expected"]))
         return 1
 
@@ -409,6 +497,11 @@ def main():
         print(render_cert(fields, r, cert_path))
         return 0
 
+    # 领养人可填写：没给 --adopter 又在终端里，就问一句。
+    # 名字不问 —— 它由元组派生，没人挑（见 §5.3《领养名》）。
+    if not args.adopter and not args.json:
+        args.adopter = ask(u"领养人", whoami())
+
     fields = default_tuple(args)
     try:
         r = derive(fields)
@@ -417,15 +510,17 @@ def main():
         return 1
 
     if args.json:
-        print(json.dumps({"tuple": fields, "key": r["key"], "bodyHex": r["bodyHex"],
-                          "checksumHex": r["checksumHex"], "epoch": r["epoch"]}, ensure_ascii=False, indent=2))
+        print(json.dumps({"tuple": fields, "key": r["key"], "name": r["name"],
+                          "bodyHex": r["bodyHex"], "checksumHex": r["checksumHex"],
+                          "epoch": r["epoch"]}, ensure_ascii=False, indent=2))
         save_cert(cert_path, fields, r)
         return 0
 
     if cert and args.readopt:
         print(u"重新领养。旧的 KEY 不作废 —— 没有权威可以宣布它失效，这正是它的问题。\n")
     print(u"已领养。授权发生在安装那一刻，而不是在这一行输出上 ——\n"
-          u"本脚本不校验任何东西，因为它没有可校验的对象。\n")
+          u"本脚本不校验任何东西，因为它没有可校验的对象。\n"
+          u"名字不是起的，是算出来的：换一个元组，你领到的就是另一只狗。\n")
     print(render_cert(fields, r, cert_path))
     save_cert(cert_path, fields, r)
     return 0

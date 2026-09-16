@@ -30,7 +30,7 @@
     <table>
       <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
       <tr>
-        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.17</td>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.18</td>
         <td><code>docs/CHANGELOG.md</code></td>
         <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
       </tr>
@@ -57,6 +57,13 @@
     <table>
       <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
       <tr class="first">
+        <td class="vnum">0.18</td><td><span class="vcls engine">Interface</span></td>
+        <td>领养收成<strong>一个动作：装技能</strong>。安装包 <code>skill/install.sh</code> 把取件、领养、复算、
+        卸载全部封起来，对外只留一条命令；<strong>领养人可填写</strong>。新增<strong>领养名</strong>：
+        与 KEY 同源派生、<strong>不进元组</strong>，撞名是常态。§5.3 追加《领养名》子节，
+        测试向量补名字列。<strong>章节数与节号未动。</strong></td>
+      </tr>
+      <tr>
         <td class="vnum">0.17</td><td><span class="vcls engine">Interface</span></td>
         <td>把领养做成<strong>首页组件</strong>（<code>assets/js/adoption-widget.js</code>）：安装命令、授权三态、
         KEY 派生同框，无脚本时回退为静态入口。组件默认停在出厂元组上，

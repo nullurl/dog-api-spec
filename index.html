@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DOG API — 狗狗接口规范</title>
-<meta name="description" content="以工程规范文体撰写的动物接口规范：DOG API（35 章、52 条公开信源、实测数据、运维手册、14 个标准场景、可计算的量化接口、一个能渲染 14 种像素表情的表情引擎，以及一条外设总线），首页可直接安装领养技能并派生领养 KEY，附口吻规范、一只狗的生活意见、速查卡、生理指标、错误码对照、术语表、量化评估器、表情渲染器、外设控制台与可运行 SDK。">
+<meta name="description" content="以工程规范文体撰写的动物接口规范：DOG API（35 章、52 条公开信源、实测数据、运维手册、14 个标准场景、可计算的量化接口、一个能渲染 14 种像素表情的表情引擎，以及一条外设总线），首页可领养（装一次技能，得一张来源标注与一个由元组派生的名字），附口吻规范、一只狗的生活意见、速查卡、生理指标、错误码对照、术语表、量化评估器、表情渲染器、外设控制台与可运行 SDK。">
 <link rel="stylesheet" href="assets/css/spec.css">
 <style>
   .stat-row { display: flex; gap: 26px; flex-wrap: wrap; margin: 26px 0 0; }
@@ -28,7 +28,7 @@
   <a class="btn ghost" href="tools/charts.html" style="margin-left:8px;">图表图鉴</a>
   <a class="btn ghost" href="tools/peripherals.html" style="margin-left:8px;">外设控制台</a>
   <a class="btn ghost" href="sdk/demo.html" style="margin-left:8px;">SDK 控制台</a>
-  <a class="btn ghost" href="#adoption" style="margin-left:8px;">领养 KEY</a>
+  <a class="btn ghost" href="#adoption" style="margin-left:8px;">领养（装技能）</a>
 
   <div class="stat-row">
     <div class="stat"><div class="n">35</div><div class="l">DOG 正文章节</div></div>
@@ -153,11 +153,13 @@
 </div>
 
 <div class="section-title" id="adoption" style="scroll-margin-top:78px;">领养与授权</div>
-<!-- 领养组件：安装命令 / 授权三态 / KEY 派生同框。
-     骨架由 assets/js/adoption-widget.js 覆盖渲染；以下文字是无脚本时的回退。 -->
+<!-- 领养组件：一条安装命令（含你自己的元组）/ 授权三态 / 装完会拿到的 KEY 与狗名。
+     骨架由 assets/js/adoption-widget.js 覆盖渲染；以下文字是无脚本时的回退 —— 少一段交互，不少一条路径。 -->
 <div id="adoption-widget" data-root="">
   <p style="font-size:14px;color:var(--muted);line-height:1.9;">
-    这个组件需要 JavaScript 才能在本页派生 KEY。也可以直接打开
+    领养只有一种形态：装技能。一条命令装完 ——
+    <code style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">curl -fsSL https://nullurl.github.io/dog-api-spec/skill/install.sh | sh -s -- --adopter "你@这台机器"</code>
+    （这条命令需要 JavaScript 才能按你填的元组生成）。也可以打开
     <a href="tools/adoption.html">领养入口</a>，或读
     <a href="spec/dog.html#adoption">§5.3《领养与授权》</a>。
   </p>
@@ -174,8 +176,8 @@
   <a class="card" href="reference/opinions.html">
     <div class="kicker">第二声部</div>
     <h3>一只狗的生活意见</h3>
-    <p>31 条意见分五组：关于人、关于自己、关于食物、关于时间，以及关于这份规范。本页没有一句有出处 —— 因为它自己就是出处。</p>
-    <div class="foot">REFERENCE / OPINIONS · 31 条</div>
+    <p>32 条意见分五组：关于人、关于自己、关于食物、关于时间，以及关于这份规范。本页没有一句有出处 —— 因为它自己就是出处。</p>
+    <div class="foot">REFERENCE / OPINIONS · 32 条</div>
   </a>
 </div>
 
@@ -238,7 +240,7 @@
       这套写法不靠感觉，规则写在 <a href="reference/voice.html">《口吻与文体》</a> 里；
       而它的另一半声音 —— 由它自己说的那部分 —— 在 <a href="reference/opinions.html">《一只狗的生活意见》</a>。
       至于你凭什么持有这份副本：本系统不返回 <code>401</code>，所以那张牌不是通行证，是来源标注 ——
-      规则见 <a href="spec/dog.html#adoption">§5.3《领养与授权》</a>，入口就是本页的 <a href="#adoption">领养组件</a>。
+      规则见 <a href="spec/dog.html#adoption">§5.3《领养与授权》</a>，入口就是本页的 <a href="#adoption">领养组件</a> —— 装一次技能，会算出一张牌与一个名字：牌登记来源，名字由同一份摘要派发，不进牌里。
       比如：某个系统在疼痛时仍会摇尾巴；某个系统会把你回家的脚步声写入永久存储；
       以及，某个系统为了和你说上话，专门长出了一块新的肌肉。
     </p>

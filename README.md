@@ -45,7 +45,7 @@ python3 -m http.server 8000
 │   ├── errors.html               错误码对照（13 个状态码）
 │   ├── glossary.html             术语表与公共约定
 │   ├── norm-ids.html             规范 ID 登记表（由脚本生成）
-│   ├── opinions.html             一只狗的生活意见（第二声部 · 31 条意见）
+│   ├── opinions.html             一只狗的生活意见（第二声部 · 32 条意见）
 │   ├── voice.html                口吻与文体（双声部定义 · 正反示例 · 回退清单）
 │   └── vitals.html               生理指标速查
 ├── tools/                        交互页面（用浏览器打开）
@@ -54,7 +54,7 @@ python3 -m http.server 8000
 │   ├── expression-sheet.html     表情联系表（由 scripts/expression.js --sheet 生成）
 │   ├── charts.html               图表图鉴（19 张手写 SVG）
 │   ├── peripherals.html          外设控制台
-│   └── adoption.html             领养 KEY（按 §5.3 派生 / 核验 / 查测试向量）
+│   └── adoption.html             领养（按 §5.3 生成安装命令 / 派生 KEY 与名字 / 核验 / 查测试向量）
 ├── sdk/                          参考客户端
 │   ├── dog-api-client.js         DogClient（含量化端点）
 │   ├── demo.html                 交互式接口控制台
@@ -64,8 +64,9 @@ python3 -m http.server 8000
 │   ├── README.md                 存档说明、版本轴、偏离记录
 │   └── single-file-v0.7.html     0.8.0 之前的单文件版（27 章，自包含可离线打开）
 ├── skill/                        DOG API 领养技能 —— 安装即授权，卸载即撤回
-│   ├── SKILL.md                  技能说明与安装命令
-│   └── dog_adopt.py              派生 / 核验领养 KEY（纯标准库，不联网）
+│   ├── install.sh                安装包：装 / 领 / 验 / 卸，其余安装命令都封在这里
+│   ├── SKILL.md                  技能说明（装完可读的说明书）
+│   └── dog_adopt.py              派生 / 核验领养 KEY 与领养名（纯标准库，不联网）
 ├── assets/                       运行时资源 —— 页面加载的就是这些
 │   ├── css/spec.css              共享样式（浅色主题，支持打印）
 │   ├── data/                     内容数据（内联在 JS 里，不用 fetch）
@@ -78,8 +79,8 @@ python3 -m http.server 8000
 │       ├── expression.js         表情渲染引擎（13 维向量 → 24×24 像素 SVG）
 │       ├── charts.js             图表渲染引擎（19 个图型 → 手写 SVG，内联 Mono 令牌）
 │       ├── peripherals.js        外设内核（14 类 / 13 门槛 / 序列闭合 / 磨损预测）
-│       ├── adoption-key.js       领养 KEY 派生内核（零依赖 SHA-256 + Crockford Base32）
-│       └── adoption-widget.js    领养组件（首页用：安装命令 / 授权三态 / KEY 派生同框）
+│       ├── adoption-key.js       领养 KEY 与领养名的派生内核（零依赖 SHA-256 + Crockford Base32）
+│       └── adoption-widget.js    领养组件（首页用：安装命令 / 授权三态 / 牌与名字）
 ├── scripts/                      开发脚本 —— 页面不加载
 │   ├── expression.js             表情命令行（svg / ascii / json / snippet / sheet）
 │   ├── sync-params.js            由引擎注册表反向同步附录 P 与各文档计数
@@ -100,10 +101,22 @@ python3 -m http.server 8000
 `reference/` 里的 `voice.html` 与 `opinions.html` 是一对：前者**定义**这套文档怎么说话，
 后者**使用**它。正文里以「本机：」开头的引用块属于后者的声部 —— 它没有出处，也不给建议。
 
-首页上的 `#adoption-widget` 是把「安装即授权」做成的一个**自包含组件**：安装命令、授权三态、
-KEY 派生同框。它不检测本机装没装技能（页面既没有这个权限，也没有这个必要），
-逻辑全在 `assets/js/adoption-widget.js` 里，命令与三态文案都只在那里定义一次。
-组件默认停在出厂元组上，所以首页一打开就实测了一次「元组相同 → KEY 相同」，
+领养只有一个形态：**装技能**。`skill/install.sh` 是安装包 —— 取说明书、取命令行实现、领养、
+复算、卸载全封在里面，对外只剩一条命令：
+
+```bash
+curl -fsSL https://nullurl.github.io/dog-api-spec/skill/install.sh | sh -s -- --adopter "你@这台机器"
+```
+
+领养人可填写（安装包会在终端里问一句，或由 `--adopter` 直接给）。装完会拿到两样东西：
+一张登记来源的牌（`DOG-` 开头的 KEY）与一个**由元组派生的名字**（形如 `薄荷·边牧`）——
+名字与 KEY 同源、不进元组，规则见 §5.3《领养名》。
+
+首页上的 `#adoption-widget` 是这件事的**自包含组件**：它按你填的元组生成那条命令
+（粘上去装完，结果与本页逐字节相同），摆出授权三态，再把装完会拿到的牌与名字先显示出来。
+它不检测本机装没装技能（页面既没有这个权限，也没有这个必要），逻辑全在
+`assets/js/adoption-widget.js` 里，命令与三态文案都只在那里定义一次。
+组件默认停在出厂元组上，所以首页一打开就实测了一次「元组相同 → KEY 与名字相同」，
 并与 §5.3 的测试向量 1 逐字节比对。
 
 同一个模块在不同目录里用**同一个词干**，由目录区分角色：

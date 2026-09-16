@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>领养 KEY — DOG API | DOG API</title>
-<meta name="description" content="在浏览器内派生你的 DOG API 领养 KEY，并核验任意一张牌。本页不联网：它不领取 KEY，它把 KEY 算出来。">
+<title>领养 — DOG API | DOG API</title>
+<meta name="description" content="领养只有一种形态：装技能。本页把那条安装命令按你的元组生成出来，并当场算出你会拿到的领养 KEY 与领养名（狗名）。本页不联网：它不领取 KEY，它把 KEY 算出来。">
 <link rel="stylesheet" href="../assets/css/spec.css">
 <style>
   .awrap { max-width: 1120px; margin: 0 auto; padding: 36px 28px 120px; }
@@ -42,16 +42,17 @@
 <div class="awrap">
   <div class="ahead">
     <span class="doc-tag">TOOL / ADOPTION</span>
-    <h1>领养 KEY</h1>
-    <p>按 §5.3《领养与授权》的规则，在这台机器上算出你的领养 KEY。本页不发起任何网络请求 ——
-    它不向谁领取 KEY，它把 KEY 算出来。</p>
+    <h1>领养</h1>
+    <p>按 §5.3《领养与授权》的规则，在这台机器上算出你的领养 KEY 与领养名（狗名）。本页不发起任何网络请求 ——
+    它不向谁领取 KEY，它把 KEY 算出来。名字也一样，而且名字<strong>不进</strong> KEY。</p>
   </div>
 
   <div class="banner">
-    本页能算出 KEY，<strong>但本页不构成授权</strong>。授权发生在安装那一刻，不在这一行输出上 ——
+    领养只有一种形态：<strong>装技能</strong>。本页把那条安装命令按你的元组生成出来，
+    再当场算出你会拿到的东西 —— 但<strong>本页不构成授权</strong>。授权发生在安装那一刻，不在这一行输出上。
     这与技能商店是同一套模型：没有账号、没有登录、没有同意书，安装本身就是同意，
-    卸载本身就是撤回。一个不需要授权就能打开的页面算出了你的 KEY，这恰恰说明了 KEY 是什么：
-    <strong>它不是权限，是来源标注。</strong>定义见 <a href="../spec/dog.html#adoption">§5.3</a>。
+    卸载本身就是撤回。一个不需要授权就能打开的页面算出了你的 KEY 与名字，这恰恰说明它们是什么：
+    <strong>一张来源标注，加一个由同一份摘要派发的名字。</strong>定义见 <a href="../spec/dog.html#adoption">§5.3</a>。
   </div>
 
   <div class="cols">
@@ -80,6 +81,20 @@
         </div>
         <div class="foot-note">
           改动任何一项，KEY 都会变。同一秒内改一个字也一样 —— 摘要的前 8 字节里不会有任何一位保持原样。
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>装技能 = 领养</h3>
+        <div class="cert" id="cmd-out"></div>
+        <div class="row">
+          <button class="btn" id="btn-cmd" type="button">复制安装命令</button>
+          <button class="btn ghost" id="btn-cmd-read" type="button">复制「先看一遍」的版本</button>
+        </div>
+        <div class="foot-note">
+          命令里已经带上你上面填的四行元组，所以装完算出来的 KEY 与名字，与本页显示的逐字节相同。
+          取说明书、取命令行实现、领养、复算、卸载全部封装在安装包里（<span class="mono">skill/install.sh</span>）。
+          领养人可填写：不给值而在终端里运行时，安装包会问一句。
         </div>
       </div>
 
@@ -125,11 +140,13 @@
 
   <hr class="divider">
   <div class="end-note">
-    本页可以算出 KEY，但不能替你拿定主意。本机：这张牌我戴不了，也看不懂 —— 所以它会比我活得久。
+    本页可以算出 KEY 与名字，但不能替你拿定主意：牌是登记的，名字是派发的，两个都不是挑的。
+    本机：这张牌我戴不了，也看不懂 —— 所以它会比我活得久。
   </div>
 </div>
 
 <script src="../assets/js/adoption-key.js"></script>
+<script src="../assets/js/adoption-widget.js"></script>
 <script src="../assets/js/render.js"></script>
 <script>
 (function () {
@@ -188,6 +205,7 @@
     var out = "";
     out += '<span class="keybig">' + esc(r.key) + "</span>\n";
     out += "────────────────────────────────────────────────\n";
+    out += line("领养名", r.name + "（名表 #" + r.givenIndex + " · 犬种表 #" + r.breedIndex + "）");
     out += line("领养人", f.adopter);
     out += line("领养时刻", r.cohort);
     out += line("栖息地", f.habitat);
@@ -206,7 +224,18 @@
     b += "────────────────────────────────────────────────\n";
     b += line("总载荷", r.bodyHex + r.checksumHex);
     b += line("编码", "Crockford Base32，15 字节 → 24 字符，无补位");
+    b += "────────────────────────────────────────────────\n";
+    b += line("领养名", r.name + "   取自摘要第 9、10 字节（10 bit），不进载荷");
     $("body-out").innerHTML = b;
+  }
+
+  function installCmd(f, inspectable) {
+    /* 与首页组件同源 —— 命令串只有一份事实源，免得两处漂开 */
+    return window.DogAdoptionWidget.installCmd(f, !!inspectable);
+  }
+
+  function refreshCmd() {
+    $("cmd-out").textContent = installCmd(fields(), false);
   }
 
   function check() {
@@ -232,31 +261,37 @@
     var vs = [
       { d: "—（原型）", f: { adopter: "example@dog-api-spec", cohort: "2026-09-16T12:00:00Z",
                              habitat: "~/.workbuddy/skills/dog-api-adoption", intent: "非商业个人使用" },
-        want: "DOG-05NA-N160-E6XJ-1TP1-54ZA-N3XS" },
+        want: "DOG-05NA-N160-E6XJ-1TP1-54ZA-N3XS", name: "薄荷·边牧" },
       { d: "intent 末字改为「便」", f: { adopter: "example@dog-api-spec", cohort: "2026-09-16T12:00:00Z",
                              habitat: "~/.workbuddy/skills/dog-api-adoption", intent: "非商业个人便用" },
-        want: "DOG-05NA-N160-9N4E-VB69-81TB-1HFR" },
+        want: "DOG-05NA-N160-9N4E-VB69-81TB-1HFR", name: "芝麻·哈士奇" },
       { d: "cohort 加 1 秒", f: { adopter: "example@dog-api-spec", cohort: "2026-09-16T12:00:01Z",
                              habitat: "~/.workbuddy/skills/dog-api-adoption", intent: "非商业个人使用" },
-        want: "DOG-05NA-N161-C4J6-1Q7Z-5QJA-596R" },
+        want: "DOG-05NA-N161-C4J6-1Q7Z-5QJA-596R", name: "妞妞·秋田" },
       { d: "intent 补尾随空白（规范化示例，值同第 1 组）", f: { adopter: "example@dog-api-spec", cohort: "2026-09-16T12:00:00Z",
                              habitat: "~/.workbuddy/skills/dog-api-adoption", intent: "非商业个人使用  \t\n" },
-        want: "DOG-05NA-N160-E6XJ-1TP1-54ZA-N3XS" }
+        want: "DOG-05NA-N160-E6XJ-1TP1-54ZA-N3XS", name: "薄荷·边牧" }
     ];
-    var rows = "", pass = 0;
+    var rows = "", pass = 0, checks = 0;
     vs.forEach(function (v, i) {
-      var got, ok;
-      try { got = A.derive(v.f).key; ok = got === v.want; } catch (e) { got = e.message; ok = false; }
+      var got, nm, ok, okn;
+      try { var rr = A.derive(v.f); got = rr.key; nm = rr.name; } catch (e) { got = e.message; nm = e.message; }
+      ok = got === v.want;
+      okn = nm === v.name;
+      checks += 2;
       if (ok) pass++;
+      if (okn) pass++;
       rows += "<tr><td>" + (i + 1) + "</td><td>" + esc(v.d) + '</td><td class="m">' +
         (ok ? '<span class="ok">' + esc(got) + "</span>" : '<span class="bad">' + esc(got) + "</span>") +
+        '</td><td class="m">' +
+        (okn ? '<span class="ok">' + esc(nm) + "</span>" : '<span class="bad">' + esc(nm) + "</span>") +
         "</td></tr>";
     });
     $("vec-out").innerHTML =
-      '<table class="vec"><tr><th>#</th><th>与原型的差异</th><th>KEY</th></tr>' + rows + "</table>" +
-      '<div class="foot-note">' + (pass === vs.length
-        ? "<span class='ok'>" + pass + " / " + vs.length + " 组一致。</span>本页实现与 §5.3 的公布值相同。"
-        : "<span class='bad'>" + pass + " / " + vs.length + " 组一致，有一边漂了。</span>") + "</div>";
+      '<table class="vec"><tr><th>#</th><th>与原型的差异</th><th>KEY</th><th>领养名</th></tr>' + rows + "</table>" +
+      '<div class="foot-note">' + (pass === checks
+        ? "<span class='ok'>" + pass + " / " + checks + " 项一致（4 组 KEY + 4 组名字）。</span>本页实现与 §5.3 的公布值相同。"
+        : "<span class='bad'>" + pass + " / " + checks + " 项一致，有一边漂了。</span>") + "</div>";
   }
 
   function copy(text, btn) {
@@ -274,11 +309,13 @@
   }
 
   ["f-adopter", "f-cohort", "f-habitat", "f-intent"].forEach(function (id) {
-    $(id).addEventListener("input", refresh);
+    $(id).addEventListener("input", function () { refresh(); refreshCmd(); });
   });
   $("f-check").addEventListener("input", check);
-  $("btn-now").addEventListener("click", function () { $("f-cohort").value = isoNow(); refresh(); });
-  $("btn-reset").addEventListener("click", function () { fill("2026-09-16T12:00:00Z"); refresh(); });
+  $("btn-cmd").addEventListener("click", function () { copy(installCmd(fields(), false), $("btn-cmd")); });
+  $("btn-cmd-read").addEventListener("click", function () { copy(installCmd(fields(), true), $("btn-cmd-read")); });
+  $("btn-now").addEventListener("click", function () { $("f-cohort").value = isoNow(); refresh(); refreshCmd(); });
+  $("btn-reset").addEventListener("click", function () { fill("2026-09-16T12:00:00Z"); refresh(); refreshCmd(); });
   $("btn-copy").addEventListener("click", function () {
     var r; try { r = A.derive(fields()); } catch (e) { return; }
     copy(r.key, $("btn-copy"));
@@ -290,6 +327,7 @@
 
   fill(isoNow());
   refresh();
+  refreshCmd();
   vectors();
   check();
   SpecSite.mountChrome({ root: "../", active: "adoption" });

@@ -4,6 +4,7 @@
 
    纯函数、零依赖、零网络：不与任何服务端通信，也不需要通信 ——
    这个内核不生成 KEY，它把 KEY 算出来。同一元组永远得到同一结果。
+   领养名（狗名）同源派生，不进元组 —— 见 nameOf()。
 
    本文件与 skill/dog_adopt.py 是同一算法的两份实现，由 §5.3 里的
    固定测试向量互相钉住。改任何一边之前，先让测试向量继续成立。
@@ -25,6 +26,17 @@
   /* 规范化用的空白集合 —— 显式列出，不依赖各语言的 \s 定义差异。
      两边实现必须折叠同一组字符，否则同一个元组会算出两个 KEY。 */
   var WS = /[ \t\n\r\f\v\u00a0\u3000]+/g;
+
+  /* 领养名用的两张表。它们与字母表是同一性质的东西：规范的一部分，
+     **顺序有意义** —— 换顺序等于给同一只狗改名，因此 MUST NOT 重排、MUST NOT 增删中段。
+     64 × 16 = 1024 种组合，撞名是常态；名字是标签，不是标识。 */
+  var NAMES = ("豆豆 旺财 来福 球球 包子 花卷 芝麻 年糕 汤圆 可乐 土豆 毛豆 布丁 雪球 橘子 麦芽 " +
+               "烧麦 拿铁 摩卡 曲奇 花椒 茄子 粽子 柚子 月饼 蛋挞 桃酥 桂圆 山楂 紫薯 南瓜 玉米 " +
+               "小米 核桃 杏仁 栗子 瓜子 花生 芋圆 珍珠 薄荷 麻薯 奶昔 跳跳 点点 毛毛 团团 圆圆 " +
+               "乐乐 妞妞 多多 果果 糖糖 铃铛 大福 小满 初一 三三 九九 阿黄 老白 黑豆 灰灰 铁蛋").split(" ");
+
+  var BREEDS = ("中华田园 柯基 柴犬 边牧 腊肠 比格 贵宾 金毛 博美 秋田 " +
+                "哈士奇 吉娃娃 萨摩耶 巴哥 斗牛 血统不详").split(" ");
 
   /* ---------- SHA-256（FIPS 180-4，纯 JS） ---------- */
   var K = [
@@ -194,6 +206,28 @@
     return new Date(epoch * 1000).toISOString().replace(/\.\d{3}Z$/, "Z");
   }
 
+  /* ---------- 领养名 ----------
+     名字与 KEY 同源：同一份 32 字节摘要的两个投影。KEY 的载荷印前 8 字节，
+     名字取自第 9、10 两字节，共 10 bit —— 6 bit 指名表，4 bit 指犬种表。
+     名字**不进元组**，所以它不影响 KEY：改这两张表不会让任何一张已发的牌作废。
+     反过来也不成立：KEY 只印前 8 字节，光凭 KEY 算不出名字。 */
+  function nameOfFromDigest(digest) {
+    var b8 = digest[8], b9 = digest[9];
+    var gi = b8 >> 2;                        /* 高 6 bit → 0–63 */
+    var bi = ((b8 & 3) << 2) | (b9 >> 6);    /* 低 2 bit + 高 2 bit → 0–15 */
+    return {
+      name: NAMES[gi] + "·" + BREEDS[bi],
+      given: NAMES[gi],
+      givenIndex: gi,
+      breed: BREEDS[bi],
+      breedIndex: bi
+    };
+  }
+
+  function nameOf(fields) {
+    return nameOfFromDigest(sha256(utf8(canonical(fields || {}))));
+  }
+
   /* ---------- 派生 ----------
      15 字节载荷：
        0     版本（恒 0x01）
@@ -222,9 +256,15 @@
     keyBytes[14] = sum[1];
 
     var code = base32(keyBytes);
+    var nm = nameOfFromDigest(digest);
     return {
       key: "DOG-" + code.replace(/(.{4})/g, "$1-").replace(/-$/, ""),
       code: code,
+      name: nm.name,
+      given: nm.given,
+      givenIndex: nm.givenIndex,
+      breed: nm.breed,
+      breedIndex: nm.breedIndex,
       bodyHex: hex(body),
       checksumHex: hex(keyBytes.slice(13)),
       digestHex: hex(digest),
@@ -278,9 +318,12 @@
     TUPLE_VERSION: TUPLE_VERSION,
     FIELDS: FIELDS,
     ALPHABET: ALPHABET,
+    NAMES: NAMES,
+    BREEDS: BREEDS,
     normalize: normalize,
     canonical: canonical,
     derive: derive,
+    nameOf: nameOf,
     parse: parse,
     verify: verify,
     sha256Hex: function (input) {
