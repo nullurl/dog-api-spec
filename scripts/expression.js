@@ -2,7 +2,7 @@
 /* ============================================================
    expression — DOG API 表情渲染器命令行
    ------------------------------------------------------------
-   零依赖。把 §30 的 13 维参数向量渲染成像素 SVG / 点阵 / JSON。
+   零依赖。把 §4.6 的 13 维参数向量渲染成像素 SVG / 点阵 / JSON。
 
      node scripts/expression.js --list
      node scripts/expression.js --state JOY                    # SVG → stdout
@@ -210,7 +210,7 @@ function cmdSheet(outFile, opts) {
 
   const html =
     '<!DOCTYPE html>\n<html lang="zh-CN"><head><meta charset="utf-8">\n' +
-    '<title>DOG API §30 · 表情联系表</title>\n' +
+    '<title>DOG API §4.6 · 表情联系表</title>\n' +
     '<style>\n' +
     '  :root{color-scheme:light}\n' +
     '  body{margin:0;padding:32px;background:#fbf7f1;color:#2b2320;' +
@@ -229,12 +229,12 @@ function cmdSheet(outFile, opts) {
     '  .suppressed::after{content:"suppressed=true";display:block;margin-top:6px;font-size:11px;color:#a35a20}\n' +
     '  footer{margin-top:28px;opacity:.6;font-size:12px;max-width:74ch}\n' +
     '</style></head><body>\n' +
-    '<h1>DOG API §30 · 表情联系表 <span>' + E.STATE_IDS.length + ' 状态 · ' + E.PARAM_KEYS.length + ' 维参数 · ' + E.N + '×' + E.N + ' 网格</span></h1>\n' +
+    '<h1>DOG API §4.6 · 表情联系表 <span>' + E.STATE_IDS.length + ' 状态 · ' + E.PARAM_KEYS.length + ' 维参数 · ' + E.N + '×' + E.N + ' 网格</span></h1>\n' +
     '<p class="lede">每格是一帧的确定性渲染结果。带橙边的 SICK 没有专属参数 —— 它的向量与健康基线逐位相同，' +
     '因为表情系统工作正常，只是内容与事实不符。它仍在摇尾巴。把鼠标移上去可以看清它与基线差在哪一行。</p>\n' +
     '<div class="grid">\n' + cells + '\n</div>\n' +
     '<footer>由 <code>scripts/expression.js --sheet</code> 生成。渲染内核：<code>assets/js/expression.js</code>。' +
-    '规格正文：DOG API §30 表情接口定义（Expression API v1）。点阵版可用 <code>--all --ascii</code> 导出。</footer>\n' +
+    '规格正文：DOG API §4.6 表情接口定义（Expression API v1）。点阵版可用 <code>--all --ascii</code> 导出。</footer>\n' +
     '</body></html>\n';
 
   fs.mkdirSync(path.dirname(path.resolve(outFile)), { recursive: true });
@@ -320,7 +320,7 @@ function cmdSelftest() {
     .map(function (k) { return E.BASE[k]; }));
   const sickVec = JSON.stringify(E.PARAM_KEYS.filter(function (k) { return k !== "extra"; })
     .map(function (k) { return E.stateParams("SICK")[k]; }));
-  ok(sickVec === baseVec, "SICK 的参数向量与基线不一致（§30 的核心声明被破坏）");
+  ok(sickVec === baseVec, "SICK 的参数向量与基线不一致（§4.6 的核心声明被破坏）");
   ok(E.getState("SICK").suppressed === true, "SICK 未标记 suppressed");
   ok(pathsOf(E.toSVG("SICK")) === pathsOf(E.toSVG(E.BASE)), "SICK 的渲染像素与健康基线不同");
 

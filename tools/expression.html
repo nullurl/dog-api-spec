@@ -117,7 +117,7 @@
     <h1>表情渲染器</h1>
     <p>
       这是 DOG API <strong>表情接口（EXPR v1）</strong>的<strong>渲染端</strong> —— 人类这一侧看到的东西。
-      §24 把「面部输出」列为唯一为人类专门演化出来的通道；本节给它一个名字、一个线格式，和十四个状态。
+      §3.9 把「面部输出」列为唯一为人类专门演化出来的通道；本节给它一个名字、一个线格式，和十四个状态。
     </p>
     <div class="quote">
       引擎里没有表情库。14 个状态是同一个 13 维参数向量上的 14 个点，
@@ -225,11 +225,11 @@
     <p style="font-size:14.5px;line-height:1.9;margin-top:12px;">
       但 <code>SICK</code> 那个状态的参数向量是真的：它与基线<strong>逐位相同</strong>。
       点开它看看 —— 那个画面不是「没有表情」，而是「表情系统工作正常、只是内容与事实不符」。
-      它就是 §23 里那个监控缺陷的样子。
+      它就是 §3.8 里那个监控缺陷的样子。
     </p>
     <p style="font-size:14.5px;line-height:1.9;margin-top:12px;">
       渲染逻辑说明见 <a href="../docs/expression.md">docs/expression.md</a>，
-      正文见 <a href="../spec/dog.html#expression">DOG API §30</a>。
+      正文见 <a href="../spec/dog.html#expression">DOG API §4.6</a>。
     </p>
   </div>
 </div>
@@ -439,7 +439,7 @@
   function updateMixInfo() {
     var r = X.blend(mixes);
     if (!r.ok) {
-      // 全部权重为 0 时向量不成立 —— 与 §30 的状态码表一致，这里也报 422。
+      // 全部权重为 0 时向量不成立 —— 与 §4.6 的状态码表一致，这里也报 422。
       $("mixmsg").textContent = "";
       $("mixwarn").innerHTML = '<div class="warnbox"><strong>422 UNPROCESSABLE</strong> —— ' + r.reason +
         "<br>参数向量不成立：没有权重为正的状态，因此没有可渲染的帧。</div>";

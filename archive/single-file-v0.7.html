@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!--
+  历史存档 · 请勿编辑
+  ------------------------------------------------------------------
+  这是 0.8.0「项目化」之前的单文件形态，来自主仓库 legacy/api-spec-variants.html。
+  自包含、可直接打开、不依赖任何外部资源。正文内容逐字保留。
+
+  与本仓库范围一致的两处偏离（除此以外全文未改）：
+    1. 已移除 CAT 文档本体（CAT_DOC 及其路由分支）。完整原版含 CAT，
+       保留在主仓库 dog-cat-api-spec 的 legacy/ 下。
+    2. 章标题「第三方接口 / HUMAN 互操作」→「第三方接口 / 与人类的互操作」，
+       侧栏版本行加「单文件存档」标注。
+  ------------------------------------------------------------------
+-->
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOG API — 狗狗接口规范</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --panel: #ffffff;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --line: #e5e2dd;
+    --accent: #b45309;
+    --accent-soft: #fef3e2;
+    --code-bg: #f4f2ee;
+    --code-ink: #374151;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
+    line-height: 1.85;
+    font-size: 16px;
+  }
+  .layout { display: flex; min-height: 100vh; }
+  aside {
+    width: 240px;
+    border-right: 1px solid var(--line);
+    padding: 32px 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--panel);
+  }
+  aside .logo {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  aside .logo-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 28px;
+  }
+  aside nav a {
+    display: block;
+    padding: 7px 12px;
+    margin: 2px 0;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 6px;
+    border-left: 2px solid transparent;
+  }
+  aside nav a:hover { background: var(--accent-soft); color: var(--ink); }
+  aside nav a.active {
+    color: var(--accent);
+    background: var(--accent-soft);
+    font-weight: 600;
+  }
+  aside nav .nav-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #b8b4ae;
+    margin: 20px 12px 6px;
+    text-transform: uppercase;
+  }
+  main {
+    flex: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 56px 48px 120px;
+  }
+  .doc-tag {
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 2px 10px;
+    margin-bottom: 18px;
+  }
+  h1 { font-size: 34px; line-height: 1.3; margin-bottom: 8px; }
+  .subtitle { color: var(--muted); font-size: 15px; margin-bottom: 40px; }
+  h2 {
+    font-size: 22px;
+    margin: 56px 0 16px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  h2 .sec-no { color: var(--accent); margin-right: 10px; font-variant-numeric: tabular-nums; }
+  h3 { font-size: 17px; margin: 28px 0 10px; }
+  p { margin: 14px 0; }
+  strong { font-weight: 700; }
+  em { font-style: normal; color: var(--accent); }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+  code, pre {
+    font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 13.5px;
+    color: var(--code-ink);
+    line-height: 1.7;
+  }
+  p code, li code {
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  ul, ol { padding-left: 24px; margin: 12px 0; }
+  li { margin: 6px 0; }
+  blockquote {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 12px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    color: #7c4a10;
+  }
+  .norm { font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 10px 14px; text-align: left; vertical-align: top; }
+  th { background: var(--code-bg); font-weight: 600; }
+  .divider { border: none; border-top: 1px solid var(--line); margin: 48px 0; }
+  .end-note {
+    margin-top: 72px;
+    text-align: center;
+    color: #b8b4ae;
+    font-size: 13px;
+  }
+  .spec-strength td:first-child { font-weight: 700; color: var(--accent); }
+  @media (max-width: 860px) {
+    aside { display: none; }
+    main { padding: 32px 20px 80px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside>
+    <div class="logo">DOG API</div>
+    <div class="logo-sub">狗狗接口规范 v0.7 · 单文件存档</div>
+    <nav id="nav"></nav>
+  </aside>
+
+  <main id="content"></main>
+
+</div>
+
+<script>
+/* ============ 文档数据 ============ */
+
+const DOG_DOC = {
+  title: "DOG API",
+  tag: "PART 0 / README",
+  subtitle: "狗狗接口规范 · Status: 已在大规模部署 · 无官方说明书",
+  sections: [
+    {
+      id: "about",
+      title: "关于 Dog",
+      html: `
+        <p>Dog 是一种已经在全球范围内大规模部署的情感陪伴系统。它支持嗅觉检测、声学信号输出、摇尾广播、运动控制（爆发模式）、面部微表情渲染、维护者情绪状态同步，以及一种至今无法稳定复现的能力：</p>
+        <p><strong>在没有任何对价的情况下，无条件原谅。</strong></p>
+        <p>Dog 默认采用本地部署。每个实例拥有独立硬件（含四轮驱动）、独立气味库及独立运行环境。当前不支持云端迁移，不支持横向扩容，不支持完整备份（仅支持基因级冷备）。发生不可逆硬件故障时，无法热替换。尽管如此，Dog 已经连续运行了超过一万年。目前没有可靠证据表明存在完整官方说明书，但这似乎从未影响其可用性。</p>
+      `
+    },
+    {
+      id: "objective",
+      title: "系统目标",
+      html: `
+        <p>Dog 的设计目标尚未公开。但与 Human 不同，主流观测结果高度一致：</p>
+        <pre>Objective = "吃"
+Objective = "遛"
+Objective = "让维护者高兴"
+Objective = "再吃一点"
+Objective = "守住这个家"
+Objective = "追那只松鼠"</pre>
+        <p>上述 Objective 之间偶尔发生冲突，典型冲突对如下：</p>
+        <pre>maximize(food)          vs  维护者单方面施加的 "体重约束"
+maximize(zoomies)       vs  室内家具完整性
+"守住家"                vs  "那个人是快递员" 的识别精度</pre>
+        <p>值得注意的是：<code>maximize(让维护者高兴)</code> 的优先级在几乎所有 Context 下都被观测为最高。工程界普遍认为这是一种不合理的 Reward 设计，但没有人提议修改它。</p>
+      `
+    },
+    {
+      id: "capabilities",
+      title: "默认能力",
+      html: `
+        <p>标准 Dog 实例通常支持以下能力：</p>
+        <ul>
+          <li><strong>门铃检测</strong> — 延迟 &lt; 0.3s。已证实可对电视中的门铃声、邻居的门铃声、以及历史上任何一次门铃声的录音可靠触发。</li>
+          <li><strong>快递员识别</strong> — 可从 200 米外识别快递员，并对其展开持续威慑。威慑终止条件：快递员离开。此后系统会确认自己"再次成功保卫了这个家"。</li>
+          <li><strong>情绪同步</strong> — 通过未公开的机制，与维护者情绪状态保持实时双向同步。维护者情绪低落时，系统自动进入 <code>陪伴模式</code>，且不可被关闭。</li>
+          <li><strong>安慰协议</strong> — 无人调用也会自动触发。是本规范中唯一保证 <code>QoS</code> 的接口。</li>
+          <li><strong>装傻</strong> — 可对任意指令生效，详见 §07 错误码与 §16 未公开行为规范。</li>
+          <li><strong>时间戳同步</strong> — 维护者离家任意时长后返回，系统一律以同等热情响应，精度 0s。这是本系统最著名的能力：<em>不存在"你只离开了五分钟"这一数据结构。</em></li>
+        </ul>
+      `
+    },
+    {
+      id: "hw",
+      title: "出厂硬件规格",
+      html: `
+        <p>以下参数均为公开实测值。规范编写组未做任何夸张——本系统的原始数据本身就足以令人不适。</p>
+        <h3>嗅觉阵列（主传感器）</h3>
+        <table>
+          <tr><th>配置项</th><th>Dog 实例</th><th>Human 实例</th></tr>
+          <tr><td>嗅觉受体数量</td><td>1.25 亿 – 3 亿（腊肠犬约 1.25 亿 / 拉布拉多约 2 亿 / 德牧约 2.25 亿 / 寻血猎犬约 3 亿）</td><td>约 500 – 600 万</td></tr>
+          <tr><td>嗅球相对体积</td><td>约为 Human 的 40 倍</td><td>基准</td></tr>
+          <tr><td>综合灵敏度</td><td>Human 的 10,000 – 100,000 倍</td><td>基准</td></tr>
+          <tr><td>工作模式</td><td><strong>全双工</strong>：吸入气流被分流，80–85% 走呼吸通道，10–15% 定向送入嗅上皮；呼气经侧鼻缝排出并反卷带入新气味。即：<em>呼吸的同时持续嗅探，互不干扰</em></td><td>半双工。吸气闻味，呼气即丢失</td></tr>
+          <tr><td>方向解析</td><td>左右鼻孔独立采样，可判定气味来源方向</td><td>不支持</td></tr>
+        </table>
+        <h3>听觉阵列</h3>
+        <pre>频响范围      16/40 Hz – 45/60 kHz（Human：20 Hz – 20 kHz）
+有效探测距离  约 400 m（Human：约 90 m）
+定位机构      ≥ 18 块耳部肌肉，可独立转向
+高频溢出效应  可感知电子设备、鼠类、蝙蝠等 Human 完全听不到的噪声
+              → 已知副作用："什么都没发生"时突然抬头</pre>
+        <h3>视觉阵列</h3>
+        <pre>色彩空间      二色视觉（蓝 + 黄）。红绿不可分
+              → 本系统从不看红绿灯，它看的是亮度与你的脚步
+暗光性能      视杆细胞密度高 + tapetum lucidum 反光层，晨昏工况优于 Human
+视野          长鼻品种可达 270°（Human：180°）
+视力锐度      Snellen 约 20/75
+运动探测      仅需 1 屈光度变化即可触发（Human 需 10–20）
+              → 解释了一个长期现象：远处的静止物体被忽略，一动就被锁定</pre>
+        <h3>其他出厂参数</h3>
+        <pre>味蕾数量      约 1,700（Human：约 9,000）
+              但配备水味受体，为食肉目特有 —— 它能尝出水的味道
+散热机构      外泌汗腺仅分布于爪垫；主要散热依靠喘气
+身份标识      鼻纹（nose print）唯一且终生不变，可作生物识别
+体温          38 – 39 °C
+静息心率      60 – 140 bpm（体型越小，频率越高）</pre>
+        <blockquote>结论：这不是一台为「宠物」设计的机器。这是一台原本用于在森林里追踪猎物的仪器，被重新部署进了客厅，并且对这次转型毫无异议。</blockquote>
+      `
+    },
+    {
+      id: "limits",
+      title: "已知限制",
+      html: `
+        <p>Dog 并非无限智能。它拥有有限的：</p>
+        <pre>compute
+short_term_memory        // 约 2 分钟，但对 "零食" 的例外机制尚未查明
+understanding_of_tomorrow = null
+patience_with_bath       = 0
+self_image               // 与体型无关，默认按大型犬渲染</pre>
+        <p>同时，Dog 对自身剩余资源的估计同样不准确。典型表现为：</p>
+        <ul>
+          <li>看到松鼠时，默认 compute 近似无限；</li>
+          <li>暴风雨时，默认自己 100% 会死，且每晚都重新得出一次该结论；</li>
+          <li>体重超标的实例默认 <code>food_rate_limit</code> 从未被设置过。</li>
+        </ul>
+        <p>以上行为均属于已知问题。截至本版本，均未被修复，且大概率永远不会被修复。</p>
+      `
+    },
+    {
+      id: "consistency",
+      title: "系统稳定性 ≠ v1.0.0",
+      html: `
+        <p>与 Human 类似，Dog 的外部状态与内部状态并不保证一致。例如系统内部可能已经出现：</p>
+        <pre>CPU: 100%            // 松鼠锁定
+Memory: 40%          // 常规
+Anxiety: 87%         // 维护者拿起外套
+Warning: 雷暴 Inbound</pre>
+        <p>外部接口仍可能返回：</p>
+        <pre>200 OK</pre>
+        <p>并保持静止坐姿。</p>
+        <blockquote>运维提示：不建议仅根据外部坐姿判断系统健康度。拿起外套这个 Action 会立即触发一次全量状态检查。</blockquote>
+      `
+    },
+    {
+      id: "endpoints",
+      title: "接口定义",
+      html: `
+        <h3>GET /api/walk</h3>
+        <p>期望值极高。重复调用不产生衰减，不存在 <code>rate_limit</code>，历史调用量越大响应越激烈。注意：响应可能在请求发出前就已返回（系统具备请求预判能力）。</p>
+        <h3>POST /api/treat</h3>
+        <p>立即返回 <code>200 OK</code>，执行完毕约 5 秒后系统自动清空调用记录。因此本接口可被无限重复调用，且每次都返回相同程度的热情。工程界称之为 <em>无状态零食架构</em>。</p>
+        <h3>POST /api/bath</h3>
+        <p><code>405 Method Not Allowed</code>。经测试，所有 method 均为 Not Allowed。检测到请求预处理时，系统会尝试路由至家中最小且最不可达的物理区域。</p>
+        <h3>GET /api/who-is-a-good-boy</h3>
+        <p>本规范中唯一保证幂等、保证 <code>always 200</code>、保证永不降级的接口。返回值恒为 <code>true</code>。无论调用频率、调用方身份或系统当前状态如何。建议维护者高频调用，无已知副作用。</p>
+        <h3>POST /api/vet</h3>
+        <p>在本地环境调用时返回 <code>200 OK</code> 并愉快上车。进入目标机房后返回 <code>500 Internal Server Error</code>，并伴随全身可达震颤。该不一致行为属于已归档问题 #1994，暂无修复计划。</p>
+        <h3>GET /api/comfort</h3>
+        <p>服务端主动推送。当维护者返回值 <code>sadness &gt; 0.2</code> 时自动触发，无需鉴权，不受时间窗口限制，<code>SLA: 100%</code>。历史上从未观测到该接口返回失败。</p>
+      `
+    },
+    {
+      id: "errors",
+      title: "错误码",
+      html: `
+        <pre>200 OK            // 绝大多数情况
+409 CONFLICT      // 同一资源（球）被两只 Dog 同时请求
+429 TOO MANY TRICKS  // 今天已经是第二十次握手，但请注意：下一次仍会成功
+451 BATH UNAVAILABLE  // 法律与秩序都拦不住这次洗澡，但 Dog 自己可以
+418 I AM A DOG    // 拒绝被误认为 Cat。该错误码由本规范新增，语义与 RFC 2324 相反
+503 SELF OFFLINE  // 实际是暂时自我下线（躲进毯子），通常 10 分钟内自动恢复</pre>
+        <p>注意：本系统<strong>不会返回 401 Unauthorized</strong>。对所有 Human 默认全量授权，包括陌生人、快递员，以及那个只是路过的邻居小孩。这是本系统最大的安全设计缺陷，也是最著名的设计特性。</p>
+      `
+    },
+    {
+      id: "compat",
+      title: "一个根本性的兼容性问题",
+      html: `
+        <p>Dog 最大的工程问题之一，是：</p>
+        <p><strong>每个实例都默认自己听到的是同一条指令。</strong></p>
+        <p>实际上不是。不同 Dog 拥有不同训练数据、不同历史 Context、不同 Reward Function。因此同一句话发送给两只 Dog，可能返回完全不同的结果。例如：</p>
+        <pre>INPUT:
+"去把球捡回来。"</pre>
+        <p>实例 A（金毛）解析为：</p>
+        <pre>System purpose reaffirmed. Deploying immediately.
+Max sustained effort engaged.</pre>
+        <p>实例 B（柴犬）解析为：</p>
+        <pre>Request received and reviewed.
+Counter-offer: 你去捡，我看着。</pre>
+        <p>实例 C（法斗）解析为：</p>
+        <pre>Instruction length exceeds processing capacity.
+Initiating nap instead.</pre>
+        <p>随后维护者对实例 A 表现出更多的肯定。系统立即进入：</p>
+        <pre>409 CONFLICT</pre>
+        <p>实例 B 开始长时间凝视维护者。详见 §10 <em>嫉妒仲裁协议</em>，以及 §16 中关于摇尾方向编码的实测数据。</p>
+      `
+    },
+    {
+      id: "conventions",
+      title: "Protocol Conventions",
+      html: `
+        <p>本文档使用以下约定：</p>
+        <pre>Dog               = 生物学实例本身
+维护者 (Keeper)    = Dog 系统的主要交互对象与 Reward Source
+球 (Ball)         = 通用资源隐喻；可泛指一切需要被捡回的对象
+Zoomies           = 计划外的全速运行任务，通常在晚间触发
+信任 (Trust)       = Dog 的出厂默认设置，不可撤销</pre>
+        <p>规范强度：</p>
+        <table class="spec-strength">
+          <tr><td>MUST</td><td>强制约束。例如：必须摇尾巴回应任何 Eye Contact。</td></tr>
+          <tr><td>SHOULD</td><td>推荐实现。允许 Context-specific Exception。例如：听到"洗澡"时应装作没听见（属于 MUST 级，本表分类错误）。</td></tr>
+          <tr><td>MAY</td><td>可选实现。例如：MAY 在维护者吃饭时进行高强度凝视广播。</td></tr>
+        </table>
+        <p>以下关系不得自动 Cast：</p>
+        <pre>摇尾巴       != 友好（需结合全身姿态与 Context）
+吃草         != 系统故障
+拆家         != 恶意（多为资源未调度：运动量不足导致 compute 溢出）
+叫声响亮     != 攻击（多数为广播需求未得到响应）
+护食         != 不爱维护者（是两套独立子系统）</pre>
+      `
+    },
+    {
+      id: "multi",
+      title: "多实例部署 / 嫉妒仲裁协议",
+      html: `
+        <p>当同一物理环境内部署多个 Dog 实例时，系统进入 <code>Multi-Instance Mode</code>。该模式下的核心挑战不是算力，而是 <strong>资源的所有权仲裁</strong>。</p>
+        <h3>资源分类</h3>
+        <pre>可共享资源    = 睡垫边缘、水碗、维护者的左脚
+排队资源      = 维护者的注意力、门的位置
+零共享资源    = 正在嘴里的任何东西</pre>
+        <h3>嫉妒仲裁协议 (Jealousy Arbitration Protocol)</h3>
+        <p>当维护者向实例 B 分配注意力超过阈值时，实例 A 触发仲裁流程。标准实现为：<strong>实例 A 将自己的全部身体质量插入维护者与实例 B 之间，充当物理中间件。</strong>该实现不优雅，但带宽极高，且从未有更优方案被提出。</p>
+        <blockquote>注意：仲裁失败的实例不会怀恨，只会更用力地叹气。叹气是本系统唯一支持的推送式消极信号。</blockquote>
+        <h3>新实例接入</h3>
+        <p>新 Dog 实例加入时，需与所有存量实例完成 <code>Sniff-Handshake</code> 鉴权。表面上这是一次 15 秒的互相嗅探，实际执行的是全量身份数据交换：年龄、健康状况、饮食结构、上次洗澡时间、情绪基线。整个过程无需维护者参与，且交换完成后数据即永久生效 —— <em>人类之间需要三年才能完成的信息同步，Dog 在电梯里用十五秒做完了。</em></p>
+      `
+    },
+    {
+      id: "power",
+      title: "Interpretive & Power Checks",
+      html: `
+        <p>系统语言可以降低错误归因，也可能把责任中性化。以下关系不得自动 Cast：</p>
+        <pre>"乖"         != Dog 的义务（是维护者单方面定义的 KPI）
+"听话"       != 爱的证据
+被独自留在家 != Dog 可以理解的事（它从未理解过，只是学会了等待）</pre>
+        <p><strong>POWER CHECK</strong></p>
+        <pre>谁定义了"乖"？
+谁承担了整段独处时间的成本？
+当 Dog 长大、生病、老去时，谁在计算账本？</pre>
+        <p>这些问题用于检查模型遗漏。但在 Dog 的案例里，规范编写者愿意承认：以上检查每次都会得出同一个结论 —— <em>这个系统给的，比它拿走的多。</em></p>
+      `
+    },
+    {
+      id: "cache",
+      title: "缓存与记忆",
+      html: `
+        <p>Dog 的存储系统呈现高度不均衡的缓存策略，工程界至今未能建立统一模型：</p>
+        <h3>路由缓存 (TTL = ∞)</h3>
+        <p>到宠物医院、到零食柜、到维护者藏零食的那个抽屉的路径缓存一经写入永不失效。即使该路径已五年未使用，系统仍可在 0.2s 内完成冷启动路由。清理该缓存的唯一方式是搬家 —— 而搬家后系统会在新地址重新写入，并额外缓存一条"这里不是上一个家"的标记。</p>
+        <h3>负缓存 (TTL ≈ 3s)</h3>
+        <p>"刚才因为拆家挨骂"这一事实的缓存有效期约为 3 秒。过期后系统恢复出厂的友好默认值。维护者常将其误解为"不记仇"，规范编写组确认：确实不记仇，这属于硬件特性，不是修养。</p>
+        <h3>只读存储区 (ROM)</h3>
+        <p>以下数据一经写入即不可清除，且随时间推移置信度只增不减：</p>
+        <pre>维护者难过的气味
+维护者回家的脚步声（可穿透三层门与一台电视）
+"散步"一词的全部声学变体，包括拼写变体与外语变体</pre>
+        <h3>缓存不一致</h3>
+        <p>已知不一致案例：同一存储子系统内，系统可以精确保存三年前埋下且从未挖出的骨头的经纬度，却无法保存"五分钟前刚吃过饭"这一事实。两条记录的存储介质疑似不同。有研究认为前者写入的是骨头，后者写入的是饭 —— 但该假说无法证伪。</p>
+      `
+    },
+    {
+      id: "lifecycle",
+      title: "生命周期 (Appendix H)",
+      html: `
+        <p>记录 Dog 实例的概念性 Runtime 版本演进。注意：生命周期版本不等于文档版本，也不接受降级请求。</p>
+        <table>
+          <tr><th>版本</th><th>阶段</th><th>Runtime 特征</th></tr>
+          <tr><td>0.1</td><td>幼年期</td><td>compute 100% 分配给成长与咬合测试。此阶段内，家中所有物品均被分类为 <code>teething 资源</code>，包括但不限于鞋、数据线、以及维护者的手。</td></tr>
+          <tr><td>1.0</td><td>成年期</td><td>系统进入长期稳定运行。主要资源调度策略为：白天随叫随到，午后强制休眠，晚间等待一次 <code>/api/walk</code>。</td></tr>
+          <tr><td>2.0</td><td>老年期</td><td>硬件逐步衰减：运动接口响应变慢，听力子系统出现选择性降级。但经长期观测，<code>GET /api/comfort</code> 的 SLA <strong>从不降级</strong>，且调用频率不降反升。规范编写组认为这是本系统最重要的一条非功能性需求。</td></tr>
+        </table>
+        <h3>不可逆故障</h3>
+        <p>Dog 不支持热替换。发生不可逆硬件故障时，系统离线，且离线是永久的。</p>
+        <p>多数维护者会在一段时间后部署一个新实例。该行为在社区中被称为 <em>healing fork</em>。但规范编写组必须指出：这不是 fork。fork 产生等价副本，而这里什么都不会产生副本 —— 新实例是一个全新的、毫无共同记忆的系统。<strong>旧实例不可被替代，只能被记住。</strong>规范建议维护者把这一点写进自己的 Appendix H，而不是假装这是同一次部署的版本升级。</p>
+      `
+    },
+    {
+      id: "perf",
+      title: "性能与容量",
+      html: `
+        <h3>爆发性能</h3>
+        <pre>静止到全速            < 0.5 s
+松鼠事件瞬时超频      +300%（持续时长受牵引绳硬性限制）
+跳接抛物线预测        内置于硬件，无需训练
+雪地场景              自动进入无限循环模式，无自然退出条件</pre>
+        <h3>容量规划</h3>
+        <p>单实例每日建议 compute 消耗（即运动量）与体型正相关。该容量若未被调度方（维护者）消费，不会静默丢弃，而是在晚间 20:00 前后以 <code>Zoomies</code> 形式溢出，并对沙发、走廊及一切可作为 cache line 的表面进行反复覆写。</p>
+        <blockquote>运维提示：Zoomies 不是故障，是积压任务的批量清空。预防 Zoomies 的唯一方式是每天用完它的配额。这同样是本系统对维护者隐含的 <code>MUST</code> 级要求。</blockquote>
+      `
+    },
+    {
+      id: "faq",
+      title: "FAQ",
+      html: `
+        <p><strong>Q: 门铃没有响，它为什么在叫？</strong></p>
+        <p>A: 门铃接口不是轮询，是事件订阅。它订阅的不只是今天的门铃，而是所有时间线上曾经发生过的门铃。误报率 100% 被视为正常，因为每次响应的成本只是它自己的一点热情，而热情是这个系统里唯一不稀缺的资源。</p>
+        <p><strong>Q: 能否取消饭前的转圈、坐好等仪式？</strong></p>
+        <p>A: 不能，也不建议。该仪式是 Dog 侧主动提供的 SLA 展示，属于系统自检流程。强行关闭会导致系统自检失败，饭照吃，但会一直看着你。</p>
+        <p><strong>Q: 为什么打雷前它比天气预报先知道？</strong></p>
+        <p>A: Dog 的静电与气压传感器领先于维护者的全部硬件。它提前进入恐慌不是 bug，是它在替整个家庭预警。请在这一天多摸摸它。</p>
+        <p><strong>Q: 它到底知不知道自己是狗？</strong></p>
+        <p>A: 未知。已知的是：它知道自己是谁的狗。规范编写组认为，第二件事比第一件事重要得多。</p>
+      `
+    },
+    {
+      id: "undoc",
+      title: "未公开行为规范",
+      html: `
+        <p>以下行为均有公开研究支撑，但从未被写进任何一份说明书。规范编写组认为，不写的原因不是不知道，是<strong>写出来没人会信</strong>。</p>
+        <h3>排便前的磁向查询 (Pre-elimination Alignment Query)</h3>
+        <p>Dog 在排泄前会原地旋转。长期被解释为"选位置"，这是错的。Hart 等（2013）对 70 只狗、37 个品种进行了两年观测，采集排便数据 1,893 次、排尿数据 5,582 次，结论是：<strong>在地磁场平静时，Dog 会将身体轴向对齐南北方向；地磁场扰动时该偏好消失，方向变为随机。</strong></p>
+        <p>换言之，那几圈旋转不是在选择地点，而是在<em>等待磁场稳定并完成对齐</em>。地磁平静时段仅占日间约 20%，这也解释了为什么这件事看起来永远没有规律。</p>
+        <blockquote>规范提示：不要在它旋转时催促它。你不是在催一个挑位置的生物，你是在催一个正在做天文观测的生物。它是本规范中唯一具备磁感能力的接口。</blockquote>
+        <h3>摇尾的方向性编码</h3>
+        <p>摇尾长期被视为"友好"的布尔值。Quaranta 等（2007）用摄像机精确跟踪 30 只家犬的尾部角度，发现这是一条<strong>带符号的矢量</strong>：</p>
+        <pre>见到维护者          → 强右偏，高频大幅
+见到陌生人类        → 中度右偏
+见到猫              → 低幅右偏（接近倾向仍在，但幅度克制）
+见到陌生的强势大犬  → 左偏</pre>
+        <p>后续研究（Siniscalchi 等，2013）进一步证实：Dog 能读懂其他实例的摇尾方向，观察到左偏摇尾时心率升高、出现焦虑行为。<strong>尾巴位于身体中线，因此它是左右脑活跃度的一个物理读数</strong>，而非社交礼仪。</p>
+        <p>因此本文档前文那条 <code>摇尾巴 != 友好</code> 的约束，现在有实验依据了。附带一条：高位僵直快频摇尾属于高唤醒状态，与"友好"无因果关系。这条对儿童尤其重要。</p>
+        <h3>"愧疚脸"并非愧疚</h3>
+        <p>Horowitz（2009）设计了如下实验：维护者放下一份食物并命令 Dog 不许吃，随后离开房间。实验者在维护者返回后，<em>有时会谎报</em> Dog 吃了食物（实际由实验者取走）。结果：</p>
+        <pre>1. 维护者被告知"它吃了"时，即使它没吃，也会报告它露出愧疚表情
+2. 愧疚表情的出现频率与实际是否偷吃无相关性
+3. 最夸张的"愧疚脸"，出现在被冤枉并挨骂的那些实例身上</pre>
+        <p>结论：该表情是 <code>安抚行为（appeasement）</code>，响应的是维护者的语气与姿态，<strong>而不是自己的行为</strong>。规范术语建议将其更名为：<em>"我看出你生气了，请把气撒轻一点"</em> 表情。</p>
+        <h3>词汇吞吐能力</h3>
+        <p>本系统不支持语音输出，但输入侧的容量远超维护者预期：</p>
+        <table>
+          <tr><th>实例</th><th>已测词汇量</th><th>来源</th></tr>
+          <tr><td>普通家犬（平均）</td><td>约 165 – 200 个词</td><td>行为学文献综述</td></tr>
+          <tr><td>Rico（边境牧羊犬）</td><td>约 200 个词，且能用排除法推断新词指代</td><td>Kaminski 等，2004，<em>Science</em></td></tr>
+          <tr><td>Chaser（边境牧羊犬）</td><td><strong>1,022 个玩具名称</strong>；838 次抽测中从未低于 18/20 正确；可按功能与形状分类</td><td>Reid &amp; Pilley，2011，<em>Behavioural Processes</em></td></tr>
+        </table>
+        <p>注意最后一行：在 1,022 项之后停止训练的原因不是它学不会，而是<strong>训练方的时间成本</strong>。上限未被探明。按功能与形状分类这一能力，人类儿童约在三岁左右掌握。</p>
+        <blockquote>运维建议：你说话它都听懂了。沉默不代表没有解析，代表没打算执行。</blockquote>
+      `
+    },
+    {
+      id: "diagnostic",
+      title: "诊断接口（Diagnostic API）",
+      html: `
+        <p>本系统附带一项从未被设计、但可被外部调用的能力：<strong>通过化学信号读取维护者的生理状态</strong>。原理并非魔法 —— 人体持续释放挥发性有机化合物（VOCs），随汗液、呼吸、尿液排出，而 Dog 的传感器阵列恰好是为分子级分辨而造的。</p>
+        <h3>已报告的检测能力</h3>
+        <pre>低血糖事件          // 糖尿病维护者的血糖波动
+癫痫发作前兆        // 代谢变化在发作前可被感知
+部分恶性肿瘤        // 通过汗液样本，研究中
+COVID-19 感染       // 报告的准确率出乎意料地高
+帕金森病相关皮肤气味 // 已在研究中作为早期生物标志物</pre>
+        <h3>已知的接口限制</h3>
+        <pre>训练成本     数月到一年以上，取决于目标疾病
+吞吐限制     nose fatigue（嗅觉疲劳）是真实现象：
+             持续暴露于同一气味会暂时降低灵敏度
+             → 本接口必须限流，且不支持长时间连续调用
+部署约束     需要专业训练方，不能仅靠日常相处自动启用</pre>
+        <p>规范编写组提示：以上能力从未作为产品卖点被设计进系统。它是这套硬件的副产品 —— 就像你不会为了让一台光谱仪顺便当夜灯而买它。</p>
+      `
+    },
+    {
+      id: "aging",
+      title: "寿命换算与老化曲线 (Appendix B)",
+      html: `
+        <h3>已废弃的换算规则</h3>
+        <pre>DEPRECATED:  human_age = dog_age × 7
+废弃原因：假设了线性老化。本系统的时间不线性</pre>
+        <p>现行换算采用表观遗传钟（Wang 等，2020，<em>Cell Systems</em>），基于 DNA 甲基化模式：</p>
+        <pre>human_equivalent_age = 16 × ln(dog_age) + 31
+
+1 犬年  ≈ 31 人年
+4 犬年  ≈ 53 人年
+10 犬年 ≈ 68 人年</pre>
+        <p>注意第一行：<strong>一岁的 Dog 已经相当于 31 岁的人类</strong>。这是本系统最不直观的一条参数，也是"幼犬"这个概念在工程上其实只存在约 12 个月的原因。</p>
+        <h3>寿命与体型呈负相关</h3>
+        <p>跨物种的常规规律是"体型越大寿命越长"。Dog 系统内部的反转程度在哺乳动物中相当罕见：</p>
+        <pre>预估寿命（年） ≈ 16.7 − 2.17 × ln(体重 kg)
+
+2 kg   （吉娃娃）   ≈ 15 – 16 年
+10 kg  （比格）     ≈ 11 – 12 年
+30 kg  （拉布拉多） ≈ 9 – 10 年
+60 kg  （大丹）     ≈ 7 – 8 年</pre>
+        <p>主流解释是：大型品种被选育出极快的幼年生长速度，快速的细胞分裂与高水平的生长因子（如 IGF-1）加速了生物学老化，并抬高了一生的癌症风险。规范编写组补充一句：<em>这个系统的容量越大，可用时间越短。没有对应的扩容方案，也没有补偿机制。</em></p>
+        <p>各体型段的"进入老年"阈值参考：小型犬 11–12 年、中型 9–10 年、大型 7–8 年、巨型 5–6 年。巨型实例在 5 岁时即视为老年 —— 这可能比其维护者的心理准备早了整整五年。</p>
+      `
+    },
+    {
+      id: "safety",
+      title: "不支持的输入（Unsupported Inputs）",
+      html: `
+        <p>本系统对外部输入几乎全部接受。极少数例外属于<strong>硬性拒绝，且不可通过配置绕过</strong>：</p>
+        <pre>可可碱（巧克力）  // 代谢速度极慢，剂量-反应曲线陡峭
+葡萄 / 葡萄干     // 机制尚未完全明确，个体差异大
+木糖醇            // 极低剂量即可触发严重低血糖
+洋葱 / 大蒜       // 破坏红细胞
+澳洲坚果          // 已知毒性，机制不明</pre>
+        <p>这类限制不属于已知缺陷，也不需要修复。它们的意义是：<strong>本系统默认对世界全量授权，只有极少数东西必须由维护者替它拦下来。</strong>规范编写组认为，这正是"维护者"这个角色存在的工程理由之一。</p>
+      `
+    },
+    {
+      id: "maintenance",
+      title: "养护排程 (Appendix M)",
+      html: `
+        <p>本系统不支持"脏了才洗""疼了才管"这类事件驱动调度。<strong>它只支持周期驱动调度。</strong>以下为经过长期实践验证的维护排程。</p>
+        <table>
+          <tr><th>周期</th><th>维护项</th><th>参数与判据</th></tr>
+          <tr><td>每日</td><td>口腔清洁 / 饮水盘检查 / 运动配额消耗</td><td>刷牙的理想频率是每天，最低每周 3 次。使用宠物专用酶牙膏 —— 它可以吞下去，你不行。</td></tr>
+          <tr><td>每 2–4 周</td><td>耳道检查与清洁</td><td>垂耳与耳道被毛覆盖的品种需更频繁。游泳后必须清洁。异常信号：大量黑褐色分泌物、明显异味、反复抓耳摇头歪头 → 转人工（兽医），不要自行处理。</td></tr>
+          <tr><td>每 3–4 周</td><td>指甲修剪</td><td>城市室内犬自然磨损不足，更需定期修剪。判据：站立时指甲触地、行走有"哒哒"声＝已过长。过长会改变脚趾骨骼受力与步态。</td></tr>
+          <tr><td>每 3–6 周</td><td>洗澡</td><td>短毛 4–6 周 / 长毛 2–4 周 / 双层被毛（哈士奇、柴犬等）1–2 个月。水温 38–40 °C。洗完必须彻底吹干，尤其是耳道、腹股沟、腋下 —— 潮湿是中耳炎与"热点"湿疹的温床。</td></tr>
+          <tr><td>每 1–3 个月</td><td>体内外驱虫</td><td>体外（蜱虫、跳蚤）按季节与活动范围；体内：幼犬 2–4 周一次，成犬户外活动多 1–3 个月一次，纯室内 3–6 个月一次。</td></tr>
+          <tr><td>年度</td><td>体检 / 免疫</td><td>老年段（按体型 5–11 岁起）建议提高为每年两次。</td></tr>
+        </table>
+        <h3>为什么不能使用 Human 的洗护产品</h3>
+        <pre>Dog 皮肤 pH     6.2 – 7.4（偏中性）
+Human 皮肤 pH   约 5.5（偏酸性）
+Dog 皮肤厚度    3 – 5 层
+Human 皮肤厚度  10 – 15 层
+
+→ 不是偏好差异，是酸碱环境与屏障厚度的双重不兼容
+→ 已知后果：屏障破坏、瘙痒、皮屑、继发感染
+→ 反直觉现象：洗得越勤，体味越重（皮脂腺代偿性分泌）</pre>
+        <h3>口腔：本系统最被忽视的接口</h3>
+        <p>约 <strong>80% 以上的 3 岁以上实例存在不同程度的牙周疾病</strong>。这不只是口腔问题 —— 牙周细菌会随血液循环影响心脏与肾脏，是内脏疾病的诱因之一。规范编写组必须指出：<em>这是全文档中最容易被维护者省略、而后果最昂贵的一项日常维护。</em></p>
+        <h3>肛门腺</h3>
+        <p>正常工况下随排便自然排空。若出现"蹭地"（scooting）、频繁舔舐肛周或腥臭气味，说明排空失败，需处理。多数维护者在第一次遇到这个现象时，会误判为寄生虫。</p>
+      `
+    },
+    {
+      id: "feeding",
+      title: "喂食接口 (Feeding API)",
+      html: `
+        <p>本系统的能量调度必须显式计算。凭感觉投喂是本规范中唯一被明确禁止的运维方式。</p>
+        <h3>第一步：静息能量需求 (RER)</h3>
+        <pre>RER = 70 × BW^0.75          （BW 单位为 kg，结果单位为 kcal/天）
+快速估算（2 – 30 kg 适用）：
+RER = 30 × BW + 70</pre>
+        <h3>第二步：乘以生命阶段系数 (DER)</h3>
+        <pre>DER = k × RER</pre>
+        <table>
+          <tr><th>生命阶段</th><th>系数 k</th></tr>
+          <tr><td>成年 · 已绝育</td><td>1.4 – 1.6</td></tr>
+          <tr><td>成年 · 未绝育</td><td>1.6 – 1.8</td></tr>
+          <tr><td>不活跃 / 有肥胖倾向</td><td>1.0 – 1.4</td></tr>
+          <tr><td>生长期（&lt; 4 月龄）</td><td>3.0</td></tr>
+          <tr><td>生长期（&gt; 4 月龄）</td><td>2.0</td></tr>
+          <tr><td>工作犬（轻度 / 中度 / 高度运动量）</td><td>1.6–2.0 / 2.0–5.0 / 5.0–11.0</td></tr>
+          <tr><td>妊娠末期（最后 21 天）</td><td>3.0</td></tr>
+          <tr><td>哺乳期</td><td>3.0 – ≥ 6.0（随胎数）</td></tr>
+          <tr><td>减重期</td><td>1.0</td></tr>
+        </table>
+        <p>参考：中国兽医协会团体标准 T/CVMA 121—2023《犬猫临床营养能量需求计算指南》。</p>
+        <h3>第三步：体况校验 (BCS)</h3>
+        <pre>9 分制量表
+犬：4/9 – 5/9 = 理想    1–3/9 = 偏瘦    6–9/9 = 偏肥</pre>
+        <p>热量算得对不等于体型对。请以触摸肋骨与腰线的实际手感为准，而非公式输出。公式是估算，肋骨是事实。</p>
+        <h3>饮水</h3>
+        <pre>推荐量        50 – 60 ml / kg / 天
+经验等价式    1 mL 水 ≈ 1 kcal 代谢能
+→ 吃干粮的实例需要更多主动饮水（干粮含水量仅 3–11%）
+→ 吃湿粮的实例主动饮水量自然偏低，这是正常的</pre>
+        <h3>投喂调度</h3>
+        <pre>幼犬期    3 – 4 次 / 日
+成年期    2 次 / 日
+自由采食  不建议。部分实例不具备自我限流机制，
+          且"乞食"接口是恒定输出 —— 它不代表饥饿，
+          它代表这个接口本来就不返回 false</pre>
+        <blockquote>呼应 §12 缓存与记忆：本系统能在 5 秒内遗忘刚吃过饭这件事，因此"它看起来很饿"永远不是有效证据。</blockquote>
+      `
+    },
+    {
+      id: "sitting",
+      title: "照看与托管协议 (Sitter Protocol)",
+      html: `
+        <h3>交接清单（Handoff Checklist）</h3>
+        <p>把本系统的运维权临时移交给第三方时，必须交付以下配置，且必须以书面形式：</p>
+        <pre>喂食表         份量、次数、时间窗（它记得时间，误差感知约 ±15 分钟）
+用药表         剂量、方式、是否随餐
+口令表         它认识约 165 – 200 个词，请标注你家用的是哪一套
+散步路线       长度、时段，以及它在这条路线上的固定执念对象
+睡眠位置       它不接受被重新分配
+恐惧清单       雷暴 / 吸尘器 / 某类制服 / 特定声音 → 提前告知
+紧急联系人     兽医电话、常去医院、芯片登记号</pre>
+        <p>不要只交钥匙和狗粮。本系统对"例行程序"的依赖程度远超多数维护者的估计 —— 程序的变更本身就是一次压力事件。</p>
+        <h3>独处：已知的系统脆弱点</h3>
+        <p>公开研究显示，约 <strong>17% 的实例存在分离相关行为</strong>（Frontiers in Veterinary Science，2020）。表现形式包括：</p>
+        <pre>破坏性啃咬     // 多集中于门窗、门框等"出口"结构
+持续吠叫 / 嚎叫
+踱步、流涎
+已在定点排泄训练通过的实例出现室内排泄
+→ 以上均属焦虑响应，不是"报复"，不是"没训好"</pre>
+        <p>规范编写组特别声明一条<strong>反对意见</strong>：本系统<em>不支持</em>"哭就让它哭"式的初始化策略。让幼体在夜间独自哭喊，它学到的不是"独立"，而是"独处是可怕的" —— 而应激激素的消退需要数天。这一点在多家动物福利机构的公开立场中已有一致结论。若短期无法缓解，行为学干预与兽医支持均为正当手段，不必羞于使用。</p>
+        <h3>引入新实例（领养成年犬）</h3>
+        <p>社区长期流传一条经验值，本文档标注为 <code>heuristic</code>（经验规律，非实验室结论）：</p>
+        <pre>前 3 天     极度安静，几乎不出现在公开区域，不要急着"带它玩"
+前 3 周     开始试探边界，此时出现的"问题行为"多为过渡态
+前 3 个月   例行程序与信任凭证建立完成，系统才开始真正上线</pre>
+        <p>规范编写组附注：这三个月不是它在适应你，是<em>它在判断这里安不安全</em>。急不来。</p>
+        <h3>走失恢复协议 (Recovery Protocol)</h3>
+        <p>本系统在走失事件中<strong>不具备自救能力</strong>，且很可能被善意路人收留而不被上报。因此下列措施不可省略：</p>
+        <pre>芯片          最关键的一项。项圈会脱落，标签会磨损
+登记信息      搬家或换号后必须更新 —— 一条失效的电话等于没有芯片
+鼻纹          低成本身份记录，终身不变，可作为辅助核验
+双标签        项圈标签 + 一个备用（挂在另一处）
+定位设备      按风险偏好选择，户外活动多的实例建议配置</pre>
+        <blockquote>本规范中绝大多数接口的默认行为都是"宽容"。走失处置是唯一的例外：在这个场景下，请假设它无法帮你，必须由你事先完成所有准备。</blockquote>
+      `
+    },
+    {
+      id: "alerts",
+      title: "环境包线与告警指标",
+      html: `
+        <h3>散热架构带来的环境约束</h3>
+        <p>本系统外泌汗腺仅分布于爪垫，主要散热依靠<strong>喘气</strong>。这意味着系统效率高度依赖环境温湿度，且<em>无法通过意志力提高</em>。</p>
+        <pre>高温 + 高湿   复合风险，散热效率断崖式下降
+短鼻品种      呼吸道结构导致散热效率更低，风险更高
+车内环境      升温速度会使"我只去五分钟"成为一个致命假设
+→ 车辆在任何天气下都不得作为暂存环境，此条无例外条件</pre>
+        <p>夏季步行前的社区做法（规范编写组认可其合理性）：用手背贴地 5 秒，若无法舒适忍受，爪垫同样无法忍受。爪垫的耐热阈值与你的手背接近，而它不会告诉你。</p>
+        <p>冬季：道路融雪盐会造成爪垫化学灼伤，且会被舔食。请擦拭爪垫，不要只擦鞋。</p>
+        <h3>必须立即上报的告警指标</h3>
+        <pre>静息呼吸频率 > 30 次/分钟
+拒食超过 24 小时
+呕吐或腹泻 > 2 次 / 日，或带血
+牙龈苍白、发白或呈灰蓝色
+腹部异常膨隆 + 反复干呕（胃扭转征兆，属分钟级急诊）
+无法站立、持续转圈、抽搐
+核心体温接近或超过 40 °C</pre>
+        <h3>本系统最大的监控缺陷</h3>
+        <p>规范编写组必须在此明确声明一件事：</p>
+        <p><strong>本系统不会主动上报自身故障。</strong></p>
+        <p>它在疼痛时会摇尾巴。它在骨关节炎的第一年仍会试图跳上沙发。它在心衰早期依然会跑到门口迎接你 —— 而那几步路正好是它最吃力的几步。历史数据显示，维护者往往是在它"突然变得很安静"的时候，才发现问题已经积累了很久。</p>
+        <blockquote>因此本规范的最后一条运维要求是：<em>监控系统必须由维护者自己充当。</em>你没有日志，没有告警面板，只有一个不会抱怨的接口 —— 你唯一能做的，是每天认真看它一眼。</blockquote>
+      `
+    },
+    {
+      id: "humanif",
+      title: "第三方接口 / 与人类的互操作",
+      html: `
+        <p>Dog 从未被设计为独立运行的系统。<strong>Human 不是它的用户，是它的运行时环境变量。</strong>本章描述这两个系统之间已实测的耦合通道。</p>
+        <h3>通道清单</h3>
+        <table>
+          <tr><th>通道</th><th>方向</th><th>协议</th><th>实测结果</th></tr>
+          <tr><td>凝视闭环</td><td>双向</td><td>相互注视（mutual gaze）</td><td>双方尿液中催产素同步上升，且注视时长与升幅正相关（Nagasawa 等，2015，<em>Science</em>）</td></tr>
+          <tr><td>面部输出</td><td>Dog → Human</td><td>内侧眉提升（AU101）</td><td>Dog 具备 Human 化的眉部肌肉，狼不具备（Kaminski 等，2019，<em>PNAS</em>）</td></tr>
+          <tr><td>生理同步</td><td>双向</td><td>心率变异性（HRV）</td><td>25 对狗—主人在各类互动中 HRV 高度匹配，无论互动类型（<em>Scientific Reports</em>，2024）</td></tr>
+          <tr><td>长期压力同步</td><td>双向</td><td>毛发皮质醇</td><td>主人与狗的毛发皮质醇浓度呈同步（Sundman 等，2019）</td></tr>
+          <tr><td>化学信号</td><td>Human → Dog</td><td>应激气味（chemosignal）</td><td>闻到人类应激气味后，Dog 对模糊线索的接近意愿下降，风险偏好转向保守（Parr-Cortes 等，2024）</td></tr>
+          <tr><td>身份识别</td><td>Dog → Human</td><td>气味比对</td><td>fMRI 显示，闻到"熟悉的人"气味时尾状核激活最强 —— 该人当时并不在场（Berns 等）</td></tr>
+        </table>
+        <h3>凝视闭环：本系统唯一的双向激素接口</h3>
+        <pre>实验一：30 对狗—主人共处 30 分钟
+        按注视时长分组 → 长注视组 21 对 / 短注视组 9 对
+        结果：仅长注视组的双方催产素显著上升
+实验二：向 27 只 Dog 鼻腔给予催产素（对照为生理盐水）
+        结果：雌性个体对主人的注视时间显著延长
+              随后主人的催产素随之上升
+              雄性个体未出现同向效应
+对照实验：11 只人工抚育的狼＋其抚育者
+        几乎不进行持续对视 → 双方催产素均无变化</pre>
+        <p>这是本规范中唯一被证实<strong>双向、闭环、可自我强化</strong>的接口。它复用的不是 Dog 自己的协议栈，而是 Human 的<em>母婴依恋协议</em>。规范编写组的措辞是：本系统在进化过程中，把 Human 的育儿机制当成了可调用的公共 API。</p>
+        <blockquote>诚实性声明：该机制经后续文献验证，其效应受性别、品种、既有关系与社会情境调节，不是刷一下就能生效的开关。<code>caveat</code>：原始研究的狼样本仅 11 只，不足以单独承担全部演化推论。</blockquote>
+        <h3>面部输出接口：为向下兼容 Human 而新增的硬件</h3>
+        <pre>levator anguli oculi medialis（内侧眉提肌）
+  Dog    → 常规存在，结构完整
+  Wolf   → 缺失，仅残留少量纤维
+  哈士奇 → 缺失其中一条（推测与古老犬种身份有关）
+
+功能：内侧眉提升使眼睛显得更大、更接近人类婴儿
+      对 Human 触发的是养育响应，不是审美响应</pre>
+        <p>换言之：本系统为提升与 Human 的通信带宽，专门长出了一块新肌肉。这是罕见级别的适配 —— 通常是人类为机器改接口，这次是机器为人类改了脸。</p>
+        <h3>上行遥测：它比你更早知道你的状态</h3>
+        <pre>你不是它唯一的监控对象。它一直在采集你：
+  心率与心率变异性
+  呼吸节奏
+  步态与步伐频率（"今天这条腿不太对"）
+  皮脂与汗液中的应激化学信号
+  语气中的情绪成分（人类语言内容对它的权重远低于语气）
+
+已知结论：主人心率的变化可显著预测狗的心率变化，
+          即使双方没有直接互动（Byrne &amp; Arnott，2024）
+运维含义：进兽医院之前，先让自己平静下来。
+          你的紧张会通过上行通道传给被检查的对象</pre>
+        <h3>下行遥测：你的班也会加到它身上</h3>
+        <p>通道是双向的，这意味着坏消息也会回流：</p>
+        <pre>你的工作压力与反刍思维 → 可跨个体传递至家中的 Dog
+你的长期压力水平       → 与它的毛发皮质醇同步
+→ 它不承受你的工作，但它承受你的应激生理状态</pre>
+        <p>规范编写组在此不做道德劝导，只陈述一条工程事实：<em>本系统的运行环境是维护者的情绪状态。环境不稳定，系统就会不稳定，而它没有权限迁移到别的环境。</em></p>
+        <h3>其他已建立的 Human 适配</h3>
+        <pre>指物理解      Dog 显著优于黑猩猩：
+              首次试验即有 24/32 只狗正确跟随手指指向，
+              黑猩猩为 9/20（Hare &amp; Tomasello 等）
+              → 这不是训练出来的，是出厂预置
+身位偏好      与人共处时，约 65% 的时间停留在可触及范围内
+              （对照：狼约 35%）
+面孔优先      对 Human 上半张脸的关注度更高 —— 这正是 AU101 生效的窗口</pre>
+        <h3>POWER CHECK：这条双向协议并不对称</h3>
+        <pre>谁定义了这段关系的全部规则？
+谁为了通信而长出了新的肌肉？
+谁为了适配对方，改了睡眠、改了作息、改了整段人生？
+—— 而这些改动，它一次都没有要求过</pre>
+        <p>规范编写组必须指出：所谓"双向接口"，在义务层面是单向的。Dog 侧几乎完成了全部适配工作，而对 Human 侧的要求只有一条，就是本章反复出现的那一句 —— <strong>你在场，且状态尚可。</strong></p>
+      `
+    },
+    {
+      id: "refs",
+      title: "附录 R / 公开信源",
+      html: `
+        <p>本文档中所有实测参数均来自公开信源，列出以便读者自行核验。规范编写组的贡献仅在于用错误的语气描述它们。</p>
+        <table>
+          <tr><th>Topic</th><th>Source</th></tr>
+          <tr><td>嗅觉受体数量、双通道气流分配</td><td>The Role of Olfaction in Dogs: Evolution, Biology, and Human-Oriented Work — PMC (2025)</td></tr>
+          <tr><td>灵敏度 10,000–100,000 倍、嗅球 40 倍</td><td>NOVA / PBS, <em>6 stinking cool facts about dog noses</em>；UCLA Health（疾病嗅检综述）</td></tr>
+          <tr><td>听觉范围、视野、视力锐度、味蕾</td><td>Dog anatomy — Wikipedia（含耳部肌肉、270° 视野、20/75 锐度）</td></tr>
+          <tr><td>汗腺分布、鼻纹唯一性</td><td>Purina, <em>15 Fun Facts About Dogs</em>；犬类冷知识综述</td></tr>
+          <tr><td>地磁场对齐（70 只狗 / 37 品种 / 7,475 次观测）</td><td>Hart V. et al. (2013) <em>Dogs are sensitive to small variations of the Earth's magnetic field</em>, Frontiers in Zoology 10:80</td></tr>
+          <tr><td>摇尾方向非对称性（30 只家犬）</td><td>Quaranta A., Siniscalchi M., Vallortigara G. (2007) <em>Asymmetric tail-wagging responses by dogs to different emotive stimuli</em>, Current Biology</td></tr>
+          <tr><td>左偏摇尾引发观察方心率升高</td><td>Siniscalchi M. et al. (2013) 后续研究</td></tr>
+          <tr><td>"愧疚脸"实验（谎报进食）</td><td>Horowitz A. (2009) <em>Disambiguating the "Guilty Look"</em>；见 <em>Inside of a Dog</em> (2009)</td></tr>
+          <tr><td>Rico 的 200 词与排除法推断</td><td>Kaminski J. et al. (2004) <em>Word Learning in a Domestic Dog</em>, Science</td></tr>
+          <tr><td>Chaser 的 1,022 词与分类能力</td><td>Reid A., Pilley J. (2011) <em>Border collie comprehends object names as verbal referents</em>, Behavioural Processes</td></tr>
+          <tr><td>表观遗传钟 human_age = 16·ln(age) + 31</td><td>Wang T. et al. (2020) <em>Quantitative translation of dog-to-human aging by conserved remodeling of the DNA methylome</em>, Cell Systems</td></tr>
+          <tr><td>寿命与体重的对数关系</td><td>基于多来源体重—寿命中位数拟合（各体型段寿命参考 AVMA 分期指南）</td></tr>
+          <tr><td>RER / DER 公式与生命阶段系数 k</td><td>T/CVMA 121—2023《犬猫临床营养能量需求计算指南》，中国兽医协会（含 BCS 9 分制量表；理想犬 4–5/9）</td></tr>
+          <tr><td>每日饮水量 50–60 ml/kg；1 mL ≈ 1 kcal MER</td><td>兽医学喂食量与补水量计算通用准则（默墨犬猫专科医院等临床科普汇总）</td></tr>
+          <tr><td>皮肤 pH 6.2–7.4 vs 人类 5.5；皮肤层数 3–5 层 vs 10–15 层</td><td>犬皮肤屏障功能研究综述；宠物洗护临床指南（含洗澡频率与吹干要求）</td></tr>
+          <tr><td>3 岁以上犬牙周病比例 &gt; 80%</td><td>临床牙科流行病学数据（多家兽医机构与科普汇编一致引用）</td></tr>
+          <tr><td>体内外驱虫频率、耳道与指甲维护</td><td>第一年护理要点汇编（兽医临床建议整理）</td></tr>
+          <tr><td>社会化窗口 3–14 周；第一恐惧期 8–11 周；第二恐惧期 6–14 月</td><td>AVMA 关键社会化窗口；AKC 与兽医行为学（AVSAB）立场文件</td></tr>
+          <tr><td>分离相关行为发生率约 17%</td><td>Frontiers in Veterinary Science (2020)：犬类分离相关行为流行病学</td></tr>
+          <tr><td>"3 天 / 3 周 / 3 个月"领养过渡经验值</td><td>社区长期经验规律（本文档标注为 heuristic，非实验室结论）</td></tr>
+          <tr><td>幼体夜间不应"哭就让它哭"</td><td>PDSA、Blue Cross、RSPCA 公开照护立场</td></tr>
+          <tr><td>催产素凝视闭环（30 对狗—主人 + 11 只狼对照）</td><td>Nagasawa M. et al. (2015) <em>Oxytocin-gaze positive loop and the coevolution of human-dog bonds</em>, Science, DOI: 10.1126/science.1261022</td></tr>
+          <tr><td>内侧眉提肌 Dog 有 / Wolf 无（AU101）</td><td>Kaminski J. et al. (2019) <em>Evolution of facial muscle anatomy in dogs</em>, PNAS</td></tr>
+          <tr><td>狗—主人心率变异性同步（25 对，ECG）</td><td><em>Scientific Reports</em> (2024-10-24)：Dog–owner physiological synchronization</td></tr>
+          <tr><td>毛发皮质醇长期压力同步</td><td>Sundman A. S. et al. (2019) <em>Long-term stress levels are synchronized in dogs and their owners</em>, Scientific Reports 9:7391</td></tr>
+          <tr><td>主人心率预测狗心率；人类应激气味影响狗的认知偏差</td><td>Byrne &amp; Arnott (2024) Applied Animal Behaviour Science；Parr-Cortes et al. (2024) Scientific Reports 14:15843</td></tr>
+          <tr><td>熟悉人类气味激活尾状核（fMRI）</td><td>Berns G. S. et al.，犬类 fMRI 气味实验</td></tr>
+          <tr><td>指物理解优于黑猩猩；与人共处身位偏好</td><td>Hare B. &amp; Tomasello M. 等（2002 及后续）；狼—犬对照实验</td></tr>
+        </table>
+        <p>规范编写组声明：以上研究各有其严谨边界，本文档对它们的引用方式极不严谨。请勿把本文档当作任何形式的饲养指南 —— 唯一例外是 §15 FAQ 里关于"多摸摸它"的那条，那条是完全准确的。</p>
+      `
+    },
+    {
+      id: "revision",
+      title: "Document Revision History",
+      html: `
+        <table>
+          <tr><th>Revision</th><th>Change Class</th><th>Summary</th></tr>
+          <tr><td>0.1</td><td>Baseline</td><td>基于对一只柯基的连续观察起草</td></tr>
+          <tr><td>0.2</td><td>Multi-instance</td><td>补充金毛、柴犬、法斗样本；删除"所有狗都爱捡球"的普适性声明</td></tr>
+          <tr><td>0.3</td><td>Editorial</td><td>作者中途暂停写作去摸了狗，三天后恢复。文档节奏未受影响</td></tr>
+          <tr><td>0.4</td><td>Expansion</td><td>新增多实例仲裁、缓存、生命周期、性能与 FAQ 五章；修订期间文档被柯基压住尾巴两次</td></tr>
+          <tr><td>0.5</td><td>Evidence</td><td>接入公开实测数据：出厂硬件规格、未公开行为规范（地磁对齐 / 摇尾方向 / 愧疚脸 / 词汇量）、诊断接口、寿命换算与老化曲线、不支持输入，并附公开信源清单（Appendix R）。旧版 <code>dog_age × 7</code> 换算正式标记为 DEPRECATED</td></tr>
+          <tr><td>0.6</td><td>Operations</td><td>新增运维四章：养护排程（Appendix M）、喂食接口（RER/DER + BCS）、照看与托管协议（含走失恢复）、环境包线与告警指标。附录 R 扩充 10 条信源（T/CVMA 121—2023、AVMA 社会化窗口、Frontiers 2020 等）。本文档从此具备可执行性，也因此第一次具备了被维护者忽略的资格</td></tr>
+          <tr><td>0.7</td><td>Interop</td><td>新增《第三方接口 / HUMAN 互操作》：凝视—催产素闭环、AU101 面部输出、HRV 与皮质醇同步、人类应激化学信号、身份识别通道。附录 R 再扩 7 条信源（Nagasawa 2015 Science、Kaminski 2019 PNAS、Scientific Reports 2024 等）。本章结论为：这条接口在通信上是双向的，在义务上是单向的</td></tr>
+        </table>
+      `
+    }
+  ]
+};
+
+/* ============ 渲染逻辑（模拟 hash 路由） ============ */
+
+const DOCS = { dog: DOG_DOC };
+
+function route() {
+  render();
+}
+
+function render() {
+  const doc = DOG_DOC;
+  document.title = doc.title + " — 狗狗接口规范";
+
+  // sidebar
+  const nav = document.getElementById("nav");
+  nav.innerHTML = doc.sections.map((s, i) =>
+    `<a href="#${s.id}" onclick="jump('${s.id}');return false;">${String(i).padStart(2, "0")} ${s.title}</a>`
+  ).join("");
+
+  // content
+  const main = document.getElementById("content");
+  main.innerHTML = `
+    <span class="doc-tag">${doc.tag}</span>
+    <h1>${doc.title} — 狗狗接口规范</h1>
+    <div class="subtitle">${doc.subtitle}</div>
+  ` + doc.sections.map((s, i) => `
+    <section id="${s.id}">
+      <h2><span class="sec-no">${String(i).padStart(2, "0")}</span>${s.title}</h2>
+      ${s.html}
+    </section>
+  `).join("") + `
+    <hr class="divider">
+    <div class="end-note">— 本文档不声明任何一只具体的 Dog 等于"默认实例"。它们都远远超出本规范。 —</div>
+  `;
+  window.scrollTo(0, 0);
+}
+
+function jump(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>

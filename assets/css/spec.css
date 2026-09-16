@@ -275,6 +275,20 @@ th { background: var(--code-bg); font-weight: 600; }
 .console-out .status-bad { color: #fca5a5; }
 .console-out .note { color: #6b7280; }
 
+/* ---------- PART 分隔标题（正文由 render.js 按 chapters[].part 插入） ---------- */
+.part-head {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  margin: 54px 0 20px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.part-roman {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+  color: var(--accent); background: var(--accent-soft);
+  padding: 3px 9px; border-radius: 4px; white-space: nowrap;
+}
+.part-title { font-size: 17px; font-weight: 700; }
+.part-note { font-size: 13px; color: var(--muted); }
+
 /* ---------- 打印 ---------- */
 @media print {
   .topbar, aside, .no-print { display: none !important; }

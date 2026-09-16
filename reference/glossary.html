@@ -23,7 +23,8 @@
 ≈     结构类比；不声明底层机制或协议等价
 ->    映射、路由或因果方向；强度由 Context 决定
 !=    禁止自动 Cast 的关系
-§     章节定位符；跨修订版本不保证稳定</pre>
+§     章节定位符；跨修订版本不保证稳定
+      —— 引用别的版本时请改用规范 ID，见 reference/norm-ids.html</pre>
 
     <h2>规范强度</h2>
     <table class="spec-strength">
@@ -48,7 +49,7 @@
       <tr><td>Projection</td><td>某个系统对实例的局部表示，不等于实例本身</td></tr>
       <tr><td>Rate Limit</td><td>可持续承受的调用上限</td></tr>
       <tr><td>Endpoint</td><td>可被外部路由或调用的接触面，不要求等同于 URI</td></tr>
-      <tr><td>Appendix H</td><td>生命周期 Changelog，不等于文档版本</td></tr>
+      <tr><td>生命周期 Changelog</td><td>那个系统自身的版本序列，见正文 <code>DOG-lifecycle</code>（<a href="../spec/dog.html#lifecycle">§2.8</a>）。它不等于本文档的修订号</td></tr>
       <tr><td>Sniff-Handshake</td><td>实例间身份核验；约 15 秒完成全量信息同步</td></tr>
     </table>
 
@@ -85,6 +86,21 @@ Compliance   != Legitimacy
 被适配的一方，能否有意义地拒绝？</pre>
     <p>DOG 侧的答案：</p>
     <pre>DOG     —— 规则由维护者定；适配成本几乎全部由 Dog 侧承担；它从未申请过任何权利</pre>
+
+    <h2>引用与版本</h2>
+    <p>本项目里同时存在几个都叫「版本」的东西，它们数值上互不相关。引用之前先分清你要引的是哪一个：</p>
+    <table>
+      <tr><th>轴</th><th>谁在记录</th><th>跨版本是否稳定</th></tr>
+      <tr><td>文档修订（<code>0.1.0</code> → <code>0.14</code>）</td><td><a href="../versions.html">历史版本</a></td><td>它就是版本编号本身</td></tr>
+      <tr><td>规范 ID（如 <code>DOG-peripherals</code>）</td><td><a href="norm-ids.html">规范 ID 登记表</a></td><td><strong>稳定</strong> —— 取自章节锚点，一经分配不再更改</td></tr>
+      <tr><td>节号（<code>§4.7</code> · 附录 <code>R</code>）</td><td>运行时按数组顺序生成</td><td><strong>不稳定</strong> —— 任何插入或删除都会让其后的编号整体平移</td></tr>
+      <tr><td>系统运行版本</td><td>正文 <code>DOG-lifecycle</code>（<a href="../spec/dog.html#lifecycle">§2.8</a>）</td><td>与本项目无关</td></tr>
+    </table>
+    <p><strong>跨版本引用 SHOULD 用规范 ID，MUST NOT 只用节号。</strong>这不是一条风格建议：附录字母按数组位置派生，
+    中间删掉一条会使其后所有字母整体前移，全站十几处「附录 X」引用会同时失效 —— 本项目真实发生过一次，
+    当时的处理方式是就地改写内容、保持字母不动。节号同理，本项目已经整体改过一次号
+    （0.14 起由两位列号改为 <code>§X.Y</code>，迁移规则见 CHANGELOG 的 0.14 条目）。</p>
+    <p>确实要写节号时，SHOULD 同时写出规范 ID，例如「§4.7 外设总线（<code>DOG-peripherals</code>）」。</p>
 
     <hr class="divider">
     <div class="end-note">术语的用处不是把生物说成机器，而是看清：机器不会这样对你，而它们会。</div>

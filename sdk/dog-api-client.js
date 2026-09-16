@@ -93,7 +93,7 @@
         "Correlation with actual misbehavior: none",
         "Note: 被冤枉的实例，表情往往更夸张"
       ],
-      note: "所谓「愧疚脸」响应的是你的语气，不是它的行为。参见 §16。"
+      note: "所谓「愧疚脸」响应的是你的语气，不是它的行为。参见 §3.1。"
     },
     "DELETE /api/peace": {
       status: 409,

@@ -93,7 +93,7 @@
     <span class="doc-tag">TOOL / 实算</span>
     <h1>DOG API 外设总线控制台</h1>
     <p>
-      §31 的实现。左侧填入一份档案与一份外设清单，右侧立刻产出序列闭合检查、配额承接上限、逐设备门槛判定与磨损预测。
+      §4.7 的实现。左侧填入一份档案与一份外设清单，右侧立刻产出序列闭合检查、配额承接上限、逐设备门槛判定与磨损预测。
       全部由 <code>assets/js/peripherals.js</code> 完成 —— 页面上没有任何写死的配额或门槛。
     </p>
     <p style="font-size:13.5px;color:var(--faint);margin-top:12px;">
@@ -160,7 +160,7 @@
 
       <div class="panel">
         <h3>④ 分诊标记 · Triage</h3>
-        <p class="note" style="margin:0 0 10px;">按 §29，P0 / P1 会短路全部接口 —— 外设清单同样不例外。下拉里的每一条都取自引擎的分诊表。</p>
+        <p class="note" style="margin:0 0 10px;">按 §4.5，P0 / P1 会短路全部接口 —— 外设清单同样不例外。下拉里的每一条都取自引擎的分诊表。</p>
         <div class="fld"><label>当前状态</label>
           <select id="f-tri">
             <option value="3" selected>常规</option>
@@ -559,7 +559,7 @@
       ? "<table><tr><th>设备</th><th>预算</th><th>区间出处</th></tr>" + wearRows.join("") + "</table>"
       : "<p>清单里没有可折算磨损的类别。</p>") +
       '<p style="margin-top:12px;">啃咬强度取 <strong>' + esc(inp.profile.chewClass) + "/5</strong>，会话频次按各设备自己的「次/日」折算。" +
-      "但无论算出多少天，§31 的那条硬规定都压在上面：</p>" +
+      "但无论算出多少天，§4.7 的那条硬规定都压在上面：</p>" +
       '<p><strong>退役判据不看日历，看外观。</strong>使用前检查四件事：破口、尖点、松散纤维、外露部件。' +
       "日历是预算，检查才是判据。本页给的是前者，而它替你做不了后者。</p>";
 

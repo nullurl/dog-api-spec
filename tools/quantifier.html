@@ -76,7 +76,7 @@
     <span class="doc-tag">TOOL / 实算</span>
     <h1>DOG API 量化评估器</h1>
     <p>
-      左侧填入一份 profile 与当日实际值，右侧立刻产出 §29 定义的全部派生指标、三项评分与分诊结论。
+      左侧填入一份 profile 与当日实际值，右侧立刻产出 §4.5 定义的全部派生指标、三项评分与分诊结论。
       计算全部由 <code>assets/js/quantify.js</code> 完成 —— 页面上没有任何写死的数字。
     </p>
     <p style="font-size:13.5px;color:var(--faint);margin-top:12px;">
@@ -342,7 +342,7 @@
         '"><strong>451 VET VISIT REQUIRED</strong><br>分诊结论：<strong>' + r.assessments.triage.code + " " +
         r.assessments.triage.label + "</strong> —— " + esc(r.assessments.triage.note) +
         "<br>命中条目：" + r.assessments.triage.hits.map(function (h) { return esc(h.label); }).join("；") +
-        "<br><em>按 §29 的短路规则，其余评分接口在此状态下不再有意义，下方分数已置灰。</em></div>";
+        "<br><em>按 §4.5 的短路规则，其余评分接口在此状态下不再有意义，下方分数已置灰。</em></div>";
     } else if (r.assessments.triage.code === "P2") {
       $("short").innerHTML = '<div class="banner p1"><strong>' + r.assessments.triage.code + " " +
         r.assessments.triage.label + "</strong> —— " + esc(r.assessments.triage.note) +

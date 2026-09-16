@@ -3,7 +3,7 @@
  * 由引擎的参数注册表（assets/js/quantify.js 的 PARAMS）反向生成：
  *   1. 附录 P 的表格与等级分布
  *   2. 各文档中所有"共 N 项 / A 级 N 项"的计数声明
- *   3. §29 内部的等级分布代码块
+ *   3. §4.5 内部的等级分布代码块
  *
  * 目的：让参数只有一份事实源。改参数请只改 quantify.js，然后跑本脚本。
  *
@@ -88,22 +88,22 @@ edits.forEach(([file, pairs]) => {
   console.log("  已同步", file);
 });
 
-/* ---------- 3. §29 内部的等级分布代码块 ---------- */
+/* ---------- 3. §4.5 内部的等级分布代码块 ---------- */
 const dd = ROOT + "assets/data/dog.js";
 const raw = fs.readFileSync(dd, "utf8");
 const doc = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
 const s29 = doc.sections.find((x) => x.id === "quant");
 if (!s29) {
-  console.log("  ! 未找到 §29（id: quant）");
+  console.log("  ! 未找到 §4.5（id: quant）");
 } else {
   const r29 = /本方案中 A 级指标（公式有出处）\s*：\d+ 项\n本方案中 B 级指标（指南共识）\s*：\d+ 项\n本方案中 C 级指标（经验 \/ 本项目定义）\s*：\d+ 项(\n本方案合计注册参数\s*：\d+ 项)?/;
   const n29 = "本方案中 A 级指标（公式有出处）        ：" + A + " 项\n本方案中 B 级指标（指南共识）          ：" + B + " 项\n本方案中 C 级指标（经验 / 本项目定义） ：" + C + " 项\n本方案合计注册参数                     ：" + T + " 项";
   if (r29.test(s29.html)) {
     s29.html = s29.html.replace(r29, n29);
     fs.writeFileSync(dd, "/* DOG API 规范数据 — 由 legacy 单文件版本提取生成 */\nwindow.DOG_DOC = " + JSON.stringify(doc, null, 2) + ";\n");
-    console.log("  已同步 §29 等级分布");
+    console.log("  已同步 §4.5 等级分布");
   } else {
-    console.log("  · §29 无匹配（或已是新文本）");
+    console.log("  · §4.5 无匹配（或已是新文本）");
   }
 }
 

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>历史版本 — DOG API | DOG API</title>
+<meta name="description" content="DOG API 的修订序列、三个互不相干的版本轴，以及为什么跨版本引用不能写节号。附单文件形态存档入口。">
+<link rel="stylesheet" href="assets/css/spec.css">
+<style>
+  .single main { max-width: 1000px; margin: 0 auto; padding: 44px 28px 140px; }
+  .vnum { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+  .vcls { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: var(--code-bg); color: var(--code-ink); white-space: nowrap; }
+  .vcls.restructure { background: #e0e7ff; color: #3730a3; }
+  .vcls.content { background: #dcfce7; color: #15803d; }
+  .vcls.engine { background: #fef3c7; color: #92400e; }
+  .vcls.verified { background: #f1f2f4; color: #4b5563; }
+  .first { background: var(--accent-soft); }
+</style>
+</head>
+<body>
+
+<div class="single">
+  <main id="content">
+    <span class="doc-tag">PROJECT / VERSIONS</span>
+    <h1>历史版本</h1>
+    <div class="subtitle">修订序列、三个互不相干的版本轴，以及存档入口。完整变更条目在 <code>docs/CHANGELOG.md</code>，本页只做索引。</div>
+
+    <h2>版本轴</h2>
+    <p>这个项目里同时存在几个都叫「版本」的东西。它们在数值上没有任何关系，混用会让引用失效，所以分开列：</p>
+    <table>
+      <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
+      <tr>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.14</td>
+        <td><code>docs/CHANGELOG.md</code></td>
+        <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
+      </tr>
+      <tr>
+        <td><strong>规范 ID</strong></td><td>章节锚点，写作 <code>DOG-<em>id</em></code>，如 <code>DOG-peripherals</code></td>
+        <td>数据文件里每个章节的 <code>id</code></td>
+        <td>几乎不变。跨版本引用 SHOULD 用它，登记表见 <a href="reference/norm-ids.html">规范 ID 登记表</a>。</td>
+      </tr>
+      <tr>
+        <td><strong>节号</strong></td><td>正文 <code>§1.1</code>–<code>§5.2</code> · 附录 <code>A</code>–<code>R</code><br><span style="color:var(--muted);font-size:12.5px;">0.13 及更早：两位列号 <code>00</code>–<code>33</code></span></td>
+        <td>数据文件的数组顺序，运行时生成</td>
+        <td>只是位置。任何一次插入或删除都会让其后全部平移 —— 本项目已在 0.14 整体改过一次号。</td>
+      </tr>
+      <tr>
+        <td><strong>系统运行版本</strong></td><td>无编号</td>
+        <td>正文 <code>DOG-lifecycle</code></td>
+        <td>那个系统自己经历的事（装配、上线、老化、退役），与本项目无关。</td>
+      </tr>
+    </table>
+
+    <blockquote><strong>跨版本引用不能写节号。</strong>这不是一条风格建议，是本项目真实踩过的坑：附录字母按数组位置派生，中间删掉一条会使其后所有字母整体前移，全站十几处「附录 X」引用同时失效。当时的处理方式不是删条目，而是就地改写内容、保持字母不动。同类问题对正文节号一样成立 —— 文本已从 27 章长到 34 章，插入都发生在中间；而在 0.14，正文节号又从两位列号整体改成了 <code>§X.Y</code>，全仓库 141 处引用随之改写。旧条目里写的那个编号（当时叫 <code>23</code>）在现在的站点上既不是 <code>§3.8</code>，也不指向任何章节 —— 除非你手上有那张迁移表。</blockquote>
+
+    <h2>修订序列</h2>
+    <table>
+      <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
+      <tr class="first">
+        <td class="vnum">0.14</td><td><span class="vcls restructure">Provenance</span></td>
+        <td>把历史形态冻成 <code>archive/</code>，给每个章节一个不随位置变化的规范 ID，新增本页；
+        <strong>正文并入 5 个 PART，节号由两位列号改为 <code>§X.Y</code></strong>。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.13</td><td><span class="vcls restructure">仓库结构</span></td>
+        <td>按运行时 / 页面 / 脚本 / 文档四层重排目录，统一命名，并把被 <code>.gitignore</code> 挡住的几何文档提升为仓库内文档。<strong>正文、编号与页面形态未动。</strong></td>
+      </tr>
+      <tr>
+        <td class="vnum">0.12</td><td><span class="vcls engine">Hardware</span></td>
+        <td>外设总线：14 类设备、6 种角色、5 阶段序列、13 道门槛、33 种失效模式与磨损预测。<em>序列闭合</em>定为 MUST。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.11</td><td><span class="vcls engine">Presentation</span></td>
+        <td>图表图鉴：19 张手写 SVG，一套七级灰阶，数据实时取自内核。四处刻意偏离（字体不外链、K 线不用涨跌色、取整要认账、极值不画）写在页底。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.10</td><td><span class="vcls engine">Expression</span></td>
+        <td>表情引擎：13 维参数向量渲染 24×24 像素 SVG，14 个状态。<code>SICK</code> 的参数向量与健康基线逐位相同，差异只在 <code>suppressed</code> 标志位。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.9.2</td><td><span class="vcls verified">Consistency</span></td>
+        <td>参数注册表收敛为单一事实源：附录 P 的表格改由引擎生成，不再手写。此前两份注册表对「睡眠占比」的来源等级存在分歧。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.9.1</td><td><span class="vcls verified">Verified</span></td>
+        <td>一轮校验：JS 语法、量化公式断言、SDK 量化端点联调、短路规则，并修正三处过期的附录字母标注。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.9.0</td><td><span class="vcls engine">Quantified</span></td>
+        <td>量化引擎：参数注册表、11 条派生公式、3 个评分模型与分诊矩阵。文档里的数字从此可<strong>算</strong>，而不是被引用。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.8.0</td><td><span class="vcls restructure">Restructure</span></td>
+        <td>从单文件文档转为静态站点：共享样式与渲染器、正文数据模块化、附录独立成模块。单文件旧版迁入 <code>legacy/</code> —— 即本仓库 <a href="archive/README.md">存档</a> 里那一份。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.7.0</td><td><span class="vcls content">Content</span></td>
+        <td>附录扩充至 A–J，并新增速查卡、错误码对照、术语表、参考客户端、交互控制台与 OpenAPI 描述。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.6.0</td><td><span class="vcls content">Interop</span></td>
+        <td>《第三方接口 / 与人类的互操作》：凝视—催产素闭环、AU101 内侧眉提肌、HRV 与皮质醇同步、身份识别通道。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.5.0</td><td><span class="vcls content">Operations</span></td>
+        <td>运维四章：养护排程、喂食接口（RER / DER / BCS）、照看与托管协议（含走失恢复）、环境包线与告警指标。首次附公开信源清单。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.4.0</td><td><span class="vcls content">Evidence</span></td>
+        <td>接入实测数据：出厂硬件规格、地磁对齐、摇尾方向编码、愧疚脸、词汇量、诊断接口、寿命换算与老化曲线。旧的 <code>dog_age × 7</code> 正式标记为 DEPRECATED。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.3.0</td><td><span class="vcls content">Expansion</span></td>
+        <td>多实例部署与嫉妒仲裁、缓存与记忆、生命周期、性能与容量、FAQ 五章。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.2.0</td><td><span class="vcls">Variant</span></td>
+        <td>上游的变体版本。与本子集无关，已略去；<strong>版本号保留</strong>以维持修订序列连续。</td>
+      </tr>
+      <tr>
+        <td class="vnum">0.1.0</td><td><span class="vcls">Baseline</span></td>
+        <td>初版单文件：基础章节、错误码全表、不可 Cast 关系、POWER CHECK 与修订历史。<strong>单文件形态的最后两版见存档。</strong></td>
+      </tr>
+    </table>
+
+    <h2>存档</h2>
+    <p>0.8.0 之前的形态是<strong>一个 HTML 文件</strong>。它没有被丢弃：</p>
+    <table>
+      <tr><th>文件</th><th>是什么</th><th>说明</th></tr>
+      <tr>
+        <td><a href="archive/single-file-v0.7.html"><code>archive/single-file-v0.7.html</code></a></td>
+        <td>单文件形态的最后一版 · 正文 27 章</td>
+        <td>自包含，无外部依赖，离线可读。正文正是当前站点数据的提取来源。</td>
+      </tr>
+      <tr>
+        <td><a href="archive/README.md"><code>archive/README.md</code></a></td>
+        <td>存档说明</td>
+        <td>存档规则、版本轴，以及与本仓库范围有关的两处偏离记录。</td>
+      </tr>
+      <tr>
+        <td><a href="docs/CHANGELOG.md"><code>docs/CHANGELOG.md</code></a></td>
+        <td>完整变更记录</td>
+        <td>每个版本的完整条目。本页的摘要都从那里来。</td>
+      </tr>
+    </table>
+
+    <blockquote>存档目录的性质是<strong>只增不改</strong>。它存在的意义是「当时是什么样」，不是「现在应该是什么样」。要修正历史记载，改 CHANGELOG，不要改存档 —— 否则「可核验」这个说法就没了依据。</blockquote>
+
+    <hr class="divider">
+    <div class="end-note">
+      本页为修订序列的索引视图 · 完整条目以 <code>docs/CHANGELOG.md</code> 为准 ·
+      文件布局的迁移对照见 0.13 条目
+    </div>
+  </main>
+</div>
+
+<script src="assets/js/render.js"></script>
+<script>SpecSite.mountChrome({ root: "", active: "versions" });</script>
+
+</body>
+</html>

@@ -1,0 +1,389 @@
+{
+  "$comment": "规范 ID 注册表。由 scripts/sync-norm-ids.js 从数据模块生成，请勿手工编辑。规范 ID 取自章节锚点，一经分配不再更改；节号只是当前位置，会随插入删除整体平移。",
+  "generatedFrom": [
+    "assets/data/dog.js",
+    "assets/data/appendices.js"
+  ],
+  "parts": [
+    {
+      "index": 0,
+      "roman": "I",
+      "title": "系统概述",
+      "note": "它是什么，以及它不承诺什么"
+    },
+    {
+      "index": 1,
+      "roman": "II",
+      "title": "接口规范",
+      "note": "可被外部调用的那一面：端点、错误码、约定与生命周期"
+    },
+    {
+      "index": 2,
+      "roman": "III",
+      "title": "实测与运维",
+      "note": "哪些行为有文献支撑，以及日常要做什么"
+    },
+    {
+      "index": 3,
+      "roman": "IV",
+      "title": "观测与量化",
+      "note": "把行为、生理与决策变成可计算的量"
+    },
+    {
+      "index": 4,
+      "roman": "V",
+      "title": "出处与修订",
+      "note": "哪些是真的，以及这份文档自己怎么改的"
+    }
+  ],
+  "sections": [
+    {
+      "normId": "DOG-about",
+      "anchor": "about",
+      "part": "I",
+      "sectionNumber": "1.1",
+      "title": "关于 Dog"
+    },
+    {
+      "normId": "DOG-objective",
+      "anchor": "objective",
+      "part": "I",
+      "sectionNumber": "1.2",
+      "title": "系统目标"
+    },
+    {
+      "normId": "DOG-capabilities",
+      "anchor": "capabilities",
+      "part": "I",
+      "sectionNumber": "1.3",
+      "title": "默认能力"
+    },
+    {
+      "normId": "DOG-hw",
+      "anchor": "hw",
+      "part": "I",
+      "sectionNumber": "1.4",
+      "title": "出厂硬件规格"
+    },
+    {
+      "normId": "DOG-limits",
+      "anchor": "limits",
+      "part": "I",
+      "sectionNumber": "1.5",
+      "title": "已知限制"
+    },
+    {
+      "normId": "DOG-consistency",
+      "anchor": "consistency",
+      "part": "I",
+      "sectionNumber": "1.6",
+      "title": "系统稳定性 ≠ v1.0.0"
+    },
+    {
+      "normId": "DOG-endpoints",
+      "anchor": "endpoints",
+      "part": "II",
+      "sectionNumber": "2.1",
+      "title": "接口定义"
+    },
+    {
+      "normId": "DOG-errors",
+      "anchor": "errors",
+      "part": "II",
+      "sectionNumber": "2.2",
+      "title": "错误码"
+    },
+    {
+      "normId": "DOG-compat",
+      "anchor": "compat",
+      "part": "II",
+      "sectionNumber": "2.3",
+      "title": "一个根本性的兼容性问题"
+    },
+    {
+      "normId": "DOG-conventions",
+      "anchor": "conventions",
+      "part": "II",
+      "sectionNumber": "2.4",
+      "title": "Protocol Conventions"
+    },
+    {
+      "normId": "DOG-multi",
+      "anchor": "multi",
+      "part": "II",
+      "sectionNumber": "2.5",
+      "title": "多实例部署 / 嫉妒仲裁协议"
+    },
+    {
+      "normId": "DOG-power",
+      "anchor": "power",
+      "part": "II",
+      "sectionNumber": "2.6",
+      "title": "Interpretive & Power Checks"
+    },
+    {
+      "normId": "DOG-cache",
+      "anchor": "cache",
+      "part": "II",
+      "sectionNumber": "2.7",
+      "title": "缓存与记忆"
+    },
+    {
+      "normId": "DOG-lifecycle",
+      "anchor": "lifecycle",
+      "part": "II",
+      "sectionNumber": "2.8",
+      "title": "生命周期"
+    },
+    {
+      "normId": "DOG-perf",
+      "anchor": "perf",
+      "part": "II",
+      "sectionNumber": "2.9",
+      "title": "性能与容量"
+    },
+    {
+      "normId": "DOG-faq",
+      "anchor": "faq",
+      "part": "II",
+      "sectionNumber": "2.10",
+      "title": "FAQ"
+    },
+    {
+      "normId": "DOG-undoc",
+      "anchor": "undoc",
+      "part": "III",
+      "sectionNumber": "3.1",
+      "title": "未公开行为规范"
+    },
+    {
+      "normId": "DOG-diagnostic",
+      "anchor": "diagnostic",
+      "part": "III",
+      "sectionNumber": "3.2",
+      "title": "诊断接口（Diagnostic API）"
+    },
+    {
+      "normId": "DOG-aging",
+      "anchor": "aging",
+      "part": "III",
+      "sectionNumber": "3.3",
+      "title": "寿命换算与老化曲线"
+    },
+    {
+      "normId": "DOG-safety",
+      "anchor": "safety",
+      "part": "III",
+      "sectionNumber": "3.4",
+      "title": "不支持的输入（Unsupported Inputs）"
+    },
+    {
+      "normId": "DOG-maintenance",
+      "anchor": "maintenance",
+      "part": "III",
+      "sectionNumber": "3.5",
+      "title": "养护排程"
+    },
+    {
+      "normId": "DOG-feeding",
+      "anchor": "feeding",
+      "part": "III",
+      "sectionNumber": "3.6",
+      "title": "喂食接口 (Feeding API)"
+    },
+    {
+      "normId": "DOG-sitting",
+      "anchor": "sitting",
+      "part": "III",
+      "sectionNumber": "3.7",
+      "title": "照看与托管协议 (Sitter Protocol)"
+    },
+    {
+      "normId": "DOG-alerts",
+      "anchor": "alerts",
+      "part": "III",
+      "sectionNumber": "3.8",
+      "title": "环境包线与告警指标"
+    },
+    {
+      "normId": "DOG-humanif",
+      "anchor": "humanif",
+      "part": "III",
+      "sectionNumber": "3.9",
+      "title": "第三方接口 / 与人类的互操作"
+    },
+    {
+      "normId": "DOG-daily",
+      "anchor": "daily",
+      "part": "IV",
+      "sectionNumber": "4.1",
+      "title": "全天行为预算（Daily Behavior Budget）"
+    },
+    {
+      "normId": "DOG-vitals",
+      "anchor": "vitals",
+      "part": "IV",
+      "sectionNumber": "4.2",
+      "title": "生理基线与家庭监测（Vitals Baseline）"
+    },
+    {
+      "normId": "DOG-vet",
+      "anchor": "vet",
+      "part": "IV",
+      "sectionNumber": "4.3",
+      "title": "就医标准场景（Veterinary Visit Scenarios）"
+    },
+    {
+      "normId": "DOG-scenarios",
+      "anchor": "scenarios",
+      "part": "IV",
+      "sectionNumber": "4.4",
+      "title": "标准场景库（SCN-01…E4）"
+    },
+    {
+      "normId": "DOG-quant",
+      "anchor": "quant",
+      "part": "IV",
+      "sectionNumber": "4.5",
+      "title": "量化接口定义（Quantified API v1）"
+    },
+    {
+      "normId": "DOG-expression",
+      "anchor": "expression",
+      "part": "IV",
+      "sectionNumber": "4.6",
+      "title": "表情接口定义（Expression API v1）"
+    },
+    {
+      "normId": "DOG-peripherals",
+      "anchor": "peripherals",
+      "part": "IV",
+      "sectionNumber": "4.7",
+      "title": "外设总线（Peripheral Bus）"
+    },
+    {
+      "normId": "DOG-refs",
+      "anchor": "refs",
+      "part": "V",
+      "sectionNumber": "5.1",
+      "title": "公开信源"
+    },
+    {
+      "normId": "DOG-revision",
+      "anchor": "revision",
+      "part": "V",
+      "sectionNumber": "5.2",
+      "title": "Document Revision History"
+    }
+  ],
+  "appendices": [
+    {
+      "normId": "DOG-apx-glossary",
+      "anchor": "apx-glossary",
+      "label": "A",
+      "title": "术语表"
+    },
+    {
+      "normId": "DOG-apx-breeds",
+      "anchor": "apx-breeds",
+      "label": "B",
+      "title": "品种部署档案"
+    },
+    {
+      "normId": "DOG-apx-sla",
+      "anchor": "apx-sla",
+      "label": "C",
+      "title": "服务等级协议（对外声明）"
+    },
+    {
+      "normId": "DOG-apx-errors",
+      "anchor": "apx-errors",
+      "label": "D",
+      "title": "错误码全表"
+    },
+    {
+      "normId": "DOG-apx-migration",
+      "anchor": "apx-migration",
+      "label": "E",
+      "title": "迁移指南：从别的系统迁移到 DOG API"
+    },
+    {
+      "normId": "DOG-apx-runbook",
+      "anchor": "apx-runbook",
+      "label": "F",
+      "title": "值班手册（Runbook）"
+    },
+    {
+      "normId": "DOG-apx-privacy",
+      "anchor": "apx-privacy",
+      "label": "G",
+      "title": "隐私与合规审计"
+    },
+    {
+      "normId": "DOG-apx-issues",
+      "anchor": "apx-issues",
+      "label": "H",
+      "title": "已知问题清单（Issue Tracker）"
+    },
+    {
+      "normId": "DOG-apx-sdk",
+      "anchor": "apx-sdk",
+      "label": "I",
+      "title": "SDK 与示例"
+    },
+    {
+      "normId": "DOG-apx-support",
+      "anchor": "apx-support",
+      "label": "J",
+      "title": "支持与投诉渠道"
+    },
+    {
+      "normId": "DOG-apx-scorecard",
+      "anchor": "apx-scorecard",
+      "label": "K",
+      "title": "行为量化评分卡（DNS 计算细则）"
+    },
+    {
+      "normId": "DOG-apx-vax",
+      "anchor": "apx-vax",
+      "label": "L",
+      "title": "免疫与驱虫日历（可计算排程）"
+    },
+    {
+      "normId": "DOG-apx-triage",
+      "anchor": "apx-triage",
+      "label": "M",
+      "title": "急诊分诊矩阵"
+    },
+    {
+      "normId": "DOG-apx-vitalsheet",
+      "anchor": "apx-vitalsheet",
+      "label": "N",
+      "title": "家庭监测记录表（可打印）"
+    },
+    {
+      "normId": "DOG-apx-vetbag",
+      "anchor": "apx-vetbag",
+      "label": "O",
+      "title": "就医随身包清单"
+    },
+    {
+      "normId": "DOG-apx-quantref",
+      "anchor": "apx-quantref",
+      "label": "P",
+      "title": "量化参数速查（含来源等级）"
+    },
+    {
+      "normId": "DOG-apx-exprref",
+      "anchor": "apx-exprref",
+      "label": "Q",
+      "title": "表情参数与状态速查"
+    },
+    {
+      "normId": "DOG-apx-peripherals",
+      "anchor": "apx-peripherals",
+      "label": "R",
+      "title": "外设目录与安全门槛"
+    }
+  ]
+}

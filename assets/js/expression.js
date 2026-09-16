@@ -483,7 +483,7 @@
   /* ------------------------------------------------------------ 状态定义 */
 
   // 每个状态 = 参数空间里的一个点 + 三组响应头 + 一条自评。
-  // 参数之外的通道（尾巴、身体、发声）不进 body，见 §30 的说明。
+  // 参数之外的通道（尾巴、身体、发声）不进 body，见 §4.6 的说明。
   var STATES = [
     {
       id: "ATTENTIVE", title: "被叫到名字（且它决定理你）", class: "日常",
@@ -549,7 +549,7 @@
       id: "ZOOMIES", title: "配额溢出", class: "日常",
       params: { earPerk: 0.92, tilt: -7, eyeOpen: 1.15, pupilX: 0.15, pupilY: -0.05, whaleEye: 0.35, browInner: 0.40, browOuter: -0.20, mouthOpen: 0.75, tongue: 0.80, blush: 0.25, extra: "blur" },
       tail: "overflow", body: "airborne", vocal: "bark", confidence: 0.61, suppressed: false,
-      note: "见 §14 性能与容量：未消费的运动配额在约 20:00 以本状态一次性溢出。面部在高速位移中不构成可靠信号。"
+      note: "见 §2.9 性能与容量：未消费的运动配额在约 20:00 以本状态一次性溢出。面部在高速位移中不构成可靠信号。"
     },
     {
       id: "PAIN", title: "急性疼痛", class: "医疗",
@@ -659,8 +659,8 @@
     { code: 405, name: "METHOD NOT ALLOWED", note: "你不能命令它高兴。" },
     { code: 409, name: "CONFLICT", note: "请求的混合表情无法保持，详见 compose。" },
     { code: 422, name: "UNPROCESSABLE", note: "参数向量不成立（如引用了不存在的状态）。" },
-    { code: 451, name: "VET VISIT REQUIRED", note: "PAIN 状态与 §28 分诊的 P0 / P1 同时命中时，所有评分端点短路到本码。" },
-    { code: 503, name: "EXPRESSION SUPPRESSED", note: "见 §23：它不会主动上报自身故障。SICK 状态即此码的成因。" }
+    { code: 451, name: "VET VISIT REQUIRED", note: "PAIN 状态与 §4.4 分诊的 P0 / P1 同时命中时，所有评分端点短路到本码。" },
+    { code: 503, name: "EXPRESSION SUPPRESSED", note: "见 §3.8：它不会主动上报自身故障。SICK 状态即此码的成因。" }
   ];
 
   /* ------------------------------------------------------------------ 导出 */

@@ -161,7 +161,7 @@
   function Q() { return global.DogQuant || null; }
   function X() { return global.DogExpression || null; }
 
-  // 图表使用的标准个体：14.5 kg 绝育成年混血犬（与 §29 示例一致）
+  // 图表使用的标准个体：14.5 kg 绝育成年混血犬（与 §4.5 示例一致）
   var DOG = { weightKg: 14.5, ageMonths: 48, ageYears: 4, neutered: true, breedClass: 'mixed', coat: 'short' };
 
   function num(v, fb) { return (typeof v === 'number' && isFinite(v)) ? v : fb; }
@@ -428,7 +428,7 @@
     var q = Q(), D;
     // 标签与处置说明一律向引擎反查，不在图里另写一份 ——
     // 取该优先级的第一条红线代入 triage()，返回的就是该级的官方式措辞。
-    // （曾经这里手写过「P1 紧急 / P2 尽快 · 当日安排」，与 §28 的「当日（小时级）/ 72 小时内」打架，
+    // （曾经这里手写过「P1 紧急 / P2 尽快 · 当日安排」，与 §4.4 的「当日（小时级）/ 72 小时内」打架，
     //   正是本项目反复嘲笑的那类漂移：一份事实两个副本。）
     var LEVEL_FALLBACK = ['立即（分钟级）', '当日（小时级）', '72 小时内', '常规'];
     var level = function (p) {

@@ -135,6 +135,24 @@ node -e 'require("./assets/js/quantify.js"); var P=require("./assets/js/peripher
 
 新增或修改类别后，记得同步**附录 R 的目录表**（手工维护，14 行）与控制台里那张数据驱动的注册表 —— 后者的数据源就是内核，不用改。
 
+**11. 章节锚点即规范 ID，一经分配不得更改。**
+`assets/data/dog.js` 与 `assets/data/appendices.js` 里每个条目的 `id` 就是它的规范 ID（写作 `DOG-<id>`）。
+**可以改标题、改内容、移动位置，但不要改已有的 `id`** —— 锚点一改，所有跨版本引用同时断掉。
+测试：改动之后跑一次生成脚本，它会把「上次登记过、这次不见了」的 ID 逐条列出来并以非零码退出。
+
+```bash
+node scripts/sync-norm-ids.js   # 改过章节 id / 标题，或增删条目之后
+```
+
+引用别的章节时 SHOULD 用规范 ID，MUST NOT 只用节号 —— 节号按数组顺序在运行时生成，插入或删除会
+让其后的编号整体平移。确实需要写节号时，SHOULD 同时写出规范 ID（例：`§4.7 外设总线（DOG-peripherals）`）。
+登记表见 `reference/norm-ids.html`，理由见该页开头。
+
+**12. 修订号只有一处。**
+当前文档修订号定义在 `assets/js/render.js` 的 `VERSION`，通过 `SpecSite.VERSION` 暴露给页面。
+**不要在页面里硬编码版本号**（`spec/dog.html` 的侧栏副标题曾经写死 `v0.12`，到 0.13 就成了错的）。
+发版时改三处：`render.js` 的 `VERSION`、`docs/CHANGELOG.md` 的新条目、`versions.html` 的修订序列表。
+
 ## 提交方式
 
 1. Fork / 建分支
@@ -144,6 +162,9 @@ node -e 'require("./assets/js/quantify.js"); var P=require("./assets/js/peripher
 ```bash
 # 若改过 quantify.js 的参数注册表，先同步下游
 node scripts/sync-params.js
+
+# 若改过章节 id / 标题，或增删了章节与附录，重新生成规范 ID 登记表
+node scripts/sync-norm-ids.js
 
 # JS 语法（无构建步骤，语法错误会直接让页面白屏）
 node --check assets/js/render.js
@@ -156,14 +177,17 @@ node --check assets/js/charts.js
 node --check assets/js/peripherals.js
 node --check sdk/dog-api-client.js
 node --check scripts/sync-params.js
+node --check scripts/sync-norm-ids.js
 node --check scripts/expression.js
 
 # 表情引擎断言（若改过 expression.js）
 node scripts/expression.js --selftest
 
 # 页面自检：直接用浏览器打开这些文件，确认导航、目录、正文均正常
-#   index.html  spec/dog.html  reference/cheatsheet.html
-#   tools/quantifier.html  tools/expression.html  tools/charts.html  tools/peripherals.html  sdk/demo.html
+#   index.html  versions.html  spec/dog.html  reference/cheatsheet.html
+#   reference/norm-ids.html  tools/quantifier.html  tools/expression.html
+#   tools/charts.html  tools/peripherals.html  sdk/demo.html
+#   archive/single-file-v0.7.html（自包含，应能离线独立渲染）
 #
 # charts.html 额外自带一条自检：标题会变成「… · mounted/total」。
 # 两者不等，或页脚出现「自检未通过」，就说明有图表没挂上或页面漏了声明。

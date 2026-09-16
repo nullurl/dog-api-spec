@@ -6,7 +6,7 @@
      - sdk/dog-api-client.js   模拟 SDK 的 assess.* 端点
      - 校验脚本                公式一致性断言
 
-   设计约束（与 §29 量化接口定义 对应）：
+   设计约束（与 §4.5 量化接口定义 对应）：
      1. 每个参数必须有 单位 / 取值范围 / 来源等级 / 采样频率 / 报警阈值
      2. 来源等级：
         A = 同行评议文献或大规模实测数据
@@ -78,8 +78,8 @@
     { key: "lifeExpectancy", label: "预期寿命", unit: "年", range: "16.7 − 2.17·ln(BW)", grade: "A", sample: "每年", alarm: "—", src: "体重—寿命中位数拟合" },
     { key: "seniorAt", label: "老年期起点", unit: "年", range: "预期寿命 × 0.75", grade: "B", sample: "每年", alarm: "进入老年期 → 体检频次翻倍", src: "AAHA 生命阶段指南" },
     { key: "cmpsSf", label: "急性疼痛评分（Glasgow CMPS-SF）", unit: "0–24 分", range: "0（无痛）", grade: "A", sample: "术后每 4 h", alarm: "≥6/24（无移动项 ≥5/20）需镇痛干预", src: "Reid 等，2007；IWAP 疼痛专题" },
-    { key: "hri", label: "热风险指数（HRI）", unit: "指数点", range: "本项目定义，见 §29", grade: "C", sample: "出门前", alarm: "≥10 取消户外运动；≥15 仅排泄", src: "本项目复合指标，非临床量表" },
-    { key: "vsi", label: "就诊应激指数（VSI）", unit: "0–10", range: "本项目定义，见 §29", grade: "C", sample: "每次就诊前", alarm: "≥7 建议与兽医讨论就诊前用药", src: "本项目复合指标，非临床量表" },
+    { key: "hri", label: "热风险指数（HRI）", unit: "指数点", range: "本项目定义，见 §4.5", grade: "C", sample: "出门前", alarm: "≥10 取消户外运动；≥15 仅排泄", src: "本项目复合指标，非临床量表" },
+    { key: "vsi", label: "就诊应激指数（VSI）", unit: "0–10", range: "本项目定义，见 §4.5", grade: "C", sample: "每次就诊前", alarm: "≥7 建议与兽医讨论就诊前用药", src: "本项目复合指标，非临床量表" },
     { key: "dns", label: "日常需求达成度（DNS）", unit: "0–100", range: "≥85 达标", grade: "C", sample: "每日", alarm: "<70 或任一维度 <60", src: "本项目复合指标，用于短期趋势" }
   ];
 

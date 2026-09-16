@@ -34,14 +34,17 @@ python3 -m http.server 8000
 ```
 .
 ├── index.html                    项目首页
+├── versions.html                 历史版本（修订序列 / 版本轴 / 存档入口）
 ├── spec/                         规范正文与机器可读定义
 │   ├── dog.html                  DOG API（34 章 + 附录 A–R）
+│   ├── norm-ids.json             规范 ID 注册表（由 scripts/sync-norm-ids.js 生成）
 │   ├── openapi.yaml              OpenAPI 3.1 结构描述
-│   └── quantified-api.yaml       量化接口描述（§29 的 10 个端点）
+│   └── quantified-api.yaml       量化接口描述（§4.5 的 10 个端点）
 ├── reference/                    速查页（可打印）
 │   ├── cheatsheet.html           速查卡
 │   ├── errors.html               错误码对照（13 个状态码）
 │   ├── glossary.html             术语表与公共约定
+│   ├── norm-ids.html             规范 ID 登记表（由脚本生成）
 │   └── vitals.html               生理指标速查
 ├── tools/                        交互页面（用浏览器打开）
 │   ├── quantifier.html           量化评估器（调用引擎算真数）
@@ -54,13 +57,16 @@ python3 -m http.server 8000
 │   ├── demo.html                 交互式接口控制台
 │   ├── curl.md                   curl 示例
 │   └── README.md                 接入说明
+├── archive/                      冻结的历史形态 —— 只增不改
+│   ├── README.md                 存档说明、版本轴、偏离记录
+│   └── single-file-v0.7.html     0.8.0 之前的单文件版（27 章，自包含可离线打开）
 ├── assets/                       运行时资源 —— 页面加载的就是这些
 │   ├── css/spec.css              共享样式（浅色主题，支持打印）
 │   ├── data/                     内容数据（内联在 JS 里，不用 fetch）
 │   │   ├── dog.js                规范正文 34 章
 │   │   └── appendices.js         附录 A–R
 │   └── js/                       运行时内核（纯计算 / 纯渲染，零依赖）
-│       ├── render.js             共享渲染器（导航 / 目录 / 正文）
+│       ├── render.js             共享渲染器（导航 / 目录 / 正文 / 协议约定）
 │       ├── quantify.js           量化引擎（参数注册表 / 公式 / 评分模型 / 分诊）
 │       ├── scenarios.js          标准场景库（D 日常 / M 医疗 / E 应急，14 个）
 │       ├── expression.js         表情渲染引擎（13 维向量 → 24×24 像素 SVG）
@@ -68,7 +74,8 @@ python3 -m http.server 8000
 │       └── peripherals.js        外设内核（14 类 / 13 门槛 / 序列闭合 / 磨损预测）
 ├── scripts/                      开发脚本 —— 页面不加载
 │   ├── expression.js             表情命令行（svg / ascii / json / snippet / sheet）
-│   └── sync-params.js            由引擎注册表反向同步附录 P 与各文档计数
+│   ├── sync-params.js            由引擎注册表反向同步附录 P 与各文档计数
+│   └── sync-norm-ids.js          由数据模块生成规范 ID 登记表与注册表
 └── docs/                         人读文档
     ├── CHANGELOG.md              修订历史
     ├── CONTRIBUTING.md           贡献指南
@@ -79,6 +86,8 @@ python3 -m http.server 8000
 
 四层的职责边界是硬的：**`assets/` 是页面运行时要加载的，`scripts/` 只有开发时跑，
 `docs/` 是给人读的，其余目录是给人看的页面。** 加文件之前先问一句它属于哪一层。
+
+`archive/` 不属于这四层里的任何一层：它是**冻结**的历史产物，只增不改。规则见 `archive/README.md`。
 
 同一个模块在不同目录里用**同一个词干**，由目录区分角色：
 
@@ -202,7 +211,7 @@ open tools/charts.html
 
 - `assets/js/peripherals.js` —— 外设内核。`14` 个设备类 · `6` 种角色 · `5` 阶段捕猎序列 · `13` 道门槛 · `33` 种失效模式 · `15` 条来源。
 - `tools/peripherals.html` —— 外设控制台。左侧填档案与清单，右侧实时出结论；页面上每一个数字都来自内核。
-- §31《外设总线》 —— 正文（协议、判定规则、端点定义）。
+- §4.7《外设总线》 —— 正文（协议、判定规则、端点定义）。
 - 附录 R《外设目录与安全门槛》 —— 目录表、33 种失效模式逐条成因、13 道门槛依据、可打印核对表。
 
 三条设计决定，全部写在页面上：
@@ -218,7 +227,7 @@ open tools/charts.html
 node -e 'require("./assets/js/quantify.js"); var P=require("./assets/js/peripherals.js"); console.log(P.selfTest());'
 ```
 
-两条短路沿用 §29 的既有规则，不新造：**热风险硬停**（气温 ≥32 ℃ 或 HRI ≥10 时户外外设全部挂起）与**分诊短路**（`P0` / `P1` 时所有外设端点返回 `451` —— 先去医院，别挑玩具）。
+两条短路沿用 §4.5 的既有规则，不新造：**热风险硬停**（气温 ≥32 ℃ 或 HRI ≥10 时户外外设全部挂起）与**分诊短路**（`P0` / `P1` 时所有外设端点返回 `451` —— 先去医院，别挑玩具）。
 
 ## 信源
 
@@ -248,7 +257,7 @@ node -e 'require("./assets/js/quantify.js"); var P=require("./assets/js/peripher
   下方单独标注的其他授权只适用于其各自列出的第三方内容，不适用于本项目自身。
 - 本项目是文体练习与科普杂糅的产物，**不是饲养指南，也不提供医疗建议**。唯一例外是速查卡里那三条 MUST，它们是认真的。
 - 所有评分为**偏差提示**，不是诊断。复合指标（DNS / HRI / VSI）不得用于横向比较不同的狗，只用于同一只狗的纵向趋势。
-- 出现 §28 分诊矩阵中的 P0 / P1 条目时，不要先算分 —— 直接联系执业兽医。
+- 出现 §4.4 分诊矩阵中的 P0 / P1 条目时，不要先算分 —— 直接联系执业兽医。
 - `sdk/` 下所有代码均为行为模拟，不发起网络请求，不收集数据。
 - `tools/expression.html` 与 `scripts/expression.js` 生成的 SVG 是**观测的编码，不是照片或插画**，请不要当作素材库使用。
   其中 `SICK` 状态的像素与健康基线完全一致 —— 这不是 bug，是那份规范里最严肃的一条。

@@ -3,7 +3,7 @@ info:
   title: DOG API — Quantified Endpoints
   version: 1.0.0
   description: |
-    §29 量化接口定义的机器可读描述。
+    §4.5 量化接口定义的机器可读描述。
 
     本文件的三个设计原则（与正文一致）：
       1. 每个指标必须声明 单位 / 取值范围 / 采样频率 / 报警阈值
