@@ -8,6 +8,18 @@
 
 ---
 
+## [0.19] — Opinions, Expanded
+
+**Change class:** Content
+
+**做了什么**
+`reference/opinions.html`《一只狗的生活意见》扩写：32 条 → **63 条**，五组 → **八组**。
+新增《关于别的动物》《关于睡觉》《关于兽医》三组；既有五组各追加条目。
+
+**没有做什么**
+不删改既有条目。口吻规则未动（三条装置与一票否决清单逐条自查通过）。
+**正文、附录、章节数与节号一律未动**，本版不涉及数据模块。
+
 ## [0.18] — Adoption as Installation
 
 **Change class:** Interface

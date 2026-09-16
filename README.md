@@ -45,7 +45,7 @@ python3 -m http.server 8000
 │   ├── errors.html               错误码对照（13 个状态码）
 │   ├── glossary.html             术语表与公共约定
 │   ├── norm-ids.html             规范 ID 登记表（由脚本生成）
-│   ├── opinions.html             一只狗的生活意见（第二声部 · 32 条意见）
+│   ├── opinions.html             一只狗的生活意见（第二声部 · 63 条意见）
 │   ├── voice.html                口吻与文体（双声部定义 · 正反示例 · 回退清单）
 │   └── vitals.html               生理指标速查
 ├── tools/                        交互页面（用浏览器打开）
