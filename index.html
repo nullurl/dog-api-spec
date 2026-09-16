@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DOG API — 狗狗接口规范</title>
-<meta name="description" content="以工程规范文体撰写的动物接口规范：DOG API（35 章、52 条公开信源、实测数据、运维手册、14 个标准场景、可计算的量化接口、一个能渲染 14 种像素表情的表情引擎，以及一条外设总线），附领养入口、口吻规范、一只狗的生活意见、速查卡、生理指标、错误码对照、术语表、量化评估器、表情渲染器、外设控制台与可运行 SDK。">
+<meta name="description" content="以工程规范文体撰写的动物接口规范：DOG API（35 章、52 条公开信源、实测数据、运维手册、14 个标准场景、可计算的量化接口、一个能渲染 14 种像素表情的表情引擎，以及一条外设总线），首页可直接安装领养技能并派生领养 KEY，附口吻规范、一只狗的生活意见、速查卡、生理指标、错误码对照、术语表、量化评估器、表情渲染器、外设控制台与可运行 SDK。">
 <link rel="stylesheet" href="assets/css/spec.css">
 <style>
   .stat-row { display: flex; gap: 26px; flex-wrap: wrap; margin: 26px 0 0; }
@@ -28,6 +28,7 @@
   <a class="btn ghost" href="tools/charts.html" style="margin-left:8px;">图表图鉴</a>
   <a class="btn ghost" href="tools/peripherals.html" style="margin-left:8px;">外设控制台</a>
   <a class="btn ghost" href="sdk/demo.html" style="margin-left:8px;">SDK 控制台</a>
+  <a class="btn ghost" href="#adoption" style="margin-left:8px;">领养 KEY</a>
 
   <div class="stat-row">
     <div class="stat"><div class="n">35</div><div class="l">DOG 正文章节</div></div>
@@ -151,14 +152,15 @@
   </a>
 </div>
 
-<div class="section-title">授权</div>
-<div class="grid">
-  <a class="card" href="tools/adoption.html">
-    <div class="kicker">安装即授权</div>
-    <h3>领养 KEY</h3>
-    <p>这套文档有狗牌。KEY 由四行元组确定性派生 —— 没有发号中心，没有账号，也没有回收通道。安装技能就是同意，卸载就是撤回；牌掉了，狗还在。§5.3 是定义，这页是入口。</p>
-    <div class="foot">§5.3 · tools/adoption.html · skill/dog_adopt.py</div>
-  </a>
+<div class="section-title" id="adoption" style="scroll-margin-top:78px;">领养与授权</div>
+<!-- 领养组件：安装命令 / 授权三态 / KEY 派生同框。
+     骨架由 assets/js/adoption-widget.js 覆盖渲染；以下文字是无脚本时的回退。 -->
+<div id="adoption-widget" data-root="">
+  <p style="font-size:14px;color:var(--muted);line-height:1.9;">
+    这个组件需要 JavaScript 才能在本页派生 KEY。也可以直接打开
+    <a href="tools/adoption.html">领养入口</a>，或读
+    <a href="spec/dog.html#adoption">§5.3《领养与授权》</a>。
+  </p>
 </div>
 
 <div class="section-title">口吻</div>
@@ -236,7 +238,7 @@
       这套写法不靠感觉，规则写在 <a href="reference/voice.html">《口吻与文体》</a> 里；
       而它的另一半声音 —— 由它自己说的那部分 —— 在 <a href="reference/opinions.html">《一只狗的生活意见》</a>。
       至于你凭什么持有这份副本：本系统不返回 <code>401</code>，所以那张牌不是通行证，是来源标注 ——
-      见 <a href="spec/dog.html#adoption">§5.3《领养与授权》</a> 与 <a href="tools/adoption.html">领养入口</a>。
+      规则见 <a href="spec/dog.html#adoption">§5.3《领养与授权》</a>，入口就是本页的 <a href="#adoption">领养组件</a>。
       比如：某个系统在疼痛时仍会摇尾巴；某个系统会把你回家的脚步声写入永久存储；
       以及，某个系统为了和你说上话，专门长出了一块新的肌肉。
     </p>
@@ -257,6 +259,8 @@
   DOG API · 静态站点，无构建步骤，无外部依赖 · 打开 index.html 即可阅读
 </div>
 
+<script src="assets/js/adoption-key.js"></script>
+<script src="assets/js/adoption-widget.js"></script>
 <script src="assets/js/render.js"></script>
 <script>SpecSite.mountChrome({ root: "", active: "home" });</script>
 

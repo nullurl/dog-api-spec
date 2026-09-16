@@ -78,7 +78,8 @@ python3 -m http.server 8000
 │       ├── expression.js         表情渲染引擎（13 维向量 → 24×24 像素 SVG）
 │       ├── charts.js             图表渲染引擎（19 个图型 → 手写 SVG，内联 Mono 令牌）
 │       ├── peripherals.js        外设内核（14 类 / 13 门槛 / 序列闭合 / 磨损预测）
-│       └── adoption-key.js       领养 KEY 派生内核（零依赖 SHA-256 + Crockford Base32）
+│       ├── adoption-key.js       领养 KEY 派生内核（零依赖 SHA-256 + Crockford Base32）
+│       └── adoption-widget.js    领养组件（首页用：安装命令 / 授权三态 / KEY 派生同框）
 ├── scripts/                      开发脚本 —— 页面不加载
 │   ├── expression.js             表情命令行（svg / ascii / json / snippet / sheet）
 │   ├── sync-params.js            由引擎注册表反向同步附录 P 与各文档计数
@@ -98,6 +99,12 @@ python3 -m http.server 8000
 
 `reference/` 里的 `voice.html` 与 `opinions.html` 是一对：前者**定义**这套文档怎么说话，
 后者**使用**它。正文里以「本机：」开头的引用块属于后者的声部 —— 它没有出处，也不给建议。
+
+首页上的 `#adoption-widget` 是把「安装即授权」做成的一个**自包含组件**：安装命令、授权三态、
+KEY 派生同框。它不检测本机装没装技能（页面既没有这个权限，也没有这个必要），
+逻辑全在 `assets/js/adoption-widget.js` 里，命令与三态文案都只在那里定义一次。
+组件默认停在出厂元组上，所以首页一打开就实测了一次「元组相同 → KEY 相同」，
+并与 §5.3 的测试向量 1 逐字节比对。
 
 同一个模块在不同目录里用**同一个词干**，由目录区分角色：
 

@@ -153,6 +153,14 @@ node scripts/sync-norm-ids.js   # 改过章节 id / 标题，或增删条目之�
 **不要在页面里硬编码版本号**（`spec/dog.html` 的侧栏副标题曾经写死 `v0.12`，到 0.13 就成了错的）。
 发版时改三处：`render.js` 的 `VERSION`、`docs/CHANGELOG.md` 的新条目、`versions.html` 的修订序列表。
 
+**13. 改文字之前先读《口吻与文体》。**
+这套文档只有两个声部，且在 `reference/voice.html` 里有明确规定：
+**规范编写组**（第三人称，事实在前，带出处）与**当事人**（第一人称，没有依据只有结论）。
+当事人声部**只**以「本机：」开头的引用块出现 —— 不要在正文段落里写成第一人称。
+该页另有一份**一票否决**清单（感叹号、自评有趣、解释性连词、形容词化的评价、饲养建议、
+把行为写成"爱"），出现即回退。`reference/opinions.html` 是当事人声部的完整作品，
+新增条目请加在那里，**不要**往正文各章散落。
+
 **14. 领养 KEY 的两份实现必须同步改。**
 `assets/js/adoption-key.js`（页面用）与 `skill/dog_adopt.py`（命令行用）是同一份规范的两处实现，
 判据是 §5.3 公布的**固定测试向量**。改任何一边之后跑：
@@ -166,14 +174,12 @@ node -e 'require("./assets/js/adoption-key.js")' # 语法
 （会让同一个元组在两个实现里算出两个 KEY，且不会报错）；MUST NOT 把证书写进技能目录
 （卸载技能不该删掉用户的证书）。
 
-
-**13. 改文字之前先读《口吻与文体》。**
-这套文档只有两个声部，且在 `reference/voice.html` 里有明确规定：
-**规范编写组**（第三人称，事实在前，带出处）与**当事人**（第一人称，没有依据只有结论）。
-当事人声部**只**以「本机：」开头的引用块出现 —— 不要在正文段落里写成第一人称。
-该页另有一份**一票否决**清单（感叹号、自评有趣、解释性连词、形容词化的评价、饲养建议、
-把行为写成"爱"），出现即回退。`reference/opinions.html` 是当事人声部的完整作品，
-新增条目请加在那里，**不要**往正文各章散落。
+**15. 界面上的领养内容只有一份事实源。**
+安装命令、授权三态的文案、出厂元组，只在 `assets/js/adoption-widget.js` 里定义一次
+（`CMD` / `STATES` / `DEFAULTS`）；首页的 `#adoption-widget` 与 `tools/adoption.html` 是它的两个消费者。
+改安装命令时，`skill/SKILL.md` 里那一段必须一起改 —— 那是用户真正复制走的东西，抄错就装不上。
+组件默认停在出厂元组上，所以首页一打开就实测了一次「元组相同 → KEY 相同」，并与 §5.3 的测试向量 1
+逐字节比对；改过组件之后，那条自检**必须仍然显示一致**（不一致就是派生链断了，不是文案问题）。
 
 ## 提交方式
 
@@ -206,11 +212,12 @@ node --check scripts/expression.js
 # 表情引擎断言（若改过 expression.js）
 node scripts/expression.js --selftest
 
-# 领养 KEY 自检（若改过 adoption-key.js 或 skill/dog_adopt.py —— 见第 14 条）
+# 领养 KEY 自检（若改过 adoption-key.js / adoption-widget.js 或 skill/dog_adopt.py —— 见第 14、15 条）
 python3 skill/dog_adopt.py --selftest
 
 # 页面自检：直接用浏览器打开这些文件，确认导航、目录、正文均正常
-#   index.html  versions.html  spec/dog.html  reference/cheatsheet.html
+#   index.html（含领养组件：命令块有内容、三态可切、KEY 显示 DOG-05NA-N160-…、自检显示一致）
+#   versions.html  spec/dog.html  reference/cheatsheet.html
 #   reference/voice.html  reference/opinions.html  reference/norm-ids.html
 #   tools/adoption.html  spec/dog.html#adoption（§5.3）
 #   tools/quantifier.html  tools/expression.html

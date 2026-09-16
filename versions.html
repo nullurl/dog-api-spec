@@ -30,7 +30,7 @@
     <table>
       <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
       <tr>
-        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.16</td>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.17</td>
         <td><code>docs/CHANGELOG.md</code></td>
         <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
       </tr>
@@ -40,7 +40,7 @@
         <td>几乎不变。跨版本引用 SHOULD 用它，登记表见 <a href="reference/norm-ids.html">规范 ID 登记表</a>。</td>
       </tr>
       <tr>
-        <td><strong>节号</strong></td><td>正文 <code>§1.1</code>–<code>§5.2</code> · 附录 <code>A</code>–<code>R</code><br><span style="color:var(--muted);font-size:12.5px;">0.13 及更早：两位列号 <code>00</code>–<code>33</code></span></td>
+        <td><strong>节号</strong></td><td>正文 <code>§1.1</code>–<code>§5.3</code> · 附录 <code>A</code>–<code>R</code><br><span style="color:var(--muted);font-size:12.5px;">0.13 及更早：两位列号 <code>00</code>–<code>33</code></span></td>
         <td>数据文件的数组顺序，运行时生成</td>
         <td>只是位置。任何一次插入或删除都会让其后全部平移 —— 本项目已在 0.14 整体改过一次号。</td>
       </tr>
@@ -57,6 +57,12 @@
     <table>
       <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
       <tr class="first">
+        <td class="vnum">0.17</td><td><span class="vcls engine">Interface</span></td>
+        <td>把领养做成<strong>首页组件</strong>（<code>assets/js/adoption-widget.js</code>）：安装命令、授权三态、
+        KEY 派生同框，无脚本时回退为静态入口。组件默认停在出厂元组上，
+        <strong>首页一打开就与 §5.3 的测试向量 1 比对一次</strong>。正文与节号未动。</td>
+      </tr>
+      <tr>
         <td class="vnum">0.16</td><td><span class="vcls content">Authorization</span></td>
         <td>新增 §5.3《领养与授权》：KEY 由四行元组确定性派生，<strong>不发放、不校验、不过期、不回收</strong>；
         授权三态取自技能商店模型 —— 安装即授权，卸载即撤回。
