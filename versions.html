@@ -30,7 +30,7 @@
     <table>
       <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
       <tr>
-        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.21</td>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.22</td>
         <td><code>docs/CHANGELOG.md</code></td>
         <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
       </tr>
@@ -57,6 +57,14 @@
     <table>
       <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
       <tr class="first">
+        <td class="vnum">0.22</td><td><span class="vcls">Consistency</span></td>
+        <td>修正工具页<strong>《星图接入》</strong>的配置与版式：两个模型输入框此前共用一份候选清单，
+        现已按类型分开；拉取清单不再顶掉手填的模型 ID；随机种子填非数字时不再把 <code>NaN</code> 送进请求体；
+        并补出「去哪创建 KEY」与「接口写法出处」两个入口。模型清单改条目式 ——
+        此前三列表格在左栏横向撑破面板。
+        <strong>正文、附录、章节数与节号一律未动</strong>；导航不变。</td>
+      </tr>
+      <tr>
         <td class="vnum">0.21</td><td><span class="vcls engine">Interface</span></td>
         <td>新增工具页<strong>《星图接入》</strong>（<code>tools/astraflow.html</code>）：把星图的对话模型与生图模型接进本站 ——
         拉模型清单、流式对话、文生图，生成的那张图可以交接给《赛博遛狗》。

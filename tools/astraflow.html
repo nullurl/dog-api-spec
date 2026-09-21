@@ -22,8 +22,8 @@
   .panel > h3 { margin: 0 0 12px; font-size: 13px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
   .kv { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   .kv td { border: none; border-bottom: 1px solid var(--line); padding: 5px 2px; vertical-align: top; }
-  .kv td:first-child { color: var(--muted); white-space: nowrap; padding-right: 10px; width: 42%; }
-  .kv td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+  .kv td:first-child { color: var(--muted); white-space: nowrap; padding-right: 10px; width: 1%; }
+  .kv td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
   .kv tr:last-child td { border-bottom: none; }
   .fld { display: grid; gap: 5px; margin: 10px 0; }
   .fld label { font-size: 12.5px; color: var(--muted); }
@@ -38,6 +38,11 @@
   .chk.ok { color: var(--ok); }
   .chk.bad { color: #b91c1c; font-weight: 600; }
   .chk.note { color: var(--faint); }
+  /* 提示条：默认中性（探测中），ok / bad 两态。此前误用 .chk（那是自检条目的样式） */
+  .alert { font-size: 12.5px; line-height: 1.8; border-radius: 8px; padding: 8px 12px; margin-top: 10px;
+           border: 1px solid var(--line); background: var(--code-bg); color: var(--muted); }
+  .alert.ok { background: #f2f8f2; border-color: #bcd8bd; color: #2f6b33; }
+  .alert.bad { background: #fdf3f2; border-color: #f0cfcb; color: #8a2f27; }
   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
   .out { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.7;
          background: var(--code-bg); border: 1px solid var(--line); border-radius: 7px; padding: 9px 11px;
@@ -64,11 +69,17 @@
   .lim { font-size: 13px; color: var(--muted); line-height: 1.85; padding-left: 20px; margin: 6px 0; }
   .lim li { margin: 7px 0; }
   .foot-note { font-size: 12.5px; color: var(--faint); line-height: 1.85; margin-top: 10px; }
-  .ptable { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .ptable td { border: none; border-bottom: 1px solid var(--line); padding: 4px 2px; vertical-align: top; }
-  .ptable td:first-child { font-family: ui-monospace, Menlo, monospace; color: var(--code-ink); white-space: nowrap; padding-right: 8px; }
-  .ptable td:nth-child(2) { color: var(--accent); font-family: ui-monospace, Menlo, monospace; white-space: nowrap; padding-right: 8px; }
-  .ptable td:last-child { color: var(--faint); }
+  /* 共享样式只给 p / li / td 里的 code 上底色，这两处会变成裸文字 */
+  .foot-note code, .chk code, .hint2 code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 11.5px; }
+  .alert code { background: rgba(255, 255, 255, .65); padding: 1px 5px; border-radius: 4px; }
+  /* 模型清单：模型 id 很长（含命名空间前缀），做成条目式 —— 表格的 nowrap 三列
+     会把左栏撑破（实测容器 362px / 表格 456px）。这里让 id 独占一行、可折行。 */
+  .mlist { margin-top: 6px; border-top: 1px solid var(--line); }
+  .mrow { padding: 7px 0 8px; border-bottom: 1px solid var(--line); }
+  .mrow .mid { display: block; font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+               color: var(--code-ink); overflow-wrap: anywhere; }
+  .mrow .mprice { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--accent); }
+  .mrow .mby { font-size: 11px; color: var(--faint); margin-left: 8px; }
   #toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #1f2430; color: #fff;
            font-size: 13px; padding: 9px 18px; border-radius: 8px; opacity: 0; transition: opacity .25s;
            pointer-events: none; z-index: 60; }
@@ -119,6 +130,7 @@
             <input type="checkbox" id="chk-remember"> 记在本标签页（关掉窗口即失）
           </label>
         </div>
+        <div class="foot-note" id="console-note" style="margin-top:6px;"></div>
         <div class="row">
           <button class="btn" id="btn-models" type="button">拉模型清单</button>
           <button class="btn ghost" id="btn-ping" type="button">测连通</button>
@@ -138,10 +150,11 @@
         </div>
         <div class="fld">
           <label for="in-mchat">对话模型 ID <span class="hint2">（可以手填，不必先拉清单）</span></label>
-          <input type="text" id="in-mchat" list="dl-models" placeholder="deepseek-v4-pro-0813" spellcheck="false">
+          <input type="text" id="in-mchat" list="dl-chat" placeholder="deepseek-v4-pro-0813" spellcheck="false">
           <label for="in-mimg" style="margin-top:8px;">生图模型 ID</label>
-          <input type="text" id="in-mimg" list="dl-models" placeholder="qwen-image-3.0" spellcheck="false">
-          <datalist id="dl-models"></datalist>
+          <input type="text" id="in-mimg" list="dl-img" placeholder="qwen-image-3.0" spellcheck="false">
+          <datalist id="dl-chat"></datalist>
+          <datalist id="dl-img"></datalist>
         </div>
         <div class="foot-note">调模型用的是完整 <code>id</code>，含命名空间前缀（如 <code>Qwen/Qwen-Image</code>），
         不要只写简称 —— 这一条来自官方文档。</div>
@@ -256,6 +269,7 @@
           <li>领 50 元算力金：<a href="https://f.howxm.com/xs/u/HVFW5X8EIYV1" target="_blank" rel="noopener">领取入口</a>。</li>
           <li>在控制台的模型服务平台里创建 API Key，粘回上面的「接入配置」。额度与价格以平台页面为准。</li>
         </ol>
+        <div class="foot-note" id="docs-note"></div>
         <div class="foot-note">上面两条链接由站点维护者提供，带渠道标记。本站不从其中获取任何数据，
         也不知道你注册与否、用了多少额度。</div>
       </div>
@@ -627,7 +641,7 @@
   var state = {
     node: "cn", catalog: [], counts: {}, all_count: 0, turns: [], usage: null,
     lastReq: null, lastRes: null, image: null, busy: false, abort: null, timer: null,
-    chatModel: "", imageModel: ""
+    chatModel: "", imageModel: "", ping: null
   };
   AF.state = state;
 
@@ -673,12 +687,45 @@
     ];
     if (extra) extra.forEach(function (r) { rows.push(r); });
     var pre = PROTO === "file:"
-      ? '<div class="chk bad" style="margin-bottom:10px;">本页从 file:// 打开 —— 浏览器会拦掉跨域请求。' +
+      ? '<div class="alert bad">本页从 file:// 打开 —— 浏览器会拦掉跨域请求。' +
         "先用 http(s) 打开：线上站点，或在项目根目录起一个静态服务。</div>"
       : "";
+    var ping = "";
+    if (state.ping) {
+      var cls = (state.ping === "…") ? "" : (state.ping.ok ? " ok" : " bad");
+      var txt = (state.ping === "…") ? "探测中…" : state.ping.text;
+      ping = '<div class="alert' + cls + '">' + esc(txt) + "</div>";
+    }
     el("conn-out").innerHTML = pre + '<table class="kv">' + rows.map(function (r) {
       return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>";
-    }).join("") + "</table>";
+    }).join("") + "</table>" + ping;
+    var cn = el("console-note");
+    if (cn && !cn.firstChild && SRC.consoleCN) {
+      /* 用 DOM 构造而不是拼字符串：① 层的链接正则会扫带引号的 href 字面量 */
+      cn.textContent = "还没有 KEY？到";
+      var a = doc.createElement("a");
+      a.href = SRC.consoleCN;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = "星图控制台";
+      cn.appendChild(a);
+      var sp = doc.createElement("span");
+      sp.textContent = "的模型服务里创建一个。本页只把它留在内存里，不写进文件。";
+      cn.appendChild(sp);
+    }
+    var dn = el("docs-note");
+    if (dn && !dn.firstChild && SRC.docs) {
+      dn.textContent = "本页的节点域名、三条路径与鉴权写法都照官方文档：";
+      var ad = doc.createElement("a");
+      ad.href = SRC.docs;
+      ad.target = "_blank";
+      ad.rel = "noopener";
+      ad.textContent = "星图文档 · 快速开始";
+      dn.appendChild(ad);
+      var sp2 = doc.createElement("span");
+      sp2.textContent = "。本页自选的默认值另标 HEURISTIC。";
+      dn.appendChild(sp2);
+    }
   }
 
   function renderCatalog() {
@@ -697,13 +744,16 @@
       return AF.classify(m.id) === "chat" || AF.classify(m.id) === "image";
     }).slice(0, 8).map(function (m) {
       var p = AF.priceOf(m);
-      return "<tr><td>" + esc(m.id) + "</td><td>" + esc(p ? p.headline : "—") + "</td><td>" + esc(m.owned_by || "") + "</td></tr>";
+      return '<div class="mrow"><span class="mid">' + esc(m.id) + "</span>" +
+        '<span class="mprice">' + esc(p ? p.headline : "清单里没有价目") + "</span>" +
+        '<span class="mby">' + esc(m.owned_by || "") + "</span></div>";
     }).join("");
     out.innerHTML = '<div style="margin-bottom:10px;">' + badges + "</div>" +
-      '<div class="chk note">共 ' + state.all_count + " 个模型。前 8 个可用条目：" + "</div>" +
-      '<table class="ptable" style="margin-top:6px;">' + rows + "</table>";
-    if (chatPick && !state.chatModel) pickChat(chatPick.id);
-    if (imgPick && !state.imageModel) pickImage(imgPick.id);
+      '<div class="chk note">共 ' + state.all_count + " 个模型。前 8 个可用条目：</div>" +
+      '<div class="mlist">' + rows + "</div>";
+    /* 只在输入框真的空着时自动带上 —— 判内部状态会把用户手填的 ID 顶掉 */
+    if (chatPick && !val("in-mchat").trim()) pickChat(chatPick.id);
+    if (imgPick && !val("in-mimg").trim()) pickImage(imgPick.id);
   }
 
   function pickChat(id) {
@@ -889,20 +939,21 @@
       state.catalog = pm.all;
       state.counts = pm.counts;
       state.all_count = pm.all.length;
-      var dl = el("dl-models");
-      dl.innerHTML = pm.all.map(function (m) { return '<option value="' + esc(m.id) + '">'; }).join("");
+      el("dl-chat").innerHTML = pm.kinds.chat.map(function (m) { return '<option value="' + esc(m.id) + '">'; }).join("");
+      el("dl-img").innerHTML = pm.kinds.image.map(function (m) { return '<option value="' + esc(m.id) + '">'; }).join("");
       var selc = el("sel-chat"), seli = el("sel-image");
       selc.innerHTML = pm.kinds.chat.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.id) + "</option>"; }).join("");
       seli.innerHTML = pm.kinds.image.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.id) + "</option>"; }).join("");
       el("fld-models").style.display = "";
       state.busy = false;
+      state.ping = null;
       renderAll();
       toast("清单已取回：" + pm.all.length + " 个模型");
       return pm;
     }, function (e) {
       state.busy = false;
+      state.ping = { ok: false, text: e.message };
       renderAll();
-      el("conn-out").innerHTML += '<div class="chk bad" style="margin-top:8px;">' + esc(e.message) + "</div>";
       throw e;
     });
   }
@@ -976,6 +1027,7 @@
     });
   }
 
+  var IMG_NOTE0 = "";
   function draw() {
     var prompt = val("in-prompt").trim();
     if (!prompt) { toast("先写提示词"); return; }
@@ -986,11 +1038,12 @@
     if (!endpoint()) { toast("先选节点或填端点"); return; }
     var size = val("in-size").trim();
     var seed = val("in-seed").trim();
+    if (seed !== "") { seed = parseInt(seed, 10); if (isNaN(seed)) seed = ""; }
     var neg = val("in-neg").trim();
     var n = parseInt(val("in-n"), 10) || 1;
     var body = AF.imageBody({
       model: model, prompt: prompt, size: size, n: n,
-      seed: seed === "" ? "" : parseInt(seed, 10),
+      seed: seed,
       negativePrompt: neg, watermark: flag("chk-wm")
     });
     var req = { method: "POST", url: endpoint() + AF.PATHS.images, headers: AF.headers(key), body: body };
@@ -1011,7 +1064,13 @@
         box.appendChild(im);
         el("btn-walk").disabled = src.indexOf("data:") !== 0;
         el("btn-dl").disabled = src.indexOf("data:") !== 0;
-        if (src.indexOf("data:") !== 0) el("img-note").innerHTML += '<br>这张是外链（<code>url</code>），跨域取回会被拦，所以「送进赛博遛狗」和「下载」都不可用 —— 右键另存，再拖进遛狗页。';
+        if (src.indexOf("data:") !== 0) {
+          /* 每次都从底稿重写，避免反复生图把这段话叠成一串 */
+          el("img-note").innerHTML = IMG_NOTE0 +
+            '<br>这张是外链（<code>url</code>），跨域取回会被拦，所以「送进赛博遛狗」和「下载」都不可用 —— 右键另存，再拖进遛狗页。';
+        } else if (IMG_NOTE0) {
+          el("img-note").innerHTML = IMG_NOTE0;
+        }
       }
       renderAll();
       toast("图回来了：" + (Date.now() - t0) + "ms");
@@ -1093,11 +1152,14 @@
 
     el("btn-models").onclick = function () { getModels().catch(function () {}); };
     el("btn-ping").onclick = function () {
-      el("conn-out").innerHTML += '<div class="chk note" style="margin-top:8px;">探测中…</div>';
+      state.ping = "…";
+      renderConn();
       getModels().then(function () {
-        el("conn-out").innerHTML += '<div class="chk ok" style="margin-top:8px;">通了。</div>';
+        state.ping = { ok: true, text: "通了。清单也顺手取回来了。" };
+        renderConn();
       }, function (e) {
-        el("conn-out").innerHTML += '<div class="chk bad" style="margin-top:8px;">不通：' + esc(e.message) + "</div>";
+        state.ping = { ok: false, text: "不通：" + e.message };
+        renderConn();
       });
     };
 
@@ -1152,6 +1214,7 @@
      ============================================================ */
 
   try {
+    IMG_NOTE0 = el("img-note") ? el("img-note").innerHTML : "";
     bind();
     try {
       var saved = sessionStorage.getItem(KEY_SS);
