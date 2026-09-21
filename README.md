@@ -54,6 +54,7 @@ python3 -m http.server 8000
 │   ├── expression-sheet.html     表情联系表（由 scripts/expression.js --sheet 生成）
 │   ├── charts.html               图表图鉴（19 张手写 SVG）
 │   ├── peripherals.html          外设控制台
+│   ├── cyber-walk.html           赛博遛狗（上传图片 → 网格 → 部件 → 两种 SVG 出口）
 │   └── adoption.html             领养（按 §5.3 生成安装命令 / 派生 KEY 与名字 / 核验 / 查测试向量）
 ├── sdk/                          参考客户端
 │   ├── dog-api-client.js         DogClient（含量化端点）
@@ -241,6 +242,8 @@ open tools/charts.html
 
 - `assets/js/peripherals.js` —— 外设内核。`14` 个设备类 · `6` 种角色 · `5` 阶段捕猎序列 · `13` 道门槛 · `33` 种失效模式 · `15` 条来源。
 - `tools/peripherals.html` —— 外设控制台。左侧填档案与清单，右侧实时出结论；页面上每一个数字都来自内核。
+- `tools/cyber-walk.html` —— 赛博遛狗。上传一张图片 → 覆盖率网格 → 部件切分 → SVG 路径，出口是静态与 SMIL 动态两种矢量图；
+  页面上指针即牵引点，绳绷直它才走。参数全部标 HEURISTIC，图片不离开这台机器。
 - §4.7《外设总线》 —— 正文（协议、判定规则、端点定义）。
 - 附录 R《外设目录与安全门槛》 —— 目录表、33 种失效模式逐条成因、13 道门槛依据、可打印核对表。
 

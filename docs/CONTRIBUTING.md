@@ -241,7 +241,7 @@ sh skill/install.sh --help
 #   reference/voice.html  reference/opinions.html  reference/norm-ids.html
 #   tools/adoption.html  spec/dog.html#adoption（§5.3）
 #   tools/quantifier.html  tools/expression.html
-#   tools/charts.html  tools/peripherals.html  sdk/demo.html
+#   tools/charts.html  tools/peripherals.html  tools/cyber-walk.html  sdk/demo.html
 #   archive/single-file-v0.7.html（自包含，应能离线独立渲染）
 #
 # charts.html 额外自带一条自检：标题会变成「… · mounted/total」。
@@ -249,6 +249,12 @@ sh skill/install.sh --help
 #
 # peripherals.html 也自带一条：标题会变成「… · 14 类 / 13 门槛 / 可承接 60%」。
 # 三个数来自内核的 selfTest()，对不上说明内核或页面被改坏了。
+#
+# cyber-walk.html 也自带一条：标题会变成「… · 12/12 自检」。
+# 那 12 项来自页面的 selftest()，任一项不符就会在页面自检区标红。
+#
+# 带内联逻辑的页面（领养、赛博遛狗）把管线函数挂在 window.<名字> 上，夹具才能在 DOM 桩里实跑；
+# 改这类页面要同时更新夹具断言与 live-replay.sh 的抓取清单 —— 漏抓不是跳过，是直接判失败。
 ```
 
 4. 提交说明写清：改了哪一章 / 新增了什么 / 信源是什么

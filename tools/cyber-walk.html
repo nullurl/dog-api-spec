@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赛博遛狗 — DOG API</title>
+<meta name="description" content="上传一张图片，把它降格成一只狗的网格与部件，导出静态或动态 SVG，然后在这页上牵它走。管线四步：像素 → 网格 → 部件 → 路径。本页不发任何请求：图片不离开这台机器。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .cwrap { max-width: 1180px; margin: 0 auto; padding: 30px 28px 120px; }
+  .chead { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 20px; }
+  .chead h1 { font-size: 30px; }
+  .chead p { color: var(--muted); font-size: 15px; max-width: 840px; margin-top: 8px; }
+  .banner { border-radius: 10px; padding: 15px 20px; margin-bottom: 20px; font-size: 14.5px; line-height: 1.85;
+            background: var(--accent-soft); border: 1px solid #f3d5ac; color: #7c4a08; }
+  .banner strong { color: #5a3406; }
+  .cols { display: grid; grid-template-columns: 380px 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+  .panel > h3 { margin: 0 0 12px; font-size: 13px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+  .stage-wrap { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+  #stage { display: block; width: 100%; height: auto; touch-action: none; cursor: crosshair; background: #fdfcfb; }
+  #stage .ground { stroke: var(--line); stroke-width: 2; }
+  #stage .ticks path { stroke: var(--faint); stroke-width: 1; }
+  #stage .leash { stroke: var(--accent); stroke-width: 2.4; fill: none; stroke-linecap: round; }
+  #stage .hand { fill: none; stroke: var(--accent); stroke-width: 2; }
+  #stage .ring { fill: #fff; stroke: #6b4f36; stroke-width: 1.8; }
+  #stage .bar { stroke: var(--faint); stroke-width: 1.4; fill: none; }
+  #stage .barlabel { fill: var(--faint); font-size: 11px; font-family: ui-monospace, Menlo, monospace; }
+  .hint { font-size: 12.5px; color: var(--faint); padding: 0 14px 12px; line-height: 1.8; }
+  .kv { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .kv td { border: none; border-bottom: 1px solid var(--line); padding: 5px 2px; vertical-align: top; }
+  .kv td:first-child { color: var(--muted); white-space: nowrap; padding-right: 10px; width: 44%; }
+  .kv td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .kv tr:last-child td { border-bottom: none; }
+  .fld { display: grid; gap: 5px; margin: 10px 0; }
+  .fld label { font-size: 12.5px; color: var(--muted); }
+  .fld .hint2 { font-size: 11.5px; color: var(--faint); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  input[type=file] { font-size: 12.5px; color: var(--muted); width: 100%; }
+  .drop { border: 1px dashed var(--line); border-radius: 10px; padding: 13px; text-align: center; font-size: 13px;
+          color: var(--muted); background: var(--code-bg); }
+  .drop.on { border-color: var(--accent); background: var(--accent-soft); color: #7c4a08; }
+  .sw { display: inline-block; width: 22px; height: 12px; border-radius: 3px; vertical-align: -1px;
+        margin-right: 6px; border: 1px solid rgba(0,0,0,.14); }
+  .chk { font-size: 12.5px; padding: 3px 0; color: var(--muted); }
+  .chk.ok { color: var(--ok); }
+  .chk.bad { color: #b91c1c; font-weight: 600; }
+  .chk.note { color: var(--faint); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  .pipe { font-size: 12.5px; line-height: 1.95; color: var(--muted); }
+  .pipe b { color: var(--accent); font-weight: 700; }
+  .lim { font-size: 13px; color: var(--muted); line-height: 1.85; padding-left: 20px; margin: 6px 0; }
+  .lim li { margin: 7px 0; }
+  .foot-note { font-size: 12.5px; color: var(--faint); line-height: 1.85; margin-top: 10px; }
+  .ptable { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .ptable td { border: none; border-bottom: 1px solid var(--line); padding: 4px 2px; vertical-align: top; }
+  .ptable td:first-child { font-family: ui-monospace, Menlo, monospace; color: var(--code-ink); white-space: nowrap; padding-right: 8px; }
+  .ptable td:nth-child(2) { color: var(--accent); font-family: ui-monospace, Menlo, monospace; white-space: nowrap; padding-right: 8px; }
+  .ptable td:last-child { color: var(--faint); }
+  #toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #1f2430; color: #fff;
+           font-size: 13px; padding: 9px 18px; border-radius: 8px; opacity: 0; transition: opacity .25s;
+           pointer-events: none; z-index: 60; }
+  #toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="cwrap">
+  <div class="chead">
+    <span class="doc-tag">TOOL / CYBER WALK</span>
+    <h1>赛博遛狗</h1>
+    <p>把一张图片降格成一只狗，再牵它走。管线四步：像素 → 网格 → 部件 → 路径。出口是 SVG ——
+    静态一张、动态一张，都能存下来。本页只有一个功能，就是遛狗。</p>
+  </div>
+
+  <div class="banner">
+    牵引在这套规范里有编号：§4.7 的外设目录把 <code>PER/LS</code>「牵引与胸背」归为<strong>约束器</strong> ——
+    不承接配额，只限制 §2.9 里那条爆发性能。本页实现的就是这一半：绳绷直时速度被限制，绳松开时不受限。
+    绳长固定 2.03 体长（6 ft，按中型犬体长 0.90 m 换算）：附录 R 的伸缩绳条款把伸缩绳排除在推荐配置之外，
+    所以这里没有长度调节。<strong>图片不离开这台机器</strong> —— 本页不发任何请求，也不保存任何文件。
+  </div>
+
+  <div class="stage-wrap">
+    <svg id="stage" viewBox="0 0 960 340" preserveAspectRatio="xMidYMid meet"
+         role="img" aria-label="赛博遛狗舞台"></svg>
+  </div>
+  <div class="hint">指针在舞台上移动 = 遛狗。绳子的松紧决定它跑不跑：绳绷直时它追，绳松开时它停。
+    ← → 推着牵引点走，或用键盘空格让它坐下。图片可以直接拖到舞台上。</div>
+
+  <div class="cols">
+    <div>
+      <div class="panel">
+        <h3>输入</h3>
+        <div class="drop" id="drop">把图片拖到这里，或从下面选一个文件</div>
+        <input type="file" id="f-file" accept="image/*">
+        <div class="fld">
+          <label for="r-grid">网格宽度 <span class="hint2" id="v-grid"></span></label>
+          <input type="range" id="r-grid" min="24" max="96" step="2">
+        </div>
+        <div class="fld">
+          <label for="r-tol">背景剔除阈值 <span class="hint2" id="v-tol"></span></label>
+          <input type="range" id="r-tol" min="8" max="140" step="1">
+        </div>
+        <div class="fld">
+          <label for="r-fill">单元填充判定 <span class="hint2" id="v-fill"></span></label>
+          <input type="range" id="r-fill" min="10" max="70" step="1">
+        </div>
+        <div class="row">
+          <label class="mono" style="display:flex;gap:6px;align-items:center;">
+            <input type="checkbox" id="chk-invert"> 反转掩膜（前景＝接近背景色）
+          </label>
+        </div>
+        <div class="row">
+          <button class="btn" id="btn-builtin" type="button">用内置狗</button>
+          <button class="btn ghost" id="btn-mirror" type="button">镜像朝向</button>
+        </div>
+        <div class="foot-note" id="src-note"></div>
+      </div>
+
+      <div class="panel">
+        <h3>部件与调色板</h3>
+        <div id="palette-out"></div>
+        <div id="parts-out"></div>
+      </div>
+
+      <div class="panel">
+        <h3>遥测</h3>
+        <div id="tele-out"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h3>管线</h3>
+        <div class="pipe" id="pipe-out"></div>
+        <blockquote style="font-size:13px;">本机：他们把我数成六十四格。数完还是我。</blockquote>
+      </div>
+
+      <div class="panel">
+        <h3>导出</h3>
+        <div class="row" style="margin-top:0;">
+          <button class="btn" id="btn-static" type="button">存静态 SVG（现在这一张）</button>
+          <button class="btn ghost" id="btn-anim" type="button">存动态 SVG（SMIL 循环）</button>
+        </div>
+        <div class="foot-note" id="svg-note"></div>
+      </div>
+
+      <div class="panel">
+        <h3>自检</h3>
+        <div id="selfcheck-out"></div>
+      </div>
+
+      <div class="panel">
+        <h3>参数 —— 全部 HEURISTIC</h3>
+        <div id="param-out"></div>
+        <div class="foot-note">
+          本页每一个数字都是 HEURISTIC：没有一条来自公开信源。这与正文的纪律一致 ——
+          没有出处就标 HEURISTIC，不许装作有。调速三条（网格、阈值、填充）会改动管线，
+          其余在源码顶部一处定义。
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>已知限制</h3>
+        <ul class="lim">
+          <li>部件按包围盒切分，不做骨架估计。效果是纸片狗，不是解剖学重构；摆幅到极限时接缝可见。</li>
+          <li>网格宽度默认 64 格。细长的耳朵、尾梢、脚趾会在降采样里先消失。</li>
+          <li>背景剔除只有一个阈值。纯色背景最省事；杂背景要手动调，且调不干净。</li>
+          <li>不处理多主体：画面里有两只狗，它会把两只合成一只。</li>
+          <li>朝向是启发式：腿带之上，左右两端带里格数多的一侧算头。遮挡或短尾会让它判断反 ——
+          用「镜像朝向」手动改。</li>
+          <li>速度以体长／秒计，是比例量：图里没有尺子。绳长、步幅、距离全部按同一比例折算。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <div class="end-note">
+    本页不联网：图片不出去，也不留下。能带走的是一只网格化的狗，和一条固定长度的绳。<br>
+    本机：绳子绷紧的方向，就是要去的方向。绳子松开的时候，我在闻地面。
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="../assets/js/render.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var doc = document;
+  var NS = "http://www.w3.org/2000/svg";
+
+  /* ============================================================
+     0 · 参数 —— 全部 HEURISTIC（见页面「参数」面板）
+     ============================================================ */
+  var P = {
+    GRID_W: 64, GRID_MIN: 24, GRID_MAX: 96,
+    CELL_FILL: 0.38, BG_TOL: 42, INVERT: false,
+    LEG_BAND: 0.62, TAIL_CUT: 0.20, HEAD_CUT: 0.72, TAIL_THIN: 0.42, MIN_TAIL: 8,
+    SWING_DEG: 13, STRIDE_BL: 0.55, BOB_UNITS: 0.62, TAIL_DEG: 11, HEAD_DEG: 3.2,
+    SIT_FOLD_DEG: 22, SIT_DROP: 1.1,
+    LEASH_BL: 2.03, PULL_K: 4.2, MAX_SPEED_BL: 3.4,
+    SIT_AFTER: 6
+  };
+  var STAGE = { w: 960, h: 340, ground: 272, bodyRatio: 0.40, widthRatio: 0.46 };
+  var REV = (window.SpecSite && window.SpecSite.VERSION) || null;
+
+  var PARAM_DOC = [
+    ["GRID_W", "64 格", "网格宽度（滑块 24–96）"],
+    ["CELL_FILL", "0.38", "单元判为填充的覆盖率下界"],
+    ["BG_TOL", "42", "与四角背景色的最大通道差（0–255）"],
+    ["LEG_BAND", "0.62", "腿带起点（包围盒高度比例）"],
+    ["TAIL_CUT", "0.20", "端带分界：尾侧占 20%"],
+    ["HEAD_CUT", "0.72", "端带分界：头侧占 28%"],
+    ["TAIL_THIN", "0.42", "尾带里列高低于上身带这个比例才算尾（厚的归躯干）"],
+    ["MIN_TAIL", "8", "薄尾碎到这个格数以下就认为尾是厚的，退回整条端带"],
+    ["SWING_DEG", "13", "单腿摆幅（度）"],
+    ["STRIDE_BL", "0.55", "步幅（体长／步）"],
+    ["BOB_UNITS", "0.62", "步行起伏（格）"],
+    ["TAIL_DEG", "11", "尾摆幅（度）"],
+    ["HEAD_DEG", "3.2", "头摆幅（度）"],
+    ["SIT_FOLD_DEG", "22", "坐下时后腿折叠角（度）"],
+    ["SIT_DROP", "1.1", "坐下时躯干下沉（格）"],
+    ["LEASH_BL", "2.03", "绳长（体长）＝ 6 ft ÷ 0.90 m"],
+    ["PULL_K", "4.2", "跟随刚度：张力换算成速度的系数"],
+    ["MAX_SPEED_BL", "3.4", "速度上限（体长／秒）"],
+    ["SIT_AFTER", "6", "无牵引多少秒后坐下"]
+  ];
+
+  /* ============================================================
+     1 · 小工具
+     ============================================================ */
+  function $(id) { return doc.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;");
+  }
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function r2(v) { return Math.round(v * 100) / 100; }
+  function mk(tag) {
+    if (doc.createElementNS) { try { return doc.createElementNS(NS, tag); } catch (e) { /* 落到 createElement */ } }
+    return doc.createElement(tag);
+  }
+  function now() {
+    if (window.performance && typeof window.performance.now === "function") return window.performance.now();
+    return Date.now();
+  }
+  var RAF = (typeof window.requestAnimationFrame === "function")
+    ? function (cb) { return window.requestAnimationFrame(cb); }
+    : (typeof setTimeout === "function" ? function (cb) { return setTimeout(cb, 16); } : null);
+  function reduced() {
+    try {
+      var mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+      return !!(mq && mq.matches);
+    } catch (e) { return false; }
+  }
+  function toast(msg) {
+    var el = $("toast");
+    if (!el) return;
+    el.textContent = msg;
+    el.className = "on";
+    if (typeof setTimeout === "function") setTimeout(function () { el.className = ""; }, 2400);
+  }
+  function lumOf(hex) {
+    var c = parseHex(hex);
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function parseHex(h) {
+    var s = String(h).replace("#", "");
+    if (s.length === 3) s = s[0] + s[0] + s[1] + s[1] + s[2] + s[2];
+    var n = parseInt(s, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function toHex(r, g, b) {
+    var f = function (v) { var x = Math.round(clamp(v, 0, 255)); return (x < 16 ? "0" : "") + x.toString(16); };
+    return "#" + f(r) + f(g) + f(b);
+  }
+
+  /* ============================================================
+     2 · 内置狗：11 个图元（30 × 20 的作图空间）
+     —— 它走的是同一条管线，所以「没有图片」也能证明管线通
+     ============================================================ */
+  var BUILTIN = {
+    label: "内置狗 PRIM-BUILTIN（30 × 20）",
+    w: 30, h: 20,
+    palette: ["#6b4f36", "#a98157", "#dcc4a2"],
+    prims: [
+      { k: "e", cx: 13.2, cy: 10.0, rx: 8.2, ry: 3.3 },   // 躯干
+      { k: "e", cx: 19.4, cy: 9.6, rx: 3.7, ry: 3.1 },    // 胸
+      { k: "e", cx: 25.3, cy: 6.6, rx: 3.1, ry: 2.9 },    // 头
+      { k: "e", cx: 28.6, cy: 8.4, rx: 1.6, ry: 1.3 },    // 吻
+      { k: "e", cx: 23.5, cy: 3.4, rx: 1.7, ry: 1.8 },    // 耳
+      { k: "e", cx: 4.4, cy: 7.6, rx: 2.3, ry: 1.3 },     // 尾根
+      { k: "e", cx: 2.4, cy: 5.8, rx: 1.5, ry: 1.2 },     // 尾梢
+      { k: "r", x: 6.0, y: 11.6, w: 1.8, h: 7.4 },        // 后腿 A
+      { k: "r", x: 9.1, y: 11.6, w: 1.8, h: 7.4 },        // 后腿 B
+      { k: "r", x: 17.6, y: 11.6, w: 1.8, h: 7.4 },       // 前腿 A
+      { k: "r", x: 20.4, y: 11.6, w: 1.8, h: 7.4 }        // 前腿 B
+    ]
+  };
+
+  function inPrim(p, x, y) {
+    if (p.k === "e") {
+      var dx = (x - p.cx) / p.rx, dy = (y - p.cy) / p.ry;
+      return dx * dx + dy * dy <= 1;
+    }
+    return x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h;
+  }
+
+  function newGrid(w, h) {
+    return {
+      w: w, h: h,
+      mask: new Uint8Array(w * h),
+      tone: new Int8Array(w * h),
+      lum: new Int16Array(w * h),
+      col: null,
+      filled: 0, palette: [], q: [0, 0], label: "", origin: "builtin"
+    };
+  }
+
+  /* 图元 → 网格：每格 3 × 3 超采样求覆盖率，再按 CELL_FILL 判定 */
+  function bakePrims(def, gw) {
+    gw = Math.round(clamp(gw, 16, 240));
+    var gh = Math.max(8, Math.round(gw * def.h / def.w));
+    var g = newGrid(gw, gh);
+    var S = 3, inv = 1 / (S * S), sx = def.w / gw, sy = def.h / gh;
+    for (var gy = 0; gy < gh; gy++) {
+      for (var gx = 0; gx < gw; gx++) {
+        var hit = 0;
+        for (var a = 0; a < S; a++) {
+          for (var b = 0; b < S; b++) {
+            var x = (gx + (a + 0.5) / S) * sx, y = (gy + (b + 0.5) / S) * sy;
+            for (var i = 0; i < def.prims.length; i++) {
+              if (inPrim(def.prims[i], x, y)) { hit++; break; }
+            }
+          }
+        }
+        var k = gy * gw + gx;
+        if (hit * inv >= P.CELL_FILL) { g.mask[k] = 1; g.filled++; }
+        // 背深腹浅：内置狗没有像素可采，用位置合成一条明度梯度
+        g.lum[k] = Math.round(255 * clamp((gy + 0.5) / gh, 0, 1));
+      }
+    }
+    g.label = def.label + " → 网格 " + gw + " × " + gh;
+    g.origin = "builtin";
+    return g;
+  }
+
+  /* 图片 → 网格：画到 3 倍网格宽的离屏画布上取像素 */
+  function canvasOK() {
+    try {
+      var c = doc.createElement("canvas");
+      return !!(c && typeof c.getContext === "function" && c.getContext("2d"));
+    } catch (e) { return false; }
+  }
+  function cornerAvg(data, w, h) {
+    var pts = [[0, 0], [w - 3, 0], [0, h - 3], [w - 3, h - 3]], acc = [0, 0, 0], n = 0;
+    for (var p = 0; p < pts.length; p++) {
+      for (var dy = 0; dy < 3; dy++) {
+        for (var dx = 0; dx < 3; dx++) {
+          var i = ((pts[p][1] + dy) * w + (pts[p][0] + dx)) * 4;
+          acc[0] += data[i]; acc[1] += data[i + 1]; acc[2] += data[i + 2]; n++;
+        }
+      }
+    }
+    return [acc[0] / n, acc[1] / n, acc[2] / n];
+  }
+  function gridFromImage(img, gw, tol, invert) {
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    if (!iw || !ih) return null;
+    if (!canvasOK()) return null;
+    gw = Math.round(clamp(gw, P.GRID_MIN, P.GRID_MAX));
+    var gh = Math.max(8, Math.round(gw * ih / iw));
+    var S = 3, sw = gw * S, sh = gh * S;
+    var cv = doc.createElement("canvas");
+    cv.width = sw; cv.height = sh;
+    var cx = cv.getContext("2d");
+    cx.drawImage(img, 0, 0, sw, sh);
+    var data;
+    try { data = cx.getImageData(0, 0, sw, sh).data; } catch (e) { return null; }
+    var bg = cornerAvg(data, sw, sh);
+    var g = newGrid(gw, gh);
+    g.col = new Uint8Array(gw * gh * 3);
+    g.origin = "image";
+    for (var gy = 0; gy < gh; gy++) {
+      for (var gx = 0; gx < gw; gx++) {
+        var hit = 0, r = 0, gg = 0, b = 0;
+        for (var a = 0; a < S; a++) {
+          for (var bb = 0; bb < S; bb++) {
+            var i = (((gy * S + bb) * sw) + (gx * S + a)) * 4;
+            var al = data[i + 3] / 255;
+            var R = data[i], G = data[i + 1], B = data[i + 2];
+            var d = Math.max(Math.abs(R - bg[0]), Math.abs(G - bg[1]), Math.abs(B - bg[2]));
+            var fg = al > 0.25 && (invert ? d <= tol : d > tol);
+            if (fg) { hit++; r += R; gg += G; b += B; }
+          }
+        }
+        var k = gy * gw + gx;
+        if (hit / (S * S) >= P.CELL_FILL) {
+          var R2 = r / hit, G2 = gg / hit, B2 = b / hit;
+          g.mask[k] = 1; g.filled++;
+          g.col[k * 3] = R2; g.col[k * 3 + 1] = G2; g.col[k * 3 + 2] = B2;
+          g.lum[k] = Math.round(0.2126 * R2 + 0.7152 * G2 + 0.0722 * B2);
+        }
+      }
+    }
+    g.label = "上传图片（" + iw + " × " + ih + "）→ 网格 " + gw + " × " + gh;
+    return g;
+  }
+
+  /* 明度三分位 → 三阶；调色板要么给定（内置狗），要么从像素均值取 */
+  function assignTones(g, palette) {
+    var L = [], k;
+    for (k = 0; k < g.mask.length; k++) if (g.mask[k]) L.push(g.lum[k]);
+    L.sort(function (a, b) { return a - b; });
+    var q1 = L[Math.floor(L.length / 3)] || 0, q2 = L[Math.floor(L.length * 2 / 3)] || 0;
+    g.q = [q1, q2];
+    var acc = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+    for (k = 0; k < g.mask.length; k++) {
+      if (!g.mask[k]) { g.tone[k] = -1; continue; }
+      var t = g.lum[k] < q1 ? 0 : (g.lum[k] < q2 ? 1 : 2);
+      g.tone[k] = t;
+      if (g.col) { acc[t][0] += g.col[k * 3]; acc[t][1] += g.col[k * 3 + 1]; acc[t][2] += g.col[k * 3 + 2]; }
+      acc[t][3]++;
+    }
+    if (palette && palette.length === 3) {
+      g.palette = palette.slice().sort(function (a, b) { return lumOf(a) - lumOf(b); });
+    } else {
+      var pal = [0, 1, 2].map(function (t) {
+        return acc[t][3] ? toHex(acc[t][0] / acc[t][3], acc[t][1] / acc[t][3], acc[t][2] / acc[t][3]) : null;
+      });
+      g.usedTones = acc.filter(function (a) { return a[3] > 0; }).length;
+      // 空档沿用邻档色：画面上本来就没有那一阶，缺位不该显示成一个用不到的灰
+      for (var i2 = 0; i2 < 3; i2++) {
+        if (pal[i2]) continue;
+        var near = null;
+        for (var d = 1; d < 3 && !near; d++) near = pal[i2 - d] || pal[i2 + d] || null;
+        pal[i2] = near || "#b9b4ac";
+      }
+      g.palette = pal;
+    }
+    if (g.usedTones == null) g.usedTones = 3;
+    return g;
+  }
+
+  /* ============================================================
+     3 · 部件切分：包围盒 → 腿 / 尾 / 头 / 躯干
+     ============================================================ */
+  function massIn(g, ax, bx, ay, by) {
+    var n = 0;
+    for (var y = ay; y <= by; y++) {
+      if (y < 0 || y >= g.h) continue;
+      for (var x = ax; x <= bx; x++) {
+        if (x < 0 || x >= g.w) continue;
+        if (g.mask[y * g.w + x]) n++;
+      }
+    }
+    return n;
+  }
+  /* 某一列在腿带里「挂着」的那一段：从腿带第一格往下连续填充 */
+  function hangRun(g, x, legTop, y1) {
+    var y = legTop;
+    while (y <= y1 && !g.mask[y * g.w + x]) y++;
+    if (y > y1) return null;
+    var s = y;
+    while (y + 1 <= y1 && g.mask[(y + 1) * g.w + x]) y++;
+    return { y0: s, y1: y };
+  }
+  function legSegments(g, x0, x1, legTop, y1) {
+    var segs = [], cur = null, x;
+    for (x = x0; x <= x1; x++) {
+      var n = 0, run = hangRun(g, x, legTop, y1);
+      if (run) n = run.y1 - run.y0 + 1;
+      if (n > 0) {
+        if (cur) { cur.x1 = x; cur.cols++; }
+        else { cur = { x0: x, x1: x, cols: 1 }; segs.push(cur); }
+      } else cur = null;
+    }
+    // 多于四条：把间距最小的一对并起来（近处的两条腿在网格里会粘在一起）
+    while (segs.length > 4) {
+      var bi = 0, bg = 1e9, i;
+      for (i = 0; i + 1 < segs.length; i++) {
+        var gap = segs[i + 1].x0 - segs[i].x1;
+        if (gap < bg) { bg = gap; bi = i; }
+      }
+      segs[bi].x1 = segs[bi + 1].x1;
+      segs[bi].cols += segs[bi + 1].cols;
+      segs.splice(bi + 1, 1);
+    }
+    // 少于四条：切最宽的一段，直到够四条或切不动
+    while (segs.length < 4) {
+      var wi = 0;
+      for (i = 1; i < segs.length; i++) if (segs[i].cols > segs[wi].cols) wi = i;
+      if (!segs.length || segs[wi].cols < 2) break;
+      var mid = Math.floor((segs[wi].x0 + segs[wi].x1) / 2);
+      segs.splice(wi, 1,
+        { x0: segs[wi].x0, x1: mid, cols: mid - segs[wi].x0 + 1 },
+        { x0: mid + 1, x1: segs[wi].x1, cols: segs[wi].x1 - mid });
+    }
+    return segs.slice(0, 4);
+  }
+  function bounds(cells) {
+    var b = { x0: 1e9, y0: 1e9, x1: -1, y1: -1 };
+    cells.forEach(function (c) {
+      if (c[0] < b.x0) b.x0 = c[0];
+      if (c[0] > b.x1) b.x1 = c[0];
+      if (c[1] < b.y0) b.y0 = c[1];
+      if (c[1] > b.y1) b.y1 = c[1];
+    });
+    return b;
+  }
+  /* 每行的连续段再按行间同宽合并 → 一个矩形一条子路径 */
+  function pathsFor(cells, pivot) {
+    var px = pivot[0], py = pivot[1];
+    var byTone = [[], [], []];
+    cells.forEach(function (c) { if (c[2] >= 0) byTone[c[2]].push(c); });
+    var out = ["", "", ""];
+    for (var t = 0; t < 3; t++) {
+      var list = byTone[t];
+      if (!list.length) continue;
+      var rows = {};
+      list.forEach(function (c) { (rows[c[1]] = rows[c[1]] || []).push(c[0]); });
+      var ys = Object.keys(rows).map(Number).sort(function (a, b) { return a - b; });
+      var segs = [], open = {};
+      ys.forEach(function (y) {
+        var xs = rows[y].sort(function (a, b) { return a - b; });
+        var runs = [], s = xs[0], p = xs[0], i;
+        for (i = 1; i <= xs.length; i++) {
+          if (i < xs.length && xs[i] === p + 1) { p = xs[i]; continue; }
+          runs.push([s, p - s + 1]);
+          if (i < xs.length) { s = xs[i]; p = xs[i]; }
+        }
+        var next = {};
+        runs.forEach(function (r) {
+          var key = r[0] + ":" + r[1], prev = open[key];
+          if (prev) { prev.y1 = y; next[key] = prev; }
+          else { var sg = { x0: r[0], len: r[1], y0: y, y1: y }; segs.push(sg); next[key] = sg; }
+        });
+        open = next;
+      });
+      var d = "";
+      segs.forEach(function (s) {
+        d += "M" + r2(s.x0 - px) + " " + r2(s.y0 - py) + "h" + s.len +
+             "v" + (s.y1 - s.y0 + 1) + "h-" + s.len + "z";
+      });
+      out[t] = d;
+    }
+    return out;
+  }
+  function mkPart(key, name, kind, cells, pivot, role) {
+    var piv = [r2(pivot[0]), r2(pivot[1])];
+    var d = pathsFor(cells, piv);
+    var nodes = 0, counts = [0, 0, 0], tones = 0;
+    cells.forEach(function (c) { if (c[2] >= 0) counts[c[2]]++; });
+    counts.forEach(function (n) { if (n) tones++; });
+    d.forEach(function (s) { nodes += (s.match(/M/g) || []).length; });
+    return { key: key, name: name, kind: kind, role: role || "", pivot: piv,
+             cells: cells.length, d: d, nodes: nodes, counts: counts, tones: tones };
+  }
+
+  function rig(grid, headOverride) {
+    var w = grid.w, h = grid.h, x, y, k;
+    var x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1, filled = 0;
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        if (!grid.mask[y * w + x]) continue;
+        filled++;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+    if (!filled) return null;
+    var bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+    var legTop = y0 + Math.max(1, Math.round(bh * P.LEG_BAND));
+    var tailEnd = x0 + Math.round(bw * P.TAIL_CUT);
+    var headStart = x0 + Math.round(bw * P.HEAD_CUT);
+
+    // 朝向：腿带之上，左右两端带里格数多的一侧算头
+    var bandW = Math.max(1, Math.round(bw * 0.22));
+    var lMass = massIn(grid, x0, x0 + bandW - 1, y0, legTop - 1);
+    var rMass = massIn(grid, x1 - bandW + 1, x1, y0, legTop - 1);
+    var headRight = (headOverride === true || headOverride === false)
+      ? headOverride : (rMass >= lMass);
+
+    var taken = new Uint8Array(w * h);
+    var legs = [];
+    legSegments(grid, x0, x1, legTop, y1).forEach(function (s, i) {
+      var cells = [];
+      for (var xx = s.x0; xx <= s.x1; xx++) {
+        var run = hangRun(grid, xx, legTop, y1);
+        if (!run) continue;
+        for (var yy = run.y0; yy <= run.y1; yy++) {
+          taken[yy * w + xx] = 1;
+          cells.push([xx, yy, grid.tone[yy * w + xx]]);
+        }
+      }
+      var role = headRight ? (i < 2 ? "hind" : "fore") : (i < 2 ? "fore" : "hind");
+      legs.push(mkPart("leg-" + i, (role === "hind" ? "后腿 " : "前腿 ") + (i % 2 === 0 ? "A" : "B"),
+        "leg", cells, [(s.x0 + s.x1 + 1) / 2, legTop], role));
+    });
+
+    var tail = [], head = [], torso = [];
+    // 端带里怎么区分「尾」与「屁股」：尾是薄的，躯干是厚的。
+    // 用列高（腿带之上这一列填了几格）判定，厚的那些归躯干 —— 否则摆尾会变成屁股在晃。
+    var upperH = legTop - y0;
+    var thinMax = Math.max(2, Math.round(upperH * P.TAIL_THIN));
+    var colFill = new Int32Array(w);
+    for (y = y0; y < legTop; y++) {
+      for (x = x0; x <= x1; x++) if (grid.mask[y * w + x]) colFill[x]++;
+    }
+    for (y = y0; y <= y1; y++) {
+      for (x = x0; x <= x1; x++) {
+        k = y * w + x;
+        if (!grid.mask[k] || taken[k]) continue;
+        var c = [x, y, grid.tone[k]];
+        var isTailBand = headRight ? (x <= tailEnd) : (x >= headStart);
+        var isHeadBand = headRight ? (x >= headStart) : (x <= tailEnd);
+        // 腿带以下的残余一律归躯干：腿已经切走了，剩下的不该跟着头或尾摆
+        if (isTailBand && y < legTop && colFill[x] <= thinMax) tail.push(c);
+        else if (isHeadBand && y < legTop) head.push(c);
+        else torso.push(c);
+      }
+    }
+    // 分出来的尾太碎，说明这条尾是厚的（猫尾、卷尾）—— 退回整条端带：
+    // 宁可让摆尾带上一点屁股，也不要一条不摆的尾。
+    if (tail.length < P.MIN_TAIL) {
+      tail = [];
+      for (y = y0; y < legTop; y++) {
+        for (x = x0; x <= x1; x++) {
+          k = y * w + x;
+          if (!grid.mask[k] || taken[k]) continue;
+          var isTail2 = headRight ? (x <= tailEnd) : (x >= headStart);
+          if (!isTail2) continue;
+          for (var q = 0; q < torso.length; q++) {
+            if (torso[q][0] === x && torso[q][1] === y) { tail.push(torso[q]); torso.splice(q, 1); break; }
+          }
+        }
+      }
+    }
+
+    var headPivot = headRight ? [bounds(head).x0, bounds(head).y1 + 1] : [bounds(head).x1 + 1, bounds(head).y1 + 1];
+    var tailPivot = headRight ? [bounds(tail).x1 + 1, bounds(tail).y1 + 1] : [bounds(tail).x0, bounds(tail).y1 + 1];
+
+    var parts = {
+      tail: mkPart("tail", "尾", "tail", tail, tailPivot, ""),
+      torso: mkPart("torso", "躯干", "torso", torso, bounds(torso).x0 === 1e9 ? [0, 0] : [(bounds(torso).x0 + bounds(torso).x1 + 1) / 2, (bounds(torso).y0 + bounds(torso).y1 + 1) / 2], ""),
+      head: mkPart("head", "头", "head", head, headPivot, "")
+    };
+    legs.forEach(function (p) { parts[p.key] = p; });
+
+    return {
+      grid: grid,
+      box: { x0: x0, y0: y0, x1: x1, y1: y1 },
+      legTop: legTop, tailEnd: tailEnd, headStart: headStart,
+      mass: { l: lMass, r: rMass },
+      headRight: headRight,
+      legs: legs,
+      parts: parts,
+      order: ["tail"].concat(legs.map(function (p) { return p.key; })).concat(["torso", "head"]),
+      collar: [headStart + 0.5, legTop],
+      label: grid.label
+    };
+  }
+
+  function buildModel(src, gw, opts) {
+    var grid;
+    if (src.kind === "prims") { P.GRID_W = gw; grid = bakePrims(src.def, gw); }
+    else grid = src.grid;
+    assignTones(grid, src.palette || null);
+    var m = rig(grid, opts && opts.headRight);
+    if (!m) return null;
+    // 缩放按**包围盒**算，不按网格 —— 上传的图里主体只占一角时，按网格算会缩成一小撮
+    var bw = m.box.x1 - m.box.x0 + 1, bh = m.box.y1 - m.box.y0 + 1;
+    m.scale = Math.min(STAGE.h * STAGE.bodyRatio / bh, STAGE.w * STAGE.widthRatio / bw);
+    m.bodyLen = bw * m.scale;                 // 体长＝包围盒宽。图里没有尺子，这是最近的代理量
+    m.left = m.box.x0 * m.scale;
+    m.right = (m.box.x1 + 1) * m.scale;
+    m.x = Math.max(20, (STAGE.w - bw * m.scale) / 2 - m.left);
+    m.palette = grid.palette;
+    m.label = grid.label;
+    return m;
+  }
+
+  /* ============================================================
+     4 · 姿态：对角步态 / 起伏 / 摇头 / 摆尾 / 坐下
+     ============================================================ */
+  function restPose() { return { facing: 1, bob: 0, sit: 0, legs: [0, 0, 0, 0], head: 0, tail: 0, x: null }; }
+  function poseFrom(m, st) {
+    var sit = st.sit, out = restPose();
+    out.facing = st.facing;
+    out.x = st.x;
+    out.sit = sit;
+    out.bob = P.BOB_UNITS * Math.abs(Math.sin(st.phase)) + P.SIT_DROP * sit;
+    // 对角步态：x 序第 0、3 条同相，第 1、2 条同相
+    out.legs = [0, 1, 1, 0].map(function (ph, i) {
+      var part = m.legs[i] || {};
+      var a = P.SWING_DEG * Math.sin(st.phase + ph * Math.PI) * (1 - 0.85 * sit);
+      if (part.role === "hind") a += P.SIT_FOLD_DEG * sit;
+      return a;
+    });
+    out.tail = P.TAIL_DEG * Math.sin(st.phase * 0.67 + 0.7) * (1 - 0.4 * sit) + 6 * sit;
+    out.head = P.HEAD_DEG * Math.sin(st.phase + 0.4) + 2 * sit;
+    return out;
+  }
+  function flipOf(m, pose) { return (m.headRight ? 1 : -1) * (pose.facing >= 0 ? 1 : -1); }
+  function dogX(m, o) {
+    if (o && o.center) return Math.max(8, r2((STAGE.w - (m.right - m.left)) / 2 - m.left));
+    return (o && o.x != null) ? o.x : m.x;
+  }
+  function dogTransform(m, pose, o) {
+    var sc = m.scale, flip = flipOf(m, pose);
+    var tx = dogX(m, o) + (flip < 0 ? m.grid.w * sc : 0);
+    var ty = STAGE.ground - (m.box.y1 + 1) * sc;
+    return { flip: flip, sc: sc, tx: tx, ty: ty,
+             str: "translate(" + r2(tx) + " " + r2(ty) + ") scale(" + r2(flip * sc) + " " + r2(sc) + ")" };
+  }
+  function toStageXY(m, pose, gp, o) {
+    var t = dogTransform(m, pose, o);
+    return [t.tx + t.flip * t.sc * gp[0], t.ty + t.sc * gp[1]];
+  }
+  function legAngle(m, pose, key) {
+    for (var i = 0; i < m.legs.length; i++) if (m.legs[i].key === key) return pose.legs[i];
+    return 0;
+  }
+  function partAngle(m, pose, p) {
+    if (p.kind === "leg") return legAngle(m, pose, p.key);
+    if (p.kind === "tail") return pose.tail;
+    if (p.kind === "head") return pose.head;
+    return 0;
+  }
+
+  /* ============================================================
+     5 · 序列化：一条结构，两种出口（浏览器 DOM / SVG 字符串）
+     ============================================================ */
+  function partChildren(m, p, animate) {
+    var out = [];
+    m.palette.forEach(function (col, t) {
+      if (!p.d[t]) return;
+      out.push({ d: p.d[t], fill: col });
+    });
+    return out;
+  }
+  function smil(type, values, dur, begin) {
+    return '<animateTransform attributeName="transform" type="' + type + '" values="' + values +
+           '" dur="' + dur + 's"' + (begin ? ' begin="' + begin + 's"' : '') +
+           ' repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>';
+  }
+  function dogString(m, pose, o) {
+    var s = [], t = dogTransform(m, pose, o);
+    s.push('  <g id="dog" transform="' + t.str + '">');
+    s.push('    <g id="bob" class="bob"' +
+           (o.animate ? "" : ' transform="translate(0 ' + r2(pose.bob) + ')"') + ">");
+    if (o.animate) {
+      s.push("      " + smil("translate", "0 0;0 " + r2(-P.BOB_UNITS) + ";0 0", "0.62", ""));
+    }
+    m.order.forEach(function (key) {
+      var p = m.parts[key];
+      var anim = o.animate && p.kind !== "torso";
+      s.push('      <g class="part" data-part="' + p.key + '" transform="translate(' +
+             r2(p.pivot[0]) + " " + r2(p.pivot[1]) + ')">');
+      s.push("        <g" + (anim ? "" : ' transform="rotate(' + r2(partAngle(m, pose, p)) + ')"') + ">");
+      if (anim) {
+        var amp = p.kind === "tail" ? P.TAIL_DEG : (p.kind === "head" ? P.HEAD_DEG : P.SWING_DEG);
+        var sg = (p.kind === "leg" && (p.key === "leg-0" || p.key === "leg-3")) ? -1 : 1;
+        var dur = p.kind === "tail" ? "0.90" : "0.62";
+        var begin = p.kind === "head" ? "-0.09" : (p.kind === "tail" ? "-0.20" : "");
+        s.push("          " + smil("rotate", r2(sg * amp) + ";" + r2(-sg * amp) + ";" + r2(sg * amp), dur, begin));
+      }
+      m.palette.forEach(function (col, ti) {
+        if (!p.d[ti]) return;
+        s.push('          <path d="' + p.d[ti] + '" fill="' + col + '" stroke="' + col +
+               '" stroke-width="0.55"/>');
+      });
+      s.push("        </g>");
+      s.push("      </g>");
+    });
+    s.push("    </g>");
+    s.push("  </g>");
+    return s.join("\n");
+  }
+  function buildSvg(m, pose, opt) {
+    var o = opt || {};
+    var s = [];
+    s.push('<svg xmlns="' + NS + '" viewBox="0 0 ' + STAGE.w + ' ' + STAGE.h + '"' +
+           ' width="' + STAGE.w + '" height="' + STAGE.h + '" role="img" aria-label="赛博遛狗">');
+    s.push('  <title>赛博遛狗 —— ' + esc(m.label) + (m.headRight ? " · 头在右" : " · 头在左") + '</title>');
+    s.push('  <!-- 由 tools/cyber-walk.html 生成 · 网格 ' + m.grid.w + ' × ' + m.grid.h +
+           ' · 三阶调色板 ' + m.palette.join(" ") + (REV ? ' · 修订 ' + REV : '') + ' -->');
+    if (o.animate) {
+      s.push('  <desc>SMIL 循环，无脚本：对角步态 0.62 s 一轮，躯干起伏半周期，尾与头带相位偏移。</desc>');
+    }
+    s.push('  <path d="M0 ' + STAGE.ground + 'H' + STAGE.w + '" stroke="#e5e2dd" stroke-width="2"/>');
+    s.push(dogString(m, pose, o));
+    if (o.leash) {
+      var bp = toStageXY(m, pose, m.collar, o);
+      var a = o.leash;
+      var dist = Math.sqrt(Math.pow(a[0] - bp[0], 2) + Math.pow(a[1] - bp[1], 2));
+      var sag = clamp(m.bodyLen * P.LEASH_BL - dist, 0, 140) * 0.36;
+      s.push('  <path d="M' + r2(a[0]) + ' ' + r2(a[1]) + 'Q' + r2((a[0] + bp[0]) / 2) + ' ' +
+             r2((a[1] + bp[1]) / 2 + sag) + ' ' + r2(bp[0]) + ' ' + r2(bp[1]) +
+             '" stroke="#b45309" stroke-width="2.4" fill="none" stroke-linecap="round"/>');
+    }
+    s.push('</svg>');
+    return s.join("\n");
+  }
+
+  /* ============================================================
+     6 · 舞台
+     ============================================================ */
+  var view = null, model = null;
+  var st = {
+    x: 320, v: 0, facing: 1, dist: 0, phase: 0, tension: 0, speed: 0,
+    anchor: { x: 640, y: 200 }, idle: 0, sit: 0
+  };
+  var keys = { left: false, right: false };
+  var fps = 0, frames = 0, lastFps = 0, lastTel = 0, last = 0, mirror = null, running = false;
+
+  function mountStage() {
+    var el = $("stage");
+    if (!el) return null;
+    el.innerHTML = "";
+    var g = { root: el, parts: {} };
+
+    var ground = mk("path");
+    ground.setAttribute("d", "M0 " + STAGE.ground + "H" + STAGE.w);
+    ground.setAttribute("class", "ground");
+    el.appendChild(ground);
+
+    var ticks = mk("g");
+    ticks.setAttribute("class", "ticks");
+    for (var x = -20; x <= STAGE.w + 20; x += 20) {
+      var t = mk("path");
+      t.setAttribute("d", "M" + x + " " + (STAGE.ground + 3) + "v" + (((x / 20) % 5 === 0) ? 9 : 5));
+      ticks.appendChild(t);
+    }
+    el.appendChild(ticks);
+    g.ticks = ticks;
+
+    // 体长比例尺 —— 页面所有长度都以体长计，就把那把尺子画出来
+    var bl = model.bodyLen;
+    var bx = 22, by = STAGE.ground + 36;
+    var bar = mk("path");
+    bar.setAttribute("d", "M" + bx + " " + (by - 6) + "v6H" + r2(bx + bl) + "v-6" +
+                         "M" + r2(bx + bl / 2) + " " + (by - 4) + "v4");
+    bar.setAttribute("class", "bar");
+    el.appendChild(bar);
+    var blabel = mk("text");
+    blabel.setAttribute("x", r2(bx + bl + 8));
+    blabel.setAttribute("y", by);
+    blabel.setAttribute("class", "barlabel");
+    blabel.textContent = "1 体长";
+    el.appendChild(blabel);
+
+    var dog = mk("g");
+    var bob = mk("g");
+    dog.appendChild(bob);
+    model.order.forEach(function (key) {
+      var p = model.parts[key];
+      var g1 = mk("g"), g2 = mk("g");
+      g1.setAttribute("class", "part");
+      g1.setAttribute("data-part", p.key);
+      g1.setAttribute("transform", "translate(" + p.pivot[0] + " " + p.pivot[1] + ")");
+      model.palette.forEach(function (col, ti) {
+        if (!p.d[ti]) return;
+        var path = mk("path");
+        path.setAttribute("d", p.d[ti]);
+        path.setAttribute("fill", col);
+        path.setAttribute("stroke", col);
+        path.setAttribute("stroke-width", "0.55");
+        g2.appendChild(path);
+      });
+      g1.appendChild(g2);
+      bob.appendChild(g1);
+      g.parts[key] = { g1: g1, g2: g2, p: p };
+    });
+    el.appendChild(dog);
+    g.dog = dog;
+    g.bob = bob;
+
+    var leash = mk("path"); leash.setAttribute("class", "leash");
+    var hand = mk("circle"); hand.setAttribute("class", "hand"); hand.setAttribute("r", "7");
+    var ring = mk("circle"); ring.setAttribute("class", "ring"); ring.setAttribute("r", "3.4");
+    el.appendChild(leash); el.appendChild(hand); el.appendChild(ring);
+    g.leash = leash; g.hand = hand; g.ring = ring;
+    return g;
+  }
+
+  function applyPose() {
+    if (!view || !model) return;
+    var pose = poseFrom(model, st);
+    var t = dogTransform(model, pose, { x: st.x });
+    view.dog.setAttribute("transform", t.str);
+    view.bob.setAttribute("transform", "translate(0 " + r2(pose.bob) + ")");
+    model.order.forEach(function (key) {
+      var v = view.parts[key];
+      v.g2.setAttribute("transform", "rotate(" + r2(partAngle(model, pose, v.p)) + ")");
+    });
+    view.ticks.setAttribute("transform", "translate(" + r2(-((st.dist * model.bodyLen * 0.55) % 20)) + " 0)");
+
+    var bp = toStageXY(model, pose, model.collar, { x: st.x });
+    var a = st.anchor;
+    var dist = Math.sqrt(Math.pow(a.x - bp[0], 2) + Math.pow(a.y - bp[1], 2));
+    var slack = model.bodyLen * P.LEASH_BL - dist;
+    var sag = clamp(slack, 0, 140) * 0.36;
+    view.leash.setAttribute("d", "M" + r2(a.x) + " " + r2(a.y) + "Q" +
+      r2((a.x + bp[0]) / 2) + " " + r2((a.y + bp[1]) / 2 + sag) + " " + r2(bp[0]) + " " + r2(bp[1]));
+    view.hand.setAttribute("cx", r2(a.x));
+    view.hand.setAttribute("cy", r2(a.y));
+    view.ring.setAttribute("cx", r2(bp[0]));
+    view.ring.setAttribute("cy", r2(bp[1]));
+  }
+
+  /* ============================================================
+     7 · 物理：绳是约束器 —— 松了不拉，绷了才拉
+     ============================================================ */
+  function step(dt) {
+    if (!model) return;
+    var bodyLen = model.bodyLen;
+    var leashPx = bodyLen * P.LEASH_BL;
+    var kx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+    if (kx) { st.anchor.x = clamp(st.anchor.x + kx * 3.6 * bodyLen * dt, 30, STAGE.w - 30); st.idle = 0; }
+
+    var gap = st.anchor.x - st.x;
+    var over = Math.abs(gap) - leashPx;
+    st.tension = clamp(over / leashPx, 0, 1);
+    var vDes = over > 0 ? clamp(over * P.PULL_K, 0, P.MAX_SPEED_BL * bodyLen) : 0;
+    var vT = (gap >= 0 ? 1 : -1) * vDes;
+    st.v += (vT - st.v) * Math.min(1, dt * 5.5);
+
+    var nx = st.x + st.v * dt;
+    var lim = STAGE.w - 10 - model.right, low = 10 - model.left;
+    if (nx < low) { nx = low; st.v = 0; }
+    if (nx > lim) { nx = lim; st.v = 0; }
+    st.x = nx;
+
+    st.speed = Math.abs(st.v) / bodyLen;
+    st.dist += Math.abs(st.v) * dt / bodyLen;
+    if (Math.abs(st.v) > bodyLen * 0.06) st.facing = st.v > 0 ? 1 : -1;
+    st.phase += (st.speed / P.STRIDE_BL) * Math.PI * dt;
+    if (st.speed > 0.06) st.idle = 0; else st.idle += dt;
+    var wantSit = (st.idle > P.SIT_AFTER && st.tension < 0.02) ? 1 : 0;
+    st.sit += (wantSit - st.sit) * Math.min(1, dt * 3.2);
+  }
+
+  function loop() {
+    running = true;
+    var t = now(), dt = Math.min(0.05, (t - last) / 1000);
+    last = t;
+    step(dt);
+    applyPose();
+    frames++;
+    if (t - lastFps > 500) { fps = frames * 1000 / (t - lastFps); frames = 0; lastFps = t; }
+    if (t - lastTel > 140) { renderTele(); lastTel = t; }
+    if (RAF) RAF(loop);
+  }
+
+  /* ============================================================
+     8 · 面板
+     ============================================================ */
+  function rows(pairs) {
+    return '<table class="kv">' + pairs.map(function (p) {
+      return '<tr><td>' + p[0] + '</td><td>' + p[1] + '</td></tr>';
+    }).join("") + '</table>';
+  }
+  function renderSource() {
+    if (!model) return;
+    var g = model.grid;
+    $("src-note").innerHTML = "来源：" + esc(g.label) + "。" +
+      (g.origin === "image" ? "这张图只在本机解析过一遍 —— 取出网格之后，像素就被丢掉了。"
+                         : "没有上传任何图片。内置狗走的是同一条管线。");
+  }
+  function renderPalette() {
+    var g = model.grid;
+    $("palette-out").innerHTML =
+      '<div class="mono" style="margin-bottom:8px;">' +
+      g.palette.map(function (c) { return '<span class="sw" style="background:' + c + '"></span>' + c; }).join(" &nbsp; ") +
+      '</div><div class="foot-note" style="margin-top:0;">三阶由明度三分位切出：' + g.q[0] + " / " + g.q[1] +
+      '（0–255）。' + (g.origin === "image" ? "色值是各阶的像素均值。" : "内置狗的色值是给定的，明度由位置合成。") +
+      (g.usedTones < 3 ? " 这张图只用到 " + g.usedTones + " 阶 —— 剩下的档位沿用了邻档色。" : "") + '</div>';
+  }
+  function renderParts() {
+    var head = '<tr><td>部件</td><td>格 · 节点 · 摆幅</td></tr>';
+    var body = model.order.map(function (key) {
+      var p = model.parts[key];
+      var amp = p.kind === "tail" ? P.TAIL_DEG + "°" :
+                (p.kind === "head" ? P.HEAD_DEG + "°" :
+                (p.kind === "leg" ? P.SWING_DEG + "°" : "—"));
+      var role = p.kind === "leg" ? (p.role === "hind" ? "约束侧" : "支撑侧") : (p.kind === "torso" ? "跟随" : "摆动");
+      return '<tr><td>' + esc(p.name) + '</td><td>' + p.cells + " · " + p.nodes + " · " + amp +
+             ' <span style="color:var(--faint)">' + role + '</span></td></tr>';
+    }).join("");
+    $("parts-out").innerHTML = '<table class="kv">' + head + body + '</table>' +
+      '<div class="foot-note">腿带从包围盒高度的 ' + P.LEG_BAND * 100 + '% 开始；四条腿按列聚类切出，' +
+      '粘连时会先合并再等分。头／尾的端带按 ' + P.TAIL_CUT * 100 + '% / ' + (100 - P.HEAD_CUT * 100) + '% 切。</div>';
+  }
+  function renderPipe() {
+    var g = model.grid;
+    var nodes = model.order.reduce(function (n, k) { return n + model.parts[k].nodes; }, 0);
+    var bytes = buildSvg(model, poseFrom(model, st), { x: st.x }).length;
+    $("pipe-out").innerHTML =
+      "① 像素 → 画布：<b>" + (g.origin === "image" ? (g.w * 3) + " × " + (g.h * 3) + " 采样点" : "无（内置狗不走这一级）") + "</b><br>" +
+      "② 覆盖率 → 网格 <b>" + g.w + " × " + g.h + "</b>：填充 <b>" + g.filled + "</b> 格 · 占比 " +
+      (g.filled * 100 / (g.w * g.h)).toFixed(1) + "%<br>" +
+      "③ 切分 → 部件 <b>" + model.order.length + "</b> 个：腿 " + model.legs.length +
+      " · 包围盒 " + (model.box.x1 - model.box.x0 + 1) + " × " + (model.box.y1 - model.box.y0 + 1) +
+      "（体长 " + Math.round(model.bodyLen) + " px · 按包围盒宽计）" +
+      " · 头在" + (model.headRight ? "右" : "左") + "（端带质量 " + model.mass.l + " / " + model.mass.r + "）<br>" +
+      "④ 路径 → <b>" + nodes + "</b> 条子路径 · SVG " + (bytes / 1024).toFixed(1) + " KB";
+  }
+  function renderTele() {
+    var pose = poseFrom(model, st);
+    $("tele-out").innerHTML = rows([
+      ["姿态", st.sit > 0.5 ? "坐" : (st.speed > 0.06 ? "走" : "站")],
+      ["速度", st.speed.toFixed(2) + " 体长／秒"],
+      ["步频", (st.speed / P.STRIDE_BL).toFixed(2) + " 步／秒"],
+      ["已走", st.dist.toFixed(2) + " 体长"],
+      ["牵引张力", Math.round(st.tension * 100) + "%"],
+      ["绳长", P.LEASH_BL + " 体长（6 ft ≈ 1.83 m）"],
+      ["朝向", pose.facing >= 0 ? "右" : "左"],
+      ["帧率", running ? Math.round(fps) + " fps" : "不跑（本机没有 requestAnimationFrame）"]
+    ]);
+  }
+  function renderParams() {
+    $("param-out").innerHTML = '<table class="ptable">' + PARAM_DOC.map(function (p) {
+      return "<tr><td>" + p[0] + "</td><td>" + p[1] + "</td><td>" + p[2] + "</td></tr>";
+    }).join("") + "</table>";
+  }
+
+  /* ============================================================
+     9 · 自检：把管线的每一次出口都过一遍
+     ============================================================ */
+  function selftest() {
+    var out = [], ok = 0, bad = 0;
+    function say(pass, text) {
+      out.push({ ok: pass, text: text });
+      if (pass) ok++; else bad++;
+    }
+    var m = buildModel({ kind: "prims", def: BUILTIN, palette: BUILTIN.palette }, P.GRID_W, { headRight: null });
+    say(!!m, "管线返回了模型");
+    if (!m) return { rows: out, passed: ok, failed: bad };
+
+    var g = m.grid;
+    say(g.filled > 50, "网格非空：" + g.w + " × " + g.h + " · 填充 " + g.filled + " 格");
+    say(m.order.length === 7, "部件 7 个：" + m.order.join(" / "));
+    var legsOK = m.legs.length === 4 && m.legs.every(function (p) { return p.cells > 0; });
+    say(legsOK, "四条腿都切出来了：" + m.legs.map(function (p) { return p.cells; }).join(" / ") + " 格");
+    var otherOK = ["tail", "torso", "head"].every(function (k) { return m.parts[k].cells > 0; });
+    say(otherOK, "尾／躯干／头都非空：" + ["tail", "torso", "head"].map(function (k) { return m.parts[k].cells; }).join(" / ") + " 格");
+    var pathsOK = m.order.every(function (k) {
+      var p = m.parts[k];
+      return p.d.some(function (d) { return d.indexOf("M") === 0; });
+    });
+    say(pathsOK, "每个非空部件都有以 M 开头的路径");
+    say(m.palette.length === 3 && m.palette.every(function (c) { return /^#[0-9a-f]{6}$/.test(c); }),
+      "三阶调色板：" + m.palette.join(" "));
+
+    var p0 = restPose();
+    var a1 = buildSvg(m, p0, { center: true, animate: false });
+    var a2 = buildSvg(m, p0, { center: true, animate: false });
+    say(a1 === a2 && a1.indexOf("<svg") === 0, "确定性：同一输入两次序列化逐字节相同（" + a1.length + " 字节）");
+    var nPart = (a1.match(/class="part"/g) || []).length;
+    say(nPart === 7, "静态导出含 7 个部件组（" + nPart + "）· 无动画元素：" + (a1.indexOf("animate") < 0));
+    var anim = buildSvg(m, p0, { center: true, animate: true });
+    var nAnim = (anim.match(/<animateTransform/g) || []).length;
+    say(nAnim === 7, "动态导出含 7 个 SMIL 动画（4 腿 + 尾 + 头 + 起伏）：" + nAnim);
+    say(anim.indexOf('viewBox="0 0 960 340"') > 0, "动态导出带 viewBox（可无损缩放）");
+    say(!/undefined|NaN/.test(a1 + anim), "两个出口都没有 undefined / NaN 残留");
+    return { rows: out, passed: ok, failed: bad };
+  }
+  function renderSelfcheck() {
+    var r = selftest();
+    var html = r.rows.map(function (x) {
+      return '<div class="chk ' + (x.ok ? "ok" : "bad") + '">' + (x.ok ? "✓ " : "✗ ") + esc(x.text) + "</div>";
+    }).join("");
+    html += '<div class="chk note">· 图片通路：' + (canvasOK() ? "本机 canvas 可用，上传即可取像素。" :
+      "本机取不到 canvas 2D 上下文 —— 上传通路不可用，内置狗不受影响。") + "</div>";
+    html += '<div class="chk note">· 判定：' + r.passed + " 项通过 · " + r.failed + " 项不符。</div>";
+    $("selfcheck-out").innerHTML = html;
+    // 标题带一条自检信号，与 charts.html / peripherals.html 同一套约定：
+    // 用浏览器打开，标题变成「… · 12/12 自检」就说明管线没被改坏。
+    // 夹具的 DOM 桩里 title 可能不是字符串，所以要挡住类型。
+    if (typeof document !== "undefined" && typeof document.title === "string" &&
+        document.title.indexOf("· 自检") < 0) {
+      document.title += " · " + r.passed + "/" + (r.passed + r.failed) + " 自检";
+    }
+  }
+
+  function renderAll() {
+    renderSource(); renderPalette(); renderParts(); renderPipe();
+    renderTele(); renderParams(); renderSelfcheck(); renderSvgNote();
+  }
+  function renderSvgNote() {
+    var g = model.grid;
+    $("svg-note").innerHTML = "静态那一张是你现在看到的姿态（含绳与把手），动态那一张没有绳、" +
+      "居中摆放，靠 SMIL 自己循环 —— 两个都不含脚本，可以单独存下来当图片用。" +
+      "网格 " + g.w + " × " + g.h + "，改网格宽度会改变出口。" +
+      (canvasOK() ? "" : '<br><span style="color:#b91c1c">本机没有 canvas 通路，上传用不了。</span>');
+  }
+
+  /* ============================================================
+     10 · 装载与交互
+     ============================================================ */
+  function load(src, opts) {
+    var m = buildModel(src, P.GRID_W, opts);
+    if (!m) { toast("这一份认不出狗：网格是空的"); return false; }
+    model = m;
+    st.x = m.x; st.v = 0; st.dist = 0; st.sit = 0; st.idle = 0; st.phase = 0;
+    view = mountStage();
+    applyPose();
+    renderAll();
+    return true;
+  }
+  function loadBuiltin() {
+    load({ kind: "prims", def: BUILTIN, palette: BUILTIN.palette }, { headRight: mirror });
+  }
+  function loadFile(file) {
+    if (!file) return;
+    if (!canvasOK()) { toast("本机没有 canvas 通路，图片取不到像素"); return; }
+    if (typeof FileReader !== "function") { toast("本机没有 FileReader，读不了文件"); return; }
+    var fr = new FileReader();
+    fr.onload = function () {
+      var img = doc.createElement("img");
+      img.onload = function () {
+        var g = gridFromImage(img, P.GRID_W, P.BG_TOL, P.INVERT);
+        if (!g) { toast("这张图没能取到像素（画布被污染，或格式不支持）"); return; }
+        if (load({ kind: "grid", grid: g, palette: null }, { headRight: mirror })) {
+          if (g.filled * 100 / (g.w * g.h) < 3) toast("阈值之后几乎没有前景：调小背景剔除阈值，或勾上反转掩膜");
+        }
+      };
+      img.onerror = function () { toast("这张图读不出来"); };
+      img.src = String(fr.result);
+    };
+    fr.onerror = function () { toast("文件读取失败"); };
+    fr.readAsDataURL(file);
+  }
+  function toStagePt(ev) {
+    var el = $("stage");
+    var r = (el && typeof el.getBoundingClientRect === "function") ? el.getBoundingClientRect() : null;
+    var cx = ev && ev.clientX != null ? ev.clientX : (r ? r.left + r.width / 2 : STAGE.w / 2);
+    var cy = ev && ev.clientY != null ? ev.clientY : (r ? r.top + r.height / 2 : STAGE.h / 2);
+    if (!r || !r.width || !r.height) return { x: cx, y: cy };
+    return { x: (cx - r.left) * STAGE.w / r.width, y: (cy - r.top) * STAGE.h / r.height };
+  }
+  function bind() {
+    var el = $("stage");
+    if (el && el.addEventListener) {
+      el.addEventListener("pointermove", function (ev) {
+        var p = toStagePt(ev);
+        st.anchor.x = clamp(p.x, 30, STAGE.w - 30);
+        st.anchor.y = clamp(p.y, 40, STAGE.h - 40);
+        st.idle = 0;
+      });
+      el.addEventListener("pointerdown", function (ev) {
+        var p = toStagePt(ev);
+        st.anchor.x = clamp(p.x, 30, STAGE.w - 30);
+        st.anchor.y = clamp(p.y, 40, STAGE.h - 40);
+        st.idle = 0;
+      });
+    }
+    if (doc.addEventListener) {
+      doc.addEventListener("keydown", function (ev) {
+        var k = ev.key;
+        if (k === "ArrowLeft" || k === "a" || k === "A") keys.left = true;
+        else if (k === "ArrowRight" || k === "d" || k === "D") keys.right = true;
+        else if (k === " " || k === "Spacebar") { st.idle = 999; ev.preventDefault(); }
+        else if (k === "m" || k === "M") toggleMirror();
+        else if (k === "r" || k === "R") loadBuiltin();
+        else return;
+        if (k === "ArrowLeft" || k === "ArrowRight") ev.preventDefault();
+      });
+      doc.addEventListener("keyup", function (ev) {
+        var k = ev.key;
+        if (k === "ArrowLeft" || k === "a" || k === "A") keys.left = false;
+        if (k === "ArrowRight" || k === "d" || k === "D") keys.right = false;
+      });
+    }
+    var drop = $("drop");
+    if (drop && drop.addEventListener) {
+      ["dragenter", "dragover"].forEach(function (t) {
+        drop.addEventListener(t, function (ev) { ev.preventDefault(); drop.className = "drop on"; });
+      });
+      ["dragleave", "drop"].forEach(function (t) {
+        drop.addEventListener(t, function (ev) { ev.preventDefault(); drop.className = "drop"; });
+      });
+      drop.addEventListener("drop", function (ev) {
+        var f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+        if (f) loadFile(f);
+      });
+    }
+    if (el && el.addEventListener) {
+      el.addEventListener("dragover", function (ev) { ev.preventDefault(); });
+      el.addEventListener("drop", function (ev) {
+        ev.preventDefault();
+        var f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+        if (f) loadFile(f);
+      });
+    }
+    if (doc.addEventListener) {
+      doc.addEventListener("paste", function (ev) {
+        var items = ev.clipboardData && ev.clipboardData.items;
+        if (!items) return;
+        for (var i = 0; i < items.length; i++) {
+          if (items[i].type && items[i].type.indexOf("image") === 0) {
+            var f = items[i].getAsFile && items[i].getAsFile();
+            if (f) { loadFile(f); break; }
+          }
+        }
+      });
+    }
+    var f = $("f-file");
+    if (f && f.addEventListener) {
+      f.addEventListener("change", function () { loadFile(f.files && f.files[0]); });
+    }
+    bindRange("r-grid", function (v) { P.GRID_W = v; });
+    bindRange("r-tol", function (v) { P.BG_TOL = v; });
+    bindRange("r-fill", function (v) { P.CELL_FILL = v / 100; });
+    var inv = $("chk-invert");
+    if (inv && inv.addEventListener) {
+      inv.addEventListener("change", function () { P.INVERT = !!inv.checked; toast("反转掩膜下次上传生效"); });
+    }
+    var bb = $("btn-builtin");
+    if (bb && bb.addEventListener) bb.addEventListener("click", function () { loadBuiltin(); });
+    var bm = $("btn-mirror");
+    if (bm && bm.addEventListener) bm.addEventListener("click", function () { toggleMirror(); });
+    var bs = $("btn-static");
+    if (bs && bs.addEventListener) bs.addEventListener("click", function () { save("cyber-dog-static.svg", buildSvg(model, poseFrom(model, st), { x: st.x, leash: [st.anchor.x, st.anchor.y] })); });
+    var ba = $("btn-anim");
+    if (ba && ba.addEventListener) ba.addEventListener("click", function () { save("cyber-dog-animated.svg", buildSvg(model, restPose(), { center: true, animate: true })); });
+  }
+  function bindRange(id, fn) {
+    var el = $(id);
+    if (!el) return;
+    if (el.value == null || el.value === "") return;
+    fn(Number(el.value));
+    if (!el.addEventListener) return;
+    el.addEventListener("input", function () { fn(Number(el.value)); });
+    el.addEventListener("change", function () {
+      if (id === "r-grid" || id === "r-tol" || id === "r-fill") loadBuiltin();
+    });
+  }
+  function toggleMirror() {
+    mirror = (mirror === null) ? !model.headRight : !mirror;
+    toast(mirror ? "朝向已镜像：头在" + (mirror ? "右" : "左") : "朝向回到自动判定");
+    loadBuiltin();
+  }
+  function save(name, text) {
+    if (!model) return;
+    if (typeof Blob !== "function" || !(window.URL && window.URL.createObjectURL)) {
+      toast("本机不能另存文件，但 SVG 已经生成（" + text.length + " 字节）");
+      return;
+    }
+    var blob = new Blob([text], { type: "image/svg+xml" });
+    var a = doc.createElement("a");
+    a.href = window.URL.createObjectURL(blob);
+    a.download = name;
+    if (a.click) a.click();
+    toast("已生成 " + name + "（" + (text.length / 1024).toFixed(1) + " KB）");
+  }
+  function syncLabels() {
+    $("v-grid").textContent = P.GRID_W + " 格";
+    $("v-tol").textContent = P.BG_TOL + " / 255";
+    $("v-fill").textContent = Math.round(P.CELL_FILL * 100) + "%";
+  }
+
+  /* ============================================================
+     11 · 启动
+     ============================================================ */
+  window.CyberWalk = {
+    PARAMS: P, STAGE: STAGE, BUILTIN: BUILTIN,
+    bake: bakePrims, tones: assignTones, rig: rig, model: buildModel,
+    gridFromImage: gridFromImage, canvasOK: canvasOK,
+    partPaths: pathsFor, restPose: restPose, poseFrom: poseFrom,
+    buildSvg: buildSvg, selftest: selftest, state: st
+  };
+
+  var gf = $("r-grid"), tf = $("r-tol"), fl = $("r-fill");
+  if (gf && gf.value) gf.value = String(P.GRID_W);
+  if (tf && tf.value) tf.value = String(P.BG_TOL);
+  if (fl && fl.value) fl.value = String(Math.round(P.CELL_FILL * 100));
+  syncLabels();
+  loadBuiltin();
+  bind();
+  if (RAF && !reduced()) { last = now(); lastFps = last; lastTel = last; loop(); }
+
+  SpecSite.mountChrome({ root: "../", active: "cyberwalk" });
+})();
+</script>
+
+</body>
+</html>
