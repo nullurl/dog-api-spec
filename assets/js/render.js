@@ -8,7 +8,7 @@ window.SpecSite = (function () {
   /* 文档修订号 —— 全站唯一事实源。
      它记录的是这份规范文本的编辑状态，与正文《生命周期》章描述的系统运行版本无关。
      改这里之前请先读 docs/CONTRIBUTING.md 的修订约定：版本号要与 CHANGELOG 的条目同时改。 */
-  const VERSION = "0.20";
+  const VERSION = "0.21";
 
   const NAV = [
     { key: "home", label: "首页", href: "index.html" },
@@ -26,6 +26,7 @@ window.SpecSite = (function () {
     { key: "charts", label: "图表图鉴", href: "tools/charts.html" },
     { key: "peripherals", label: "外设总线", href: "tools/peripherals.html" },
     { key: "cyberwalk", label: "赛博遛狗", href: "tools/cyber-walk.html" },
+    { key: "astraflow", label: "星图接入", href: "tools/astraflow.html" },
     { key: "sdk", label: "SDK 控制台", href: "sdk/demo.html" }
   ];
 

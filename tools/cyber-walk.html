@@ -79,7 +79,8 @@
     牵引在这套规范里有编号：§4.7 的外设目录把 <code>PER/LS</code>「牵引与胸背」归为<strong>约束器</strong> ——
     不承接配额，只限制 §2.9 里那条爆发性能。本页实现的就是这一半：绳绷直时速度被限制，绳松开时不受限。
     绳长固定 2.03 体长（6 ft，按中型犬体长 0.90 m 换算）：附录 R 的伸缩绳条款把伸缩绳排除在推荐配置之外，
-    所以这里没有长度调节。<strong>图片不离开这台机器</strong> —— 本页不发任何请求，也不保存任何文件。
+    所以这里没有长度调节。<strong>图片不离开这台机器</strong> —— 本页不发任何请求，也不保存任何文件；
+    从《星图接入》交接过来的那张只走同一标签页，读完即删。
   </div>
 
   <div class="stage-wrap">
@@ -179,7 +180,7 @@
 
   <hr class="divider">
   <div class="end-note">
-    本页不联网：图片不出去，也不留下。能带走的是一只网格化的狗，和一条固定长度的绳。<br>
+    本页不联网：图片不出去，也不留下（从《星图接入》交接来的那张，读完即删）。能带走的是一只网格化的狗，和一条固定长度的绳。<br>
     本机：绳子绷紧的方向，就是要去的方向。绳子松开的时候，我在闻地面。
   </div>
 </div>
@@ -1139,6 +1140,30 @@
     fr.onerror = function () { toast("文件读取失败"); };
     fr.readAsDataURL(file);
   }
+  /* 交接入口：《星图接入》生成的那张图放在同一个标签页的会话存储里。
+     读一次就删，本页不留下第二份。没有交接就静默返回，照常用内置狗。 */
+  function handoffIn() {
+    var raw = null;
+    try {
+      if (typeof sessionStorage === "undefined") return false;
+      raw = sessionStorage.getItem("dog.walk.image");
+      if (raw) sessionStorage.removeItem("dog.walk.image");
+    } catch (e) { return false; }
+    if (!raw || raw.indexOf("data:image") !== 0) return false;
+    if (!canvasOK()) { toast("本机没有 canvas 通路，交接过来的图取不到像素"); return false; }
+    var img = doc.createElement("img");
+    img.onload = function () {
+      var g = gridFromImage(img, P.GRID_W, P.BG_TOL, P.INVERT);
+      if (!g) { toast("交接过来的图没能取到像素"); return; }
+      if (load({ kind: "grid", grid: g, palette: null }, { headRight: mirror })) {
+        toast("接手了《星图接入》生成的那一张");
+      }
+    };
+    img.onerror = function () { toast("交接过来的图读不出来"); };
+    img.src = raw;
+    return true;
+  }
+
   function toStagePt(ev) {
     var el = $("stage");
     var r = (el && typeof el.getBoundingClientRect === "function") ? el.getBoundingClientRect() : null;
@@ -1286,6 +1311,7 @@
   syncLabels();
   loadBuiltin();
   bind();
+  handoffIn();   /* 有交接就覆盖内置狗 */
   if (RAF && !reduced()) { last = now(); lastFps = last; lastTel = last; loop(); }
 
   SpecSite.mountChrome({ root: "../", active: "cyberwalk" });

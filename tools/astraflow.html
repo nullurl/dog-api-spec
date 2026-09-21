@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星图接入 — DOG API</title>
+<meta name="description" content="把星图 AstraFlow 的对话模型与生图模型接进本站工具链：拉模型清单、流式对话、文生图，再把生成的图交给赛博遛狗。本页是本站唯一会出网的页面，KEY 只留在浏览器里。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .cwrap { max-width: 1180px; margin: 0 auto; padding: 30px 28px 120px; }
+  .chead { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 20px; }
+  .chead h1 { font-size: 30px; }
+  .chead p { color: var(--muted); font-size: 15px; max-width: 880px; margin-top: 8px; }
+  .banner { border-radius: 10px; padding: 15px 20px; margin-bottom: 20px; font-size: 14.5px; line-height: 1.85;
+            background: var(--accent-soft); border: 1px solid #f3d5ac; color: #7c4a08; }
+  .banner strong { color: #5a3406; }
+  .warn { background: #fdf3f2; border-color: #f0cfcb; color: #8a2f27; }
+  .warn strong { color: #7a231c; }
+  .cols { display: grid; grid-template-columns: 400px 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+  .panel > h3 { margin: 0 0 12px; font-size: 13px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+  .kv { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .kv td { border: none; border-bottom: 1px solid var(--line); padding: 5px 2px; vertical-align: top; }
+  .kv td:first-child { color: var(--muted); white-space: nowrap; padding-right: 10px; width: 42%; }
+  .kv td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+  .kv tr:last-child td { border-bottom: none; }
+  .fld { display: grid; gap: 5px; margin: 10px 0; }
+  .fld label { font-size: 12.5px; color: var(--muted); }
+  .fld .hint2 { font-size: 11.5px; color: var(--faint); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  select, textarea, input[type=text], input[type=password], input[type=number] {
+    width: 100%; font: inherit; font-size: 12.5px; color: var(--code-ink); background: var(--code-bg);
+    border: 1px solid var(--line); border-radius: 7px; padding: 7px 9px; box-sizing: border-box; }
+  textarea { min-height: 62px; resize: vertical; line-height: 1.6; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .chk { font-size: 12.5px; padding: 3px 0; color: var(--muted); }
+  .chk.ok { color: var(--ok); }
+  .chk.bad { color: #b91c1c; font-weight: 600; }
+  .chk.note { color: var(--faint); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  .out { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.7;
+         background: var(--code-bg); border: 1px solid var(--line); border-radius: 7px; padding: 9px 11px;
+         max-height: 210px; overflow: auto; white-space: pre-wrap; word-break: break-all; color: var(--code-ink); }
+  .say { font-size: 13.5px; line-height: 1.9; color: var(--code-ink); }
+  .msg { border-left: 2px solid var(--line); padding: 7px 0 7px 12px; margin: 9px 0; font-size: 13.5px; line-height: 1.85; }
+  .msg.u { border-left-color: var(--accent); }
+  .msg.a { border-left-color: var(--ok); }
+  .msg .who { font-size: 11px; letter-spacing: .06em; color: var(--faint); text-transform: uppercase; }
+  .msg .think { font-size: 12px; color: var(--faint); line-height: 1.75; white-space: pre-wrap;
+                border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 6px; }
+  .badge { display: inline-block; font-family: ui-monospace, Menlo, monospace; font-size: 11px; padding: 1px 7px;
+           border-radius: 20px; border: 1px solid var(--line); color: var(--muted); background: var(--code-bg); margin-right: 5px; }
+  .badge.on { border-color: #bcd8bd; color: #2f6b33; background: #f2f8f2; }
+  .badge.off { border-color: #e6cfcd; color: #8a2f27; background: #fdf3f2; }
+  .kv2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+  @media (max-width: 620px) { .kv2 { grid-template-columns: 1fr; } }
+  .imgbox { border: 1px dashed var(--line); border-radius: 10px; background: var(--code-bg); padding: 10px;
+            text-align: center; min-height: 120px; display: flex; align-items: center; justify-content: center; }
+  .imgbox img { max-width: 100%; border-radius: 6px; display: block; }
+  .imgbox .ph { color: var(--faint); font-size: 12.5px; }
+  .pipe { font-size: 12.5px; line-height: 1.95; color: var(--muted); }
+  .pipe b { color: var(--accent); font-weight: 700; }
+  .lim { font-size: 13px; color: var(--muted); line-height: 1.85; padding-left: 20px; margin: 6px 0; }
+  .lim li { margin: 7px 0; }
+  .foot-note { font-size: 12.5px; color: var(--faint); line-height: 1.85; margin-top: 10px; }
+  .ptable { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .ptable td { border: none; border-bottom: 1px solid var(--line); padding: 4px 2px; vertical-align: top; }
+  .ptable td:first-child { font-family: ui-monospace, Menlo, monospace; color: var(--code-ink); white-space: nowrap; padding-right: 8px; }
+  .ptable td:nth-child(2) { color: var(--accent); font-family: ui-monospace, Menlo, monospace; white-space: nowrap; padding-right: 8px; }
+  .ptable td:last-child { color: var(--faint); }
+  #toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #1f2430; color: #fff;
+           font-size: 13px; padding: 9px 18px; border-radius: 8px; opacity: 0; transition: opacity .25s;
+           pointer-events: none; z-index: 60; }
+  #toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="cwrap">
+  <div class="chead">
+    <span class="doc-tag">TOOL / ASTRAFLOW</span>
+    <h1>星图接入</h1>
+    <p>把星图的对话模型与生图模型接进这座站点：拉模型清单、流式对话、文生图。
+    生出来的图可以直接牵走 —— 交给《赛博遛狗》降格成网格，再导出 SVG。
+    本页是本站<strong>唯一</strong>会出网的页面；其余页面照旧离线可读。</p>
+  </div>
+
+  <div class="banner warn">
+    <strong>这一页是例外，而且只有这一页。</strong>
+    正文、附录、参考页、其余工具页都不发请求 —— 直接打开就能读，拔掉网线也一样。
+    本页要调用外部模型，所以必须联网，这就是它唯一的功能。
+    <strong>API KEY 不写进任何文件</strong>，只留在你浏览器的内存里；默认连标签页都不记，
+    除非你自己打开下面那个开关。清单里的价格来自平台的 <code>/v1/models</code>，
+    本页只做展示与估算，不做结算。
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="panel">
+        <h3>接入配置</h3>
+        <div class="fld">
+          <label for="sel-node">API 节点 <span class="hint2">（官方文档列了四个）</span></label>
+          <select id="sel-node"></select>
+        </div>
+        <div class="fld" id="fld-base" style="display:none;">
+          <label for="in-base">自定义端点 <span class="hint2">（形如 https://域名，不带 /v1）</span></label>
+          <input type="text" id="in-base" placeholder="https://api.modelverse.cn" spellcheck="false">
+        </div>
+        <div class="fld">
+          <label for="in-key">API KEY <span class="hint2">（本页不发送到星图以外的任何地方）</span></label>
+          <div class="row" style="margin-top:0;">
+            <input type="password" id="in-key" placeholder="sk-…" autocomplete="off" spellcheck="false" style="flex:1;min-width:150px;">
+            <button class="btn ghost" id="btn-peek" type="button">显示</button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:4px;">
+          <label class="mono" style="display:flex;gap:6px;align-items:center;">
+            <input type="checkbox" id="chk-remember"> 记在本标签页（关掉窗口即失）
+          </label>
+        </div>
+        <div class="row">
+          <button class="btn" id="btn-models" type="button">拉模型清单</button>
+          <button class="btn ghost" id="btn-ping" type="button">测连通</button>
+          <button class="btn ghost" id="btn-forget" type="button">忘掉 KEY</button>
+        </div>
+        <div id="conn-out" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="panel">
+        <h3>模型清单</h3>
+        <div id="cat-out"><div class="chk note">还没有清单。清单接口 <code>GET /v1/models</code> 免 KEY 可读 —— 点上面的「拉模型清单」。</div></div>
+        <div class="fld" id="fld-models" style="display:none;">
+          <label for="sel-chat">对话模型 <span class="hint2" id="v-chat"></span></label>
+          <select id="sel-chat"></select>
+          <label for="sel-image" style="margin-top:8px;">生图模型 <span class="hint2" id="v-image"></span></label>
+          <select id="sel-image"></select>
+        </div>
+        <div class="fld">
+          <label for="in-mchat">对话模型 ID <span class="hint2">（可以手填，不必先拉清单）</span></label>
+          <input type="text" id="in-mchat" list="dl-models" placeholder="deepseek-v4-pro-0813" spellcheck="false">
+          <label for="in-mimg" style="margin-top:8px;">生图模型 ID</label>
+          <input type="text" id="in-mimg" list="dl-models" placeholder="qwen-image-3.0" spellcheck="false">
+          <datalist id="dl-models"></datalist>
+        </div>
+        <div class="foot-note">调模型用的是完整 <code>id</code>，含命名空间前缀（如 <code>Qwen/Qwen-Image</code>），
+        不要只写简称 —— 这一条来自官方文档。</div>
+      </div>
+
+      <div class="panel">
+        <h3>计费与用量</h3>
+        <div id="cost-out"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h3>对话</h3>
+        <div class="fld">
+          <label for="in-sys">系统提示词</label>
+          <textarea id="in-sys" spellcheck="false">你在回答一只狗的问题。只给结论，不要形容词。</textarea>
+        </div>
+        <div class="fld">
+          <label for="in-umsg">你说</label>
+          <textarea id="in-umsg" spellcheck="false" placeholder="讲一句关于落雨的话。"></textarea>
+        </div>
+        <div class="kv2">
+          <div class="fld">
+            <label for="r-temp">温度 <span class="hint2" id="v-temp"></span></label>
+            <input type="range" id="r-temp" min="0" max="2" step="0.1">
+          </div>
+          <div class="fld">
+            <label>开关</label>
+            <label class="mono" style="display:flex;gap:6px;align-items:center;">
+              <input type="checkbox" id="chk-stream" checked> 流式返回
+            </label>
+          </div>
+        </div>
+        <div class="row" style="margin-top:4px;">
+          <button class="btn" id="btn-send" type="button">发送</button>
+          <button class="btn ghost" id="btn-stop" type="button">中止</button>
+          <button class="btn ghost" id="btn-clear" type="button">清空对话</button>
+        </div>
+        <div id="chat-out" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="panel">
+        <h3>生图</h3>
+        <div class="fld">
+          <label for="in-prompt">提示词</label>
+          <textarea id="in-prompt" spellcheck="false" placeholder="一只侧身的狗，纯色背景，四足可辨。"></textarea>
+        </div>
+        <div class="kv2">
+          <div class="fld">
+            <label for="in-size">尺寸 <span class="hint2">（留空＝由模型自选）</span></label>
+            <input type="text" id="in-size" list="dl-size" spellcheck="false" placeholder="留空">
+            <datalist id="dl-size"></datalist>
+          </div>
+          <div class="fld">
+            <label for="in-seed">随机种子 <span class="hint2">（留空＝随机）</span></label>
+            <input type="number" id="in-seed" min="0" step="1" placeholder="留空">
+          </div>
+        </div>
+        <div class="kv2">
+          <div class="fld">
+            <label for="in-n">张数 <span class="hint2">（1–6，看模型）</span></label>
+            <input type="number" id="in-n" min="1" max="6" step="1" value="1">
+          </div>
+          <div class="fld">
+            <label>开关</label>
+            <label class="mono" style="display:flex;gap:6px;align-items:center;">
+              <input type="checkbox" id="chk-wm"> 加水印
+            </label>
+          </div>
+        </div>
+        <div class="fld">
+          <label for="in-neg">反向提示词 <span class="hint2">（留空则不进请求体）</span></label>
+          <input type="text" id="in-neg" spellcheck="false" placeholder="留空">
+        </div>
+        <div class="row" style="margin-top:4px;">
+          <button class="btn" id="btn-draw" type="button">生成</button>
+          <button class="btn ghost" id="btn-tochat" type="button">用对话里的最后一句</button>
+        </div>
+        <div class="imgbox" id="imgbox" style="margin-top:12px;"><span class="ph">还没有图。</span></div>
+        <div class="row">
+          <button class="btn" id="btn-walk" type="button" disabled>送进赛博遛狗</button>
+          <button class="btn ghost" id="btn-dl" type="button" disabled>下载 PNG</button>
+        </div>
+        <div class="foot-note" id="img-note">尺寸字段的写法随模型而异：官方示例里 gpt-image 系列用
+        <code>1024x1024</code>、qwen-image 用 <code>1024*1024</code>、wan 系列用 <code>1K</code>。
+        这里的预设只是提示，你可以直接改。</div>
+      </div>
+
+      <div class="panel">
+        <h3>请求可观测</h3>
+        <div id="req-out"><div class="chk note">还没有请求。发出的每一个请求都会原样贴在这里 —— KEY 打码。</div></div>
+        <div class="row">
+          <button class="btn ghost" id="btn-curl" type="button" disabled>复制成 curl</button>
+        </div>
+        <div class="foot-note">打码规则：只留前 4 位与后 4 位。复制出去的那条命令里 KEY 写成
+        <code>$ASTRAFLOW_API_KEY</code>，你得自己导出这个环境变量。</div>
+      </div>
+
+      <div class="panel">
+        <h3>自检</h3>
+        <div id="selfcheck-out"></div>
+        <div class="foot-note">自检只跑纯函数：节点表、鉴权头、两种请求体的构造、模型分类、SSE 解析、
+        base64 归一、打码与 curl 生成。它<strong>不发任何请求</strong>，所以断网也能跑。</div>
+      </div>
+
+      <div class="panel">
+        <h3>渠道 —— 注册与算力金</h3>
+        <ol class="lim">
+          <li>注册 UCloud 账号并完成实名认证：<a href="https://www.ucloud.cn/site/active/astraflow?ytag=geo_kol_Marvin" target="_blank" rel="noopener">星图 AstraFlow 活动页</a>。
+          注册用邮箱，算力券发到邮箱。</li>
+          <li>领 50 元算力金：<a href="https://f.howxm.com/xs/u/HVFW5X8EIYV1" target="_blank" rel="noopener">领取入口</a>。</li>
+          <li>在控制台的模型服务平台里创建 API Key，粘回上面的「接入配置」。额度与价格以平台页面为准。</li>
+        </ol>
+        <div class="foot-note">上面两条链接由站点维护者提供，带渠道标记。本站不从其中获取任何数据，
+        也不知道你注册与否、用了多少额度。</div>
+      </div>
+
+      <div class="panel">
+        <h3>已知限制</h3>
+        <ul class="lim">
+          <li>必须先有 KEY。清单接口免 KEY，但对话与生图接口要鉴权。</li>
+          <li>浏览器直连要过 CORS。实测 <code>api.modelverse.cn</code> 返回 <code>Access-Control-Allow-Origin: *</code> 并放行
+          <code>Authorization</code>，所以网页可以直连；但换节点、换代理或平台改策略都会失效，那时看下面贴的 curl。</li>
+          <li>从 <code>file://</code> 打开会被浏览器拦。本页只支持 <code>http(s)</code>：线上站点，或本地起一个静态服务。</li>
+          <li>生图返回的是 base64，图直接进内存，不落盘 —— 除非你点「下载 PNG」。</li>
+          <li>「送进赛博遛狗」靠同一标签页内的交接：图只在本标签页的会话存储里放一次，遛狗页读完就删。
+          换了标签页或跳转前刷新过，就只剩下载再拖进去这条路。</li>
+          <li>价格是清单里的目录价（含峰谷时段说明），不是账单。真实扣费以平台账单为准。</li>
+          <li>本页不保存对话历史。刷新即清零。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <div class="end-note">
+    本页与其余页面的分界很简单：只有这一页会向外发一个请求，其余页面在读的时候也是离线的。<br>
+    本机：他们把绳子接了很长。长到我这一头已经看不见另一头。方向还是那个方向。
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="../assets/js/render.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var doc = document;
+  /* DOM 桩里可能没有 location，不能让页面启动即失败 */
+  var PROTO = (typeof location !== "undefined" && location && location.protocol) ? location.protocol : "";
+  var HOST = (typeof location !== "undefined" && location && location.host) ? location.host : "";
+
+  /* ============================================================
+     0 · 接口登记 —— 来自官方文档，非本页发明
+     ------------------------------------------------------------
+     节点域名、/v1/models、/v1/chat/completions、/v1/images/generations、
+     Authorization: Bearer、以及尺寸字段三种写法，均见
+     astraflow.ucloud-global.com/docs/modelverse 的《快速开始》与图像生成页。
+     本页自己选的默认值（温度 0.7、超时、并发）标 HEURISTIC。
+     ============================================================ */
+  var SRC = {
+    docs: "https://astraflow.ucloud-global.com/docs/modelverse/quick-start",
+    consoleCN: "https://astraflow.ucloud.cn/modelverse/playground"
+  };
+
+  var AF = {};
+
+  /* 本页自选（HEURISTIC） */
+  var P = {
+    TEMP: 0.7,          /* HEURISTIC：沿用常见对话默认 */
+    TIMEOUT_MS: 120000, /* HEURISTIC：生图比对话慢，取两分钟 */
+    MAX_TURNS: 12       /* HEURISTIC：只保留最近 12 轮，避免体无界增长 */
+  };
+
+  /* 官方文档的四个节点 */
+  AF.NODES = [
+    { id: "cn", label: "中国大陆 — api.modelverse.cn", base: "https://api.modelverse.cn" },
+    { id: "sg", label: "新加坡 — api-sg.umodelverse.ai", base: "https://api-sg.umodelverse.ai" },
+    { id: "us", label: "美国洛杉矶 — api-us-ca.umodelverse.ai", base: "https://api-us-ca.umodelverse.ai" },
+    { id: "eu", label: "法兰克福 — api-ge-fra.umodelverse.ai", base: "https://api-ge-fra.umodelverse.ai" },
+    { id: "custom", label: "自定义端点", base: "" }
+  ];
+
+  AF.PATHS = {
+    models: "/v1/models",
+    chat: "/v1/chat/completions",
+    images: "/v1/images/generations"
+  };
+
+  AF.KINDS = { chat: "对话", image: "生图", video: "视频", audio: "音频", embed: "向量", other: "其他" };
+
+  /* 尺寸预设：语法随模型而异，官方示例给了三种 */
+  AF.SIZES = {
+    gpt: ["1024x1024", "1024x1536", "1536x1024"],
+    qwen: ["1024*1024", "1328*1328", "1664*928"],
+    wan: ["1K", "2K"],
+    seedream: ["1024x1024", "2048x2048"],
+    other: ["1024x1024"]
+  };
+
+  AF.nodeBase = function (id) {
+    var n = AF.NODES.filter(function (x) { return x.id === id; })[0];
+    return n ? n.base : "";
+  };
+
+  /* ---------- 纯函数：请求构造 ---------- */
+
+  AF.headers = function (key, json) {
+    var h = {};
+    if (json !== false) h["Content-Type"] = "application/json";
+    if (key) h["Authorization"] = "Bearer " + String(key).trim();
+    return h;
+  };
+
+  AF.chatBody = function (cfg) {
+    cfg = cfg || {};
+    var msgs = [];
+    if (cfg.system) msgs.push({ role: "system", content: String(cfg.system) });
+    (cfg.messages || []).forEach(function (m) {
+      if (m && m.role && m.content) msgs.push({ role: m.role, content: String(m.content) });
+    });
+    var body = {
+      model: cfg.model || "",
+      messages: msgs,
+      stream: cfg.stream !== false
+    };
+    if (typeof cfg.temperature === "number" && !isNaN(cfg.temperature)) body.temperature = cfg.temperature;
+    return body;
+  };
+
+  AF.imageBody = function (cfg) {
+    cfg = cfg || {};
+    var body = { model: cfg.model || "", prompt: cfg.prompt || "" };
+    function put(k, v) { if (v !== "" && v !== null && v !== undefined) body[k] = v; }
+    put("size", cfg.size);
+    put("n", cfg.n);
+    put("seed", cfg.seed);
+    put("negative_prompt", cfg.negativePrompt);
+    if (cfg.watermark === true) body.watermark = true;
+    return body;
+  };
+
+  /* ---------- 纯函数：模型分类与价目 ---------- */
+
+  AF.classify = function (id) {
+    var s = String(id || "").toLowerCase();
+    if (/video|t2v|i2v|r2v|lipsync|lip-sync/.test(s)) return "video";
+    if (/image|seedream|seededit|dall|dalle|flux|kolors|jimeng/.test(s)) return "image";
+    if (/tts|audio|speech|asr|voice/.test(s)) return "audio";
+    if (/embed|rerank|bge-|m3e/.test(s)) return "embed";
+    return "chat";
+  };
+
+  AF.parseModels = function (json) {
+    var data = (json && json.data) || [];
+    var kinds = { chat: [], image: [], video: [], audio: [], embed: [], other: [] };
+    data.forEach(function (m) {
+      var k = AF.classify(m && m.id);
+      (kinds[k] || kinds.other).push(m);
+    });
+    var counts = {};
+    Object.keys(kinds).forEach(function (k) { counts[k] = kinds[k].length; });
+    return { all: data, kinds: kinds, counts: counts };
+  };
+
+  AF.priceOf = function (model) {
+    if (!model || !model.pricing || !model.pricing.length) return null;
+    var p = model.pricing[0];
+    var rates = (p.Rates || []).map(function (r) {
+      return { item: r.ChargeItem, price: r.Price, currency: r.Currency || "CNY", unit: r.Unit || "" };
+    });
+    return {
+      condition: p.Condition || "",
+      rates: rates,
+      headline: rates.length ? (rates[0].price + " " + rates[0].currency + " / " + rates[0].unit) : ""
+    };
+  };
+
+  AF.estimate = function (model, usage, n) {
+    var p = model && model.pricing && model.pricing[0];
+    if (!p) return null;
+    function rate(item) {
+      var hit = (p.Rates || []).filter(function (x) { return x.ChargeItem === item; })[0];
+      return hit ? hit.Price : null;
+    }
+    if (usage) {
+      var ip = rate("input");
+      var op = rate("output_text_tokens");
+      if (op === null) op = rate("output_text");
+      if (op === null) op = rate("output");
+      if (ip === null && op === null) return null;
+      var cny = (usage.prompt_tokens || 0) / 1e6 * (ip || 0) + (usage.completion_tokens || 0) / 1e6 * (op || 0);
+      return {
+        kind: "chat", cny: cny, condition: p.Condition || "",
+        note: "输入 " + (ip === null ? "—" : ip) + " / 输出 " + (op === null ? "—" : op) + " 元／百万 Token"
+      };
+    }
+    var per = rate("image_count");
+    if (per === null) return null;
+    return {
+      kind: "image", cny: per * (n || 1), condition: p.Condition || "",
+      note: per + " 元／张 × " + (n || 1) + " 张"
+    };
+  };
+
+  /* ---------- 纯函数：流式解析 ---------- */
+
+  AF.parseSSE = function (buf) {
+    var parts = String(buf || "").split("\n\n");
+    var rest = parts.pop();
+    var events = [];
+    parts.forEach(function (block) {
+      var datalines = [];
+      block.split(/\r?\n/).forEach(function (ln) {
+        if (ln.indexOf("data:") === 0) datalines.push(ln.slice(5).replace(/^ /, ""));
+      });
+      if (!datalines.length) return;
+      var payload = datalines.join("\n");
+      if (payload === "[DONE]") { events.push({ done: true, text: "", think: "", usage: null }); return; }
+      try {
+        var j = JSON.parse(payload);
+        var ch = (j.choices && j.choices[0]) || {};
+        var d = ch.delta || ch.message || {};
+        events.push({
+          done: false,
+          text: typeof d.content === "string" ? d.content : "",
+          think: typeof d.reasoning_content === "string" ? d.reasoning_content : "",
+          usage: j.usage || null,
+          finish: ch.finish_reason || null,
+          error: null
+        });
+      } catch (e) {
+        events.push({ done: false, text: "", think: "", usage: null, finish: null, error: String(e && e.message || e) });
+      }
+    });
+    return { events: events, rest: rest };
+  };
+
+  /* ---------- 纯函数：图片提取 ---------- */
+
+  AF.pickImage = function (json) {
+    var d = (json && json.data) || [];
+    if (!d.length) return null;
+    var it = d[0] || {};
+    if (it.b64_json) {
+      var raw = String(it.b64_json);
+      return raw.indexOf("data:") === 0 ? raw : "data:image/png;base64," + raw;
+    }
+    if (it.url) return String(it.url);
+    return null;
+  };
+
+  /* ---------- 纯函数：打码与 curl ---------- */
+
+  AF.maskKey = function (k) {
+    var s = String(k || "");
+    if (!s) return "（未填）";
+    if (s.length <= 8) return s.slice(0, 1) + "••••••";
+    return s.slice(0, 4) + "••••••" + s.slice(-4);
+  };
+
+  AF.curlFor = function (req) {
+    if (!req) return "";
+    var lines = ["curl -X " + (req.method || "POST") + " '" + req.url + "'"];
+    Object.keys(req.headers || {}).forEach(function (k) {
+      var v = req.headers[k];
+      if (k.toLowerCase() === "authorization") v = "Bearer $ASTRAFLOW_API_KEY";
+      lines.push("  -H '" + k + ": " + v + "'");
+    });
+    if (req.body) lines.push("  -d '" + JSON.stringify(req.body, null, 2).replace(/\n/g, "\n      ") + "'");
+    return lines.join(" \\\n");
+  };
+
+  AF.maskReq = function (req) {
+    if (!req) return null;
+    var h = {};
+    Object.keys(req.headers || {}).forEach(function (k) {
+      h[k] = (k.toLowerCase() === "authorization") ? AF.maskKey(req.headers[k]) : req.headers[k];
+    });
+    return { method: req.method, url: req.url, headers: h, body: req.body };
+  };
+
+  /* ---------- 自检 ---------- */
+
+  AF.selftest = function () {
+    var out = [];
+    function ck(name, cond, got) { out.push({ name: name, ok: !!cond, got: got === undefined ? "" : String(got) }); }
+
+    ck("节点表 4 个官方域名 + 1 个自定义",
+       AF.NODES.length === 5 && AF.NODES.slice(0, 4).every(function (n) { return /^https:\/\//.test(n.base); }),
+       AF.NODES.length + " 项");
+
+    ck("鉴权头 = Bearer + KEY，且带 JSON 类型",
+       AF.headers("sk-test-1234")["Authorization"] === "Bearer sk-test-1234" &&
+       AF.headers("sk-test-1234")["Content-Type"] === "application/json");
+
+    var cb = AF.chatBody({
+      model: "m", system: "s", stream: true, temperature: 0.7,
+      messages: [{ role: "user", content: "u1" }, { role: "assistant", content: "a1" }, { role: "user", content: "u2" }]
+    });
+    ck("对话体：system 在最前、轮次保序、stream 显式",
+       cb.messages.length === 4 && cb.messages[0].role === "system" &&
+       cb.messages[1].content === "u1" && cb.messages[3].content === "u2" && cb.stream === true,
+       cb.messages.map(function (m) { return m.role; }).join("/"));
+
+    var ib = AF.imageBody({ model: "w", prompt: "p", size: "", n: 1, seed: "", negativePrompt: "", watermark: false });
+    ck("生图体：空字段不进请求体",
+       Object.keys(ib).join(",") === "model,prompt,n" && ib.watermark === undefined, Object.keys(ib).join(","));
+
+    var ib2 = AF.imageBody({ model: "w", prompt: "p", size: "1K", n: 2, seed: 7, negativePrompt: "模糊", watermark: true });
+    ck("生图体：填了才进（含 watermark）",
+       ib2.size === "1K" && ib2.n === 2 && ib2.seed === 7 && ib2.negative_prompt === "模糊" && ib2.watermark === true);
+
+    var cases = [
+      ["deepseek-v4-pro-0813", "chat"], ["glm-5.3", "chat"], ["doubao-web-search-custom", "chat"],
+      ["qwen-image-3.0", "image"], ["Qwen/Qwen-Image-Edit", "image"], ["doubao-seedream-5-0-260128", "image"],
+      ["wan2.7-image-pro", "image"], ["wan2.7-t2v", "video"], ["Wan-AI/Wan2.5-I2V", "video"],
+      ["kling-video-o1", "video"], ["cicada-tts", "audio"], ["speech-2.8-hd", "audio"],
+      ["BAAI/bge-m3", "embed"], ["qwen3-reranker-8b", "embed"],
+      ["deepseek-v4-flash-vision-exp", "chat"]
+    ];
+    var bad = cases.filter(function (c) { return AF.classify(c[0]) !== c[1]; });
+    ck("分类器：" + cases.length + " 个真实模型 ID 逐个对号", bad.length === 0,
+       bad.length ? bad.map(function (c) { return c[0] + "→" + AF.classify(c[0]); }).join(" ") : "0 错");
+
+    var pm = AF.parseModels({ data: [{ id: "a-image" }, { id: "b-video" }, { id: "c" }, {}] });
+    ck("清单解析：分类计数与总数一致",
+       pm.counts.image === 1 && pm.counts.video === 1 && pm.counts.chat === 2 &&
+       pm.counts.chat + pm.counts.image + pm.counts.video + pm.counts.audio + pm.counts.embed + pm.counts.other === pm.all.length,
+       "总计 " + pm.all.length);
+
+    var imgPrice = AF.priceOf({ pricing: [{ Condition: "默认", Rates: [{ ChargeItem: "image_count", Price: 0.2, Currency: "CNY", Unit: "张" }] }] });
+    var txtPrice = AF.priceOf({ pricing: [{ Condition: "峰时", Rates: [{ ChargeItem: "input", Price: 9, Currency: "CNY", Unit: "百万 Token" }] }] });
+    ck("价目：生图按张、对话按百万 Token，条件一并带出",
+       imgPrice.headline === "0.2 CNY / 张" && txtPrice.condition === "峰时" && AF.priceOf({}) === null);
+
+    var est = AF.estimate({ pricing: [{ Condition: "", Rates: [{ ChargeItem: "image_count", Price: 0.2 }] }] }, null, 3);
+    ck("计费估算：0.2 元 × 3 张 = 0.6 元", Math.abs(est.cny - 0.6) < 1e-9, est.cny + " 元");
+
+    var sse = 'data: {"choices":[{"delta":{"reasoning_content":"想"}}]}\n\n' +
+              'data: {"choices":[{"delta":{"content":"落"}}]}\n\n' +
+              'data: {"choices":[{"delta":{"content":"雨"}}],"usage":{"prompt_tokens":9,"completion_tokens":2}}\n\n' +
+              'data: [DONE]\n\ndata: {"choices":[{"delta":{"con';
+    var r = AF.parseSSE(sse);
+    ck("SSE 解析：3 个事件 + DONE，正文拼回「落雨」",
+       r.events.length === 4 && r.events[0].think === "想" && r.events[1].text + r.events[2].text === "落雨" &&
+       r.events[3].done === true && r.events[2].usage.total === undefined && r.events[2].usage.completion_tokens === 2,
+       r.events.length + " 个事件");
+    ck("SSE 解析：半截数据留在 rest，不丢不猜",
+       r.rest.indexOf('"delta":{"con') > 0 && AF.parseSSE(r.rest).events.length === 0);
+
+    ck("图片提取：裸 base64 补前缀，已是 data URL 不重复补",
+       AF.pickImage({ data: [{ b64_json: "AAA" }] }) === "data:image/png;base64,AAA" &&
+       AF.pickImage({ data: [{ b64_json: "data:image/jpeg;base64,AAA" }] }) === "data:image/jpeg;base64,AAA" &&
+       AF.pickImage({ data: [{ url: "https://x/y.png" }] }) === "https://x/y.png" &&
+       AF.pickImage({ data: [] }) === null);
+
+    var mk = AF.maskKey("sk-abcdefghijklmnop");
+    ck("打码：中段不泄露", mk.indexOf("efghijkl") < 0 && mk.indexOf("sk-a") === 0 && mk.length < 20, mk);
+
+    var cu = AF.curlFor({ method: "POST", url: "https://api.modelverse.cn/v1/chat/completions",
+                          headers: { "Content-Type": "application/json", "Authorization": "Bearer sk-abcdefghijklmnop" },
+                          body: { model: "m", messages: [] } });
+    ck("curl：KEY 换成环境变量，真实 KEY 不出现",
+       cu.indexOf("$ASTRAFLOW_API_KEY") > 0 && cu.indexOf("abcdefghijklmnop") < 0 && cu.indexOf("curl -X POST") === 0);
+
+    var lean = JSON.stringify([AF.chatBody({ model: "m" }), AF.imageBody({ model: "m", prompt: "p" })]);
+    ck("请求体：只带必要的键，不带空串与 undefined",
+       lean.indexOf("undefined") < 0 && lean.indexOf('""') < 0 && lean.indexOf("NaN") < 0, lean);
+
+    var passed = out.filter(function (x) { return x.ok; }).length;
+    return { checks: out, passed: passed, failed: out.length - passed, total: out.length };
+  };
+
+  /* ============================================================
+     1 · 状态
+     ============================================================ */
+  var KEY_SS = "astraflow.key";
+  var HANDOFF = "dog.walk.image";
+
+  var state = {
+    node: "cn", catalog: [], counts: {}, all_count: 0, turns: [], usage: null,
+    lastReq: null, lastRes: null, image: null, busy: false, abort: null, timer: null,
+    chatModel: "", imageModel: ""
+  };
+  AF.state = state;
+
+  function el(id) { return doc.getElementById(id); }
+  /* 桩与真实 DOM 的差别：input 的 .value 在桩里可能是 undefined。
+     所有读取都走这两个助手，避免 undefined.trim() 把整页打死。 */
+  function val(id, dflt) {
+    var n = el(id);
+    var v = n ? n.value : undefined;
+    if (typeof v === "string") return v;
+    if (typeof v === "number") return String(v);
+    return dflt === undefined ? "" : dflt;
+  }
+  function flag(id) { var n = el(id); return !!(n && n.checked); }
+  function esc(s) {
+    return String(s === null || s === undefined ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var t = el("toast");
+    if (!t) return;
+    t.textContent = msg;
+    t.className = "on";
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = ""; }, 2200);
+  }
+
+  /* ============================================================
+     2 · 面板渲染
+     ============================================================ */
+
+  function renderConn(extra) {
+    var base = endpoint();
+    var rows = [
+      ["端点", base || "（未填）"],
+      ["协议", "OpenAI 兼容 REST"],
+      ["对话", AF.PATHS.chat],
+      ["生图", AF.PATHS.images],
+      ["清单", AF.PATHS.models],
+      ["KEY", AF.maskKey(val("in-key"))],
+      ["跨域", PROTO === "file:" ? "file:// —— 会被浏览器拦" : (PROTO ? PROTO + "//" + HOST : "（未知）")]
+    ];
+    if (extra) extra.forEach(function (r) { rows.push(r); });
+    var pre = PROTO === "file:"
+      ? '<div class="chk bad" style="margin-bottom:10px;">本页从 file:// 打开 —— 浏览器会拦掉跨域请求。' +
+        "先用 http(s) 打开：线上站点，或在项目根目录起一个静态服务。</div>"
+      : "";
+    el("conn-out").innerHTML = pre + '<table class="kv">' + rows.map(function (r) {
+      return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>";
+    }).join("") + "</table>";
+  }
+
+  function renderCatalog() {
+    var out = el("cat-out");
+    if (!state.catalog.length) {
+      out.innerHTML = '<div class="chk note">还没有清单。清单接口 <code>GET /v1/models</code> 免 KEY 可读 —— 点上面的「拉模型清单」。</div>';
+      return;
+    }
+    var order = ["chat", "image", "video", "audio", "embed", "other"];
+    var badges = order.filter(function (k) { return state.counts[k]; }).map(function (k) {
+      return '<span class="badge">' + AF.KINDS[k] + " " + state.counts[k] + "</span>";
+    }).join("");
+    var chatPick = state.catalog.filter(function (m) { return AF.classify(m.id) === "chat"; })[0];
+    var imgPick = state.catalog.filter(function (m) { return AF.classify(m.id) === "image"; })[0];
+    var rows = state.catalog.filter(function (m) {
+      return AF.classify(m.id) === "chat" || AF.classify(m.id) === "image";
+    }).slice(0, 8).map(function (m) {
+      var p = AF.priceOf(m);
+      return "<tr><td>" + esc(m.id) + "</td><td>" + esc(p ? p.headline : "—") + "</td><td>" + esc(m.owned_by || "") + "</td></tr>";
+    }).join("");
+    out.innerHTML = '<div style="margin-bottom:10px;">' + badges + "</div>" +
+      '<div class="chk note">共 ' + state.all_count + " 个模型。前 8 个可用条目：" + "</div>" +
+      '<table class="ptable" style="margin-top:6px;">' + rows + "</table>";
+    if (chatPick && !state.chatModel) pickChat(chatPick.id);
+    if (imgPick && !state.imageModel) pickImage(imgPick.id);
+  }
+
+  function pickChat(id) {
+    state.chatModel = id;
+    el("in-mchat").value = id;
+    var m = byId(id);
+    var p = AF.priceOf(m);
+    el("v-chat").textContent = p ? ("· " + p.headline + (p.condition ? "（" + p.condition + "）" : "")) : "";
+    renderCost();
+  }
+
+  function pickImage(id) {
+    state.imageModel = id;
+    el("in-mimg").value = id;
+    var m = byId(id);
+    var p = AF.priceOf(m);
+    el("v-image").textContent = p ? ("· " + p.headline) : "";
+    var fam = sizeFamily(id);
+    el("dl-size").innerHTML = AF.SIZES[fam].map(function (s) { return '<option value="' + s + '">'; }).join("");
+    renderCost();
+  }
+
+  function byId(id) {
+    return state.catalog.filter(function (m) { return m.id === id; })[0] || null;
+  }
+
+  function sizeFamily(id) {
+    var s = String(id || "").toLowerCase();
+    if (/gpt-image/.test(s)) return "gpt";
+    if (/qwen[\/-]image/.test(s)) return "qwen";
+    if (/wan/.test(s) && /image/.test(s)) return "wan";
+    if (/seedream/.test(s)) return "seedream";
+    return "other";
+  }
+
+  function renderCost() {
+    var rows = [];
+    var cm = byId(val("in-mchat").trim());
+    var im = byId(val("in-mimg").trim());
+    if (cm) {
+      var cp = AF.priceOf(cm);
+      rows.push(["对话模型", cm.id]);
+      rows.push(["对话单价", cp ? cp.headline + (cp.condition ? "（" + cp.condition + "）" : "") : "清单里没有价目"]);
+    }
+    if (im) {
+      var ip = AF.priceOf(im);
+      rows.push(["生图模型", im.id]);
+      rows.push(["生图单价", ip ? ip.headline : "清单里没有价目"]);
+    }
+    if (state.usage) {
+      rows.push(["本次用量", "输入 " + state.usage.prompt_tokens + " / 输出 " + state.usage.completion_tokens + " token"]);
+      var e = AF.estimate(cm, state.usage, null);
+      rows.push(["本次估算", e ? (e.cny.toFixed(4) + " 元　（" + e.note + "）") : "该模型没有可用价目"]);
+    }
+    var n = parseInt(val("in-n", "1"), 10) || 1;
+    var ie = AF.estimate(im, null, n);
+    rows.push(["下次生图", ie ? (ie.cny.toFixed(2) + " 元　（" + ie.note + "）") : "选一个带 image_count 价目的模型才估得出"]);
+    el("cost-out").innerHTML = rows.length
+      ? '<table class="kv">' + rows.map(function (r) {
+          return "<tr><td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>";
+        }).join("") + "</table>"
+      : '<div class="chk note">先选模型。单价来自清单 $/张 与 百万 Token 两套口径。</div>';
+  }
+
+  function renderChat() {
+    var out = el("chat-out");
+    if (!state.turns.length) {
+      out.innerHTML = '<div class="chk note">还没有对话。</div>';
+      return;
+    }
+    out.innerHTML = state.turns.map(function (t) {
+      return '<div class="msg ' + (t.role === "user" ? "u" : "a") + '">' +
+        '<div class="who">' + (t.role === "user" ? "你" : "模型") + "</div>" +
+        '<div class="say">' + esc(t.content).replace(/\n/g, "<br>") + "</div>" +
+        (t.think ? '<div class="think">思考：' + esc(t.think) + "</div>" : "") +
+        (t.role === "assistant" ? '<div class="row" style="margin-top:6px;"><button class="btn ghost" type="button" data-draw="' + esc(t.content).replace(/"/g, "&quot;") + '">用这句去生图</button></div>' : "") +
+        "</div>";
+    }).join("");
+  }
+
+  function renderReq() {
+    var out = el("req-out");
+    if (!state.lastReq) {
+      out.innerHTML = '<div class="chk note">还没有请求。发出的每一个请求都会原样贴在这里 —— KEY 打码。</div>';
+      el("btn-curl").disabled = true;
+      return;
+    }
+    var m = AF.maskReq(state.lastReq);
+    var html = '<table class="kv">' +
+      "<tr><td>方法</td><td>" + esc(m.method) + "</td></tr>" +
+      "<tr><td>地址</td><td>" + esc(m.url) + "</td></tr>" +
+      "<tr><td>状态</td><td>" + esc(state.lastRes || "—") + "</td></tr>" +
+      "</table>" +
+      '<div class="chk note" style="margin-top:8px;">请求体</div><div class="out">' + esc(JSON.stringify(m.body || {}, null, 2)) + "</div>";
+    out.innerHTML = html;
+    el("btn-curl").disabled = false;
+  }
+
+  function renderSelftest() {
+    var r = AF.selftest();
+    el("selfcheck-out").innerHTML = r.checks.map(function (c) {
+      return '<div class="chk ' + (c.ok ? "ok" : "bad") + '">' + (c.ok ? "✓ " : "✗ ") + esc(c.name) +
+        (c.ok ? (c.got ? '　<span class="chk note" style="display:inline;color:var(--faint);">' + esc(c.got) + "</span>" : "") : '　' + esc(c.got)) + "</div>";
+    }).join("") + '<div class="chk note" style="margin-top:8px;">' + r.passed + " / " + r.total + " 通过，全部纯函数。</div>";
+    return r;
+  }
+
+  function renderAll() {
+    renderConn();
+    renderCatalog();
+    renderCost();
+    renderChat();
+    renderReq();
+    var st = renderSelftest();
+    var t = doc.title.replace(/ · \d+\/\d+ 自检$/, "");
+    doc.title = t + " · " + st.passed + "/" + st.total + " 自检";
+  }
+
+  /* ============================================================
+     3 · 网络 —— 只在用户按按钮时才走
+     ============================================================ */
+
+  function endpoint() {
+    if (state.node === "custom") return val("in-base").trim().replace(/\/+$/, "");
+    return AF.nodeBase(state.node);
+  }
+
+  function jsonOrRaw(text) {
+    try { return JSON.parse(text); } catch (e) { return { raw: text }; }
+  }
+
+  function explainError(e) {
+    var msg = String(e && e.message || e);
+    if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+      return "连不上（Failed to fetch）。常见三种原因：当前是 file:// 打开、网络或代理拦了、平台改了跨域策略。" +
+             "先用「测连通」分辨，再看下面贴的 curl 在终端里能不能通。";
+    }
+    if (/aborted|AbortError/i.test(e && e.name || "")) return "已中止。";
+    return msg;
+  }
+
+  function doFetch(req, onStream) {
+    state.lastReq = req;
+    state.lastRes = "请求中…";
+    renderReq();
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    state.abort = ctl;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, P.TIMEOUT_MS);
+    var init = { method: req.method, headers: req.headers };
+    if (req.body) init.body = JSON.stringify(req.body);
+    if (ctl) init.signal = ctl.signal;
+    return fetch(req.url, init).then(function (res) {
+      state.lastRes = res.status + " " + res.statusText;
+      renderReq();
+      if (!res.ok) {
+        return res.text().then(function (t) {
+          throw new Error("HTTP " + res.status + "　" + t.slice(0, 400));
+        });
+      }
+      if (onStream && res.body && typeof res.body.getReader === "function") { state.timer = timer; return onStream(res); }
+      return res.text().then(function (t) {
+        clearTimeout(timer);
+        state.abort = null;
+        return jsonOrRaw(t);
+      });
+    }).catch(function (e) {
+      clearTimeout(timer);
+      state.abort = null;
+      state.lastRes = "失败";
+      renderReq();
+      throw new Error(explainError(e));
+    });
+  }
+
+  function getModels() {
+    var url = endpoint() + AF.PATHS.models;
+    var h = AF.headers(val("in-key").trim(), false);
+    h["Accept"] = "application/json";
+    var req = { method: "GET", url: url, headers: h, body: null };
+    state.busy = true;
+    return doFetch(req).then(function (j) {
+      var pm = AF.parseModels(j);
+      state.catalog = pm.all;
+      state.counts = pm.counts;
+      state.all_count = pm.all.length;
+      var dl = el("dl-models");
+      dl.innerHTML = pm.all.map(function (m) { return '<option value="' + esc(m.id) + '">'; }).join("");
+      var selc = el("sel-chat"), seli = el("sel-image");
+      selc.innerHTML = pm.kinds.chat.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.id) + "</option>"; }).join("");
+      seli.innerHTML = pm.kinds.image.map(function (m) { return '<option value="' + esc(m.id) + '">' + esc(m.id) + "</option>"; }).join("");
+      el("fld-models").style.display = "";
+      state.busy = false;
+      renderAll();
+      toast("清单已取回：" + pm.all.length + " 个模型");
+      return pm;
+    }, function (e) {
+      state.busy = false;
+      renderAll();
+      el("conn-out").innerHTML += '<div class="chk bad" style="margin-top:8px;">' + esc(e.message) + "</div>";
+      throw e;
+    });
+  }
+
+  function send() {
+    var text = val("in-umsg").trim();
+    if (!text) { toast("先写一句"); return; }
+    var model = val("in-mchat").trim();
+    if (!model) { toast("先填对话模型 ID"); return; }
+    var key = val("in-key").trim();
+    if (!key) { toast("先填 API KEY"); return; }
+    if (!endpoint()) { toast("先选节点或填端点"); return; }
+    state.turns.push({ role: "user", content: text, think: "" });
+    state.turns.push({ role: "assistant", content: "", think: "" });
+    el("in-umsg").value = "";
+    renderChat();
+    var hist = state.turns.filter(function (t) { return t.content || t.role === "user"; })
+      .slice(-P.MAX_TURNS * 2, -1)
+      .map(function (t) { return { role: t.role, content: t.content }; });
+    var stream = flag("chk-stream");
+    var temp = parseFloat(val("r-temp"));
+    if (isNaN(temp)) temp = P.TEMP;
+    var body = AF.chatBody({
+      model: model, system: val("in-sys"), messages: hist.concat([{ role: "user", content: text }]),
+      stream: stream, temperature: temp
+    });
+    var req = { method: "POST", url: endpoint() + AF.PATHS.chat, headers: AF.headers(key), body: body };
+    var self = state.turns[state.turns.length - 1];
+    var t0 = Date.now();
+    renderChat();
+    return doFetch(req, stream ? function (res) {
+      var reader = res.body.getReader();
+      var dec = new TextDecoder("utf-8");
+      var buf = "";
+      function pump() {
+        return reader.read().then(function (r) {
+          if (r.done) {
+            if (state.timer) { clearTimeout(state.timer); state.timer = null; }
+            state.lastRes = "200 流结束 · " + (Date.now() - t0) + "ms";
+            renderReq();
+            state.abort = null;
+            if (!self.content) self.content = "（流结束，但没有正文）";
+            renderChat();
+            return null;
+          }
+          buf += dec.decode(r.value, { stream: true });
+          var p = AF.parseSSE(buf);
+          buf = p.rest;
+          p.events.forEach(function (ev) {
+            if (ev.usage) state.usage = ev.usage;
+            if (ev.think) self.think += ev.think;
+            if (ev.text) self.content += ev.text;
+          });
+          renderChat();
+          if (state.usage) renderCost();
+          return pump();
+        });
+      }
+      return pump();
+    } : null).then(function (j) {
+      if (j && j.choices) {
+        self.content = (j.choices[0].message || {}).content || self.content;
+        if (j.usage) { state.usage = j.usage; }
+        state.lastRes = "200 · " + (Date.now() - t0) + "ms";
+      }
+      renderAll();
+      return j;
+    }, function (e) {
+      self.content = self.content || "（失败：" + e.message + "）";
+      renderAll();
+    });
+  }
+
+  function draw() {
+    var prompt = val("in-prompt").trim();
+    if (!prompt) { toast("先写提示词"); return; }
+    var model = val("in-mimg").trim();
+    if (!model) { toast("先填生图模型 ID"); return; }
+    var key = val("in-key").trim();
+    if (!key) { toast("先填 API KEY"); return; }
+    if (!endpoint()) { toast("先选节点或填端点"); return; }
+    var size = val("in-size").trim();
+    var seed = val("in-seed").trim();
+    var neg = val("in-neg").trim();
+    var n = parseInt(val("in-n"), 10) || 1;
+    var body = AF.imageBody({
+      model: model, prompt: prompt, size: size, n: n,
+      seed: seed === "" ? "" : parseInt(seed, 10),
+      negativePrompt: neg, watermark: flag("chk-wm")
+    });
+    var req = { method: "POST", url: endpoint() + AF.PATHS.images, headers: AF.headers(key), body: body };
+    var t0 = Date.now();
+    el("imgbox").innerHTML = '<span class="ph">生成中…（' + n + " 张，最长等 " + Math.round(P.TIMEOUT_MS / 1000) + " 秒）</span>";
+    return doFetch(req).then(function (j) {
+      var src = AF.pickImage(j);
+      state.image = src;
+      state.lastRes = "200 · " + (Date.now() - t0) + "ms";
+      if (!src) {
+        el("imgbox").innerHTML = '<span class="ph">返回里没有 data[0].b64_json，也没有 data[0].url。原始响应：</span><div class="out" style="margin-top:8px;text-align:left;">' + esc(JSON.stringify(j).slice(0, 600)) + "</div>";
+      } else {
+        var box = el("imgbox");
+        box.innerHTML = "";
+        var im = doc.createElement("img");
+        im.setAttribute("alt", "生成结果");
+        im.src = src;
+        box.appendChild(im);
+        el("btn-walk").disabled = src.indexOf("data:") !== 0;
+        el("btn-dl").disabled = src.indexOf("data:") !== 0;
+        if (src.indexOf("data:") !== 0) el("img-note").innerHTML += '<br>这张是外链（<code>url</code>），跨域取回会被拦，所以「送进赛博遛狗」和「下载」都不可用 —— 右键另存，再拖进遛狗页。';
+      }
+      renderAll();
+      toast("图回来了：" + (Date.now() - t0) + "ms");
+      return j;
+    }, function (e) {
+      el("imgbox").innerHTML = '<span class="ph">失败：' + esc(e.message) + "</span>";
+      renderAll();
+    });
+  }
+
+  /* ============================================================
+     4 · 交接：把图放进同一标签页的会话存储，遛狗页读一次就删
+     ============================================================ */
+
+  function handoff() {
+    if (!state.image || state.image.indexOf("data:") !== 0) { toast("这张图不是本地数据，交不过去"); return; }
+    var ok = false;
+    try {
+      sessionStorage.setItem(HANDOFF, state.image);
+      ok = sessionStorage.getItem(HANDOFF) === state.image;
+    } catch (e) { ok = false; }
+    if (!ok) { toast("交接失败：这个环境不给会话存储，改用下载再拖进去"); return; }
+    location.href = "cyber-walk.html";
+  }
+
+  function save() {
+    if (!state.image) return;
+    var a = doc.createElement("a");
+    a.download = "astraflow-dog.png";
+    a.href = state.image;
+    doc.body.appendChild(a);
+    a.click();
+    doc.body.removeChild(a);
+    toast("已下载");
+  }
+
+  /* ============================================================
+     5 · 绑定
+     ============================================================ */
+
+  function bind() {
+    var sn = el("sel-node");
+    sn.innerHTML = AF.NODES.map(function (n) { return '<option value="' + n.id + '">' + esc(n.label) + "</option>"; }).join("");
+    sn.value = state.node;
+    sn.onchange = function () {
+      state.node = sn.value;
+      el("fld-base").style.display = state.node === "custom" ? "" : "none";
+      renderConn();
+    };
+
+    el("btn-peek").onclick = function () {
+      var i = el("in-key");
+      var show = i.type === "password";
+      i.type = show ? "text" : "password";
+      el("btn-peek").textContent = show ? "隐藏" : "显示";
+    };
+
+    el("in-key").oninput = function () {
+      renderConn();
+      if (el("chk-remember").checked) {
+        try { sessionStorage.setItem(KEY_SS, val("in-key")); } catch (e) {}
+      }
+    };
+
+    el("chk-remember").onchange = function () {
+      try {
+        if (flag("chk-remember")) sessionStorage.setItem(KEY_SS, val("in-key"));
+        else sessionStorage.removeItem(KEY_SS);
+      } catch (e) {}
+      toast(flag("chk-remember") ? "KEY 记在本标签页了" : "本标签页也不再记 KEY");
+    };
+
+    el("btn-forget").onclick = function () {
+      el("in-key").value = "";
+      try { sessionStorage.removeItem(KEY_SS); } catch (e) {}
+      renderConn();
+      toast("已忘掉 KEY");
+    };
+
+    el("btn-models").onclick = function () { getModels().catch(function () {}); };
+    el("btn-ping").onclick = function () {
+      el("conn-out").innerHTML += '<div class="chk note" style="margin-top:8px;">探测中…</div>';
+      getModels().then(function () {
+        el("conn-out").innerHTML += '<div class="chk ok" style="margin-top:8px;">通了。</div>';
+      }, function (e) {
+        el("conn-out").innerHTML += '<div class="chk bad" style="margin-top:8px;">不通：' + esc(e.message) + "</div>";
+      });
+    };
+
+    el("btn-send").onclick = function () { send().catch(function () {}); };
+    el("btn-stop").onclick = function () { if (state.abort) state.abort.abort(); };
+    el("btn-clear").onclick = function () { state.turns = []; state.usage = null; renderAll(); };
+
+    el("r-temp").value = P.TEMP;
+    el("r-temp").oninput = function () { el("v-temp").textContent = "· " + val("r-temp"); };
+    el("v-temp").textContent = "· " + P.TEMP;
+
+    el("sel-chat").onchange = function () { pickChat(el("sel-chat").value); };
+    el("sel-image").onchange = function () { pickImage(el("sel-image").value); };
+    el("in-mchat").oninput = renderCost;
+    el("in-mimg").oninput = renderCost;
+    el("in-n").oninput = renderCost;
+
+    el("btn-draw").onclick = function () { draw().catch(function () {}); };
+    el("btn-tochat").onclick = function () {
+      var last = null;
+      for (var i = state.turns.length - 1; i >= 0; i--) {
+        if (state.turns[i].role === "assistant" && state.turns[i].content) { last = state.turns[i].content; break; }
+      }
+      if (!last) { toast("对话里还没有回复"); return; }
+      el("in-prompt").value = last;
+      toast("已带入提示词");
+    };
+    el("btn-walk").onclick = handoff;
+    el("btn-dl").onclick = save;
+
+    el("chat-out").onclick = function (ev) {
+      var b = ev.target;
+      if (b && b.getAttribute && b.getAttribute("data-draw")) {
+        el("in-prompt").value = b.getAttribute("data-draw");
+        toast("已带入提示词");
+      }
+    };
+
+    el("btn-curl").onclick = function () {
+      var text = AF.curlFor(state.lastReq);
+      var ok = false;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { toast("命令已复制"); }, function () {});
+        ok = true;
+      }
+      if (!ok) toast("这个环境不给剪贴板，命令已贴在「请求可观测」里");
+    };
+  }
+
+  /* ============================================================
+     6 · 启动 —— 不出网。清单要等用户按按钮。
+     ============================================================ */
+
+  try {
+    bind();
+    try {
+      var saved = sessionStorage.getItem(KEY_SS);
+      if (saved) { el("in-key").value = saved; el("chk-remember").checked = true; }
+    } catch (e) {}
+    renderAll();
+    if (typeof SpecSite !== "undefined" && SpecSite.mountChrome) {
+      SpecSite.mountChrome({ root: "../", active: "astraflow" });
+    }
+  } catch (e) {
+    if (doc.body && doc.body.insertAdjacentHTML) {
+      doc.body.insertAdjacentHTML("beforeend", '<div class="chk bad">启动失败：' + esc(e.message) + "</div>");
+    }
+  }
+
+  AF.renderAll = renderAll;
+  AF.getModels = getModels;
+  AF.doFetch = doFetch;
+  AF.writeReq = function (r) { state.lastReq = r; renderReq(); };
+  window.AstraFlow = AF;
+})();
+</script>
+</body>
+</html>
