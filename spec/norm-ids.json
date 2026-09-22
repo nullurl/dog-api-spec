@@ -213,6 +213,13 @@
       "title": "第三方接口 / 与人类的互操作"
     },
     {
+      "normId": "DOG-crosspet",
+      "anchor": "crosspet",
+      "part": "III",
+      "sectionNumber": "3.10",
+      "title": "跨站接口 / CrossPet 协议（CrossPet Protocol v1）"
+    },
+    {
       "normId": "DOG-daily",
       "anchor": "daily",
       "part": "IV",

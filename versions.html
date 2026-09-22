@@ -30,7 +30,7 @@
     <table>
       <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
       <tr>
-        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.22</td>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.23</td>
         <td><code>docs/CHANGELOG.md</code></td>
         <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
       </tr>
@@ -51,12 +51,20 @@
       </tr>
     </table>
 
-    <blockquote><strong>跨版本引用不能写节号。</strong>这不是一条风格建议，是本项目真实踩过的坑：附录字母按数组位置派生，中间删掉一条会使其后所有字母整体前移，全站十几处「附录 X」引用同时失效。当时的处理方式不是删条目，而是就地改写内容、保持字母不动。同类问题对正文节号一样成立 —— 文本已从 27 章长到 35 章，插入都发生在中间；而在 0.14，正文节号又从两位列号整体改成了 <code>§X.Y</code>，全仓库 141 处引用随之改写。旧条目里写的那个编号（当时叫 <code>23</code>）在现在的站点上既不是 <code>§3.8</code>，也不指向任何章节 —— 除非你手上有那张迁移表。</blockquote>
+    <blockquote><strong>跨版本引用不能写节号。</strong>这不是一条风格建议，是本项目真实踩过的坑：附录字母按数组位置派生，中间删掉一条会使其后所有字母整体前移，全站十几处「附录 X」引用同时失效。当时的处理方式不是删条目，而是就地改写内容、保持字母不动。同类问题对正文节号一样成立 —— 文本已从 27 章长到 36 章，插入都发生在中间；而在 0.14，正文节号又从两位列号整体改成了 <code>§X.Y</code>，全仓库 141 处引用随之改写。旧条目里写的那个编号（当时叫 <code>23</code>）在现在的站点上既不是 <code>§3.8</code>，也不指向任何章节 —— 除非你手上有那张迁移表。</blockquote>
 
     <h2>修订序列</h2>
     <table>
       <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
       <tr class="first">
+        <td class="vnum">0.23</td><td><span class="vcls content">Content</span></td>
+        <td>DOG 正文新增一章<strong>《跨站接口 / CrossPet 协议》</strong>（<code>DOG-crosspet</code>，§3.10），
+        挂在本 PART 末尾：宠物经 Supabase 公共频道跨站串门 —— 接入方式、对外接口、实时通道的前置条件，
+        以及三处与实现注释不符之处的照实记录。
+        <strong>本站不加载该脚本</strong>，章节里的代码是转义后的展示文本。
+        新章追加在本 PART 末尾，<strong>其后两个 PART 的全部节号一处未平移</strong>；附录与导航未动。</td>
+      </tr>
+      <tr>
         <td class="vnum">0.22</td><td><span class="vcls">Consistency</span></td>
         <td>修正工具页<strong>《星图接入》</strong>的配置与版式：两个模型输入框此前共用一份候选清单，
         现已按类型分开；拉取清单不再顶掉手填的模型 ID；随机种子填非数字时不再把 <code>NaN</code> 送进请求体；
