@@ -14,7 +14,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "0.25";
+  var VERSION = "0.26";
 
   /* 公共频道。零认证 —— 谁都能进，所以进来的东西一律按不可信处理。 */
   var DEFAULTS = {

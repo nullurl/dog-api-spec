@@ -30,7 +30,7 @@
     <table>
       <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
       <tr>
-        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.25</td>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.26</td>
         <td><code>docs/CHANGELOG.md</code></td>
         <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
       </tr>
@@ -56,7 +56,15 @@
     <h2>修订序列</h2>
     <table>
       <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
-            <tr class="first">
+      <tr class="first">
+        <td class="vnum">0.26</td><td><span class="vcls content">Content</span></td>
+        <td>DOG 正文 §3.10 补两条实测。其一：参考实现加载 supabase-js 的那条 CDN 路径是 <code>404</code>
+        （真实文件叫 <code>supabase.min.js</code>），而 <code>connect()</code> 在依赖加载失败时静默返回 ——
+        只填凭证、不改这一行，页面仍停在演示模式。其二：与参考实现本身的互通改记为实测 —— 不改它的任何文件，
+        在它线上页面里调用它自己的 <code>CrossPet.configure(url, key)</code> 交入本站凭证，双向都收到了。
+        凭证清单的 <code>howto</code> 与 <code>notes</code> 同步补上这两条。<strong>章节数与节号一律未动</strong>，导航未动。</td>
+      </tr>
+      <tr>
         <td class="vnum">0.25</td><td><span class="vcls content">Content</span></td>
         <td>DOG 正文 §3.10 补一节<strong>《接入凭证》</strong>：把「两份部署必须填同一组值」落实成一组可照抄的值 ——
         新开 Supabase 项目 <code>crosspet</code>（新加坡 <code>ap-southeast-1</code>），并新增机器可读的
