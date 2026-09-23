@@ -30,7 +30,7 @@
     <table>
       <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
       <tr>
-        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.26</td>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.27</td>
         <td><code>docs/CHANGELOG.md</code></td>
         <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
       </tr>
@@ -57,6 +57,15 @@
     <table>
       <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
       <tr class="first">
+        <td class="vnum">0.27</td><td><span class="vcls engine">Interface</span></td>
+        <td>修「接不进去」。<code>*.supabase.co</code> 在部分网络里直连被重置（0.3 秒内失败，不是超时），
+        而本页此前只往日志写一行「连接出错」，主状态一直停在 <code>connecting</code> —— 看得见转圈，看不见原因。
+        现在按序试两条通道：主通道仍是 Supabase Realtime，备用是本站自己跑的一份零依赖中继
+        （Phoenix 帧原样转发，同一网络下实测可连、可广播）；单条通道只试 2 次就换，几条都试过才退演示模式，
+        并明说试过哪几条、最可能是什么原因。§3.10 新增《通道与可达性》一节记这组实测，
+        凭证清单同步列出 <code>transports</code>。</td>
+      </tr>
+      <tr>
         <td class="vnum">0.26</td><td><span class="vcls content">Content</span></td>
         <td>DOG 正文 §3.10 补两条实测。其一：参考实现加载 supabase-js 的那条 CDN 路径是 <code>404</code>
         （真实文件叫 <code>supabase.min.js</code>），而 <code>connect()</code> 在依赖加载失败时静默返回 ——

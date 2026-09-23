@@ -100,6 +100,7 @@
         <table class="kv">
           <tr><td>状态</td><td id="st-state"><span class="dot idle"></span>未接入</td></tr>
           <tr><td>频道</td><td id="st-chan">crosspet-global</td></tr>
+          <tr><td>通道</td><td id="st-tr">—</td></tr>
           <tr><td>端点</td><td id="st-ep">—</td></tr>
           <tr><td>本站标识</td><td id="st-site">—</td></tr>
           <tr><td>收到</td><td id="st-recv">0 位来客 / 0 条互动</td></tr>
@@ -269,12 +270,30 @@
     if (recv) recv.textContent = S.recv + " 位来客 / " + S.meets + " 条互动";
     var site = $("st-site");
     if (site) site.textContent = S.siteId;
+    paintTransport();
+    paintEndpoint();
+  }
+  function paintTransport() {
+    var box = $("st-tr");
+    if (!box) return;
+    if (!S.ctl || !RA) { box.textContent = RA ? (RA.TRANSPORTS[0].label + "（待试）") : "—"; return; }
+    var id = S.ctl.transportId();
+    var i = 0;
+    for (var k = 0; k < RA.TRANSPORTS.length; k++) if (RA.TRANSPORTS[k].id === id) i = k;
+    box.textContent = (S.ctl.transportLabel() || "—") + "（第 " + (i + 1) + "/" + RA.TRANSPORTS.length + " 条）";
   }
   function paintEndpoint() {
     var box = $("st-ep");
     if (!box || !RA) return;
-    var full = RA.wsEndpoint(RA.DEFAULTS.url, RA.DEFAULTS.key, RA.DEFAULTS.vsn);
+    // 显示**当前**那条通道的端点：换通道时这一行会跟着变
+    var t = (S.ctl && RA.TRANSPORTS) ? (function () {
+      var id = S.ctl.transportId();
+      for (var k = 0; k < RA.TRANSPORTS.length; k++) if (RA.TRANSPORTS[k].id === id) return RA.TRANSPORTS[k];
+      return RA.TRANSPORTS[0];
+    })() : RA.TRANSPORTS[0];
+    var full = t ? RA.wsEndpointFor(t, RA.DEFAULTS.vsn) : null;
     if (!full) { box.textContent = "—"; return; }
+    paintTransport();
     // 只留用户名与首尾，密钥不进页面可见文本
     var masked = full.replace(/(apikey=)([A-Za-z0-9_-]{6})[A-Za-z0-9_.-]+([A-Za-z0-9_-]{4})/,
       function (m, a, b, c) { return a + b + "…" + c; });
@@ -395,7 +414,7 @@
           if (s === "live") note("已接入频道。狗可以从这一页走到别的站点去。", "ok");
           else if (s === "demo") note("没接上实时频道（" + (why || "网络不可达") + "）。本页退到演示模式：" +
             "按钮照按，流程照走，但消息不会真的发出去，也收不到别人的宠物。", "bad");
-          else if (s === "connecting") note("正在连接…");
+          else if (s === "connecting") note("正在连接…" + (why ? "（" + why + "）" : ""));
         },
         live: function () { say("已接入频道 <b>" + esc(RA.DEFAULTS.channel) + "</b>", "good"); },
         arrive: function (v) { addGuest(v); },

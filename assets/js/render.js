@@ -8,7 +8,7 @@ window.SpecSite = (function () {
   /* 文档修订号 —— 全站唯一事实源。
      它记录的是这份规范文本的编辑状态，与正文《生命周期》章描述的系统运行版本无关。
      改这里之前请先读 docs/CONTRIBUTING.md 的修订约定：版本号要与 CHANGELOG 的条目同时改。 */
-  const VERSION = "0.26";
+  const VERSION = "0.27";
 
   const NAV = [
     { key: "home", label: "首页", href: "index.html" },

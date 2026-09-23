@@ -14,7 +14,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "0.26";
+  var VERSION = "0.27";
 
   /* 公共频道。零认证 —— 谁都能进，所以进来的东西一律按不可信处理。 */
   var DEFAULTS = {
@@ -28,7 +28,8 @@
   var HEURISTIC = {
     heartbeatMs: 25000,      // 心跳间隔
     backoffSec: [1, 2, 4, 8, 16, 30],  // 重连退避
-    maxRetry: 6,             // 连续失败到这个数就回落到演示模式
+    maxRetry: 6,             // 单条通道连续失败到这个数就回落到演示模式
+    switchAfter: 2,          // 单条通道失败到这个数就换下一条（早于 maxRetry，免得干等一分多钟）
     maxSvgBytes: 12000,      // 单只宠物造型的上限
     maxNameLen: 24,
     maxSiteLen: 80,
@@ -46,6 +47,44 @@
     var base = url.replace(/^http/, "ws").replace(/\/+$/, "");
     return base + "/realtime/v1/websocket?apikey=" + encodeURIComponent(key) +
            "&vsn=" + (vsn || "1.0.0");
+  }
+
+  /*
+   * 通道清单，按顺序试。
+   *
+   * 为什么不止一条：第一条 Supabase Realtime 的域名在部分网络里连不上 ——
+   * 实测中国大陆多数家宽与移动网直连 *.supabase.co 会被重置（0.27 记录），
+   * 那一页于是永远停在 connecting，而页面当时只会写一行「连接出错」，
+   * 用户看不出是网络不通还是自己配错了。
+   *
+   * 第二条是本站自己跑的中继：帧格式与语义和 Phoenix 完全一致
+   * （topic / event / payload / ref，phx_join → phx_reply，broadcast 原样转发），
+   * 所以客户端只换端点，其余一行不用改。
+   * 两端必须落在**同一条**通道上才见得到彼此 —— 这条限制照实写在正文 §3.10。
+   */
+  var TRANSPORTS = [
+    { id: "supabase", label: "Supabase Realtime",
+      url: "https://mpkcvkqiimxhrlsvjasr.supabase.co",
+      key: DEFAULTS.key,
+      path: "/realtime/v1/websocket", auth: "apikey" },
+    { id: "relay", label: "本站中继",
+      url: "https://crosspet-relay.app.workbuddy.host",
+      key: "",
+      path: "/", auth: "none" }
+  ];
+
+  /**
+   * 由通道描述拼出端点。
+   * auth 为 "apikey" 才带上 apikey 与 vsn；"none" 什么都不带。
+   */
+  function wsEndpointFor(t, vsn) {
+    if (!t || typeof t.url !== "string" || !/^https?:\/\//.test(t.url)) return null;
+    var ep = t.url.replace(/^http/, "ws").replace(/\/+$/, "") + (t.path || "/");
+    if (t.auth === "apikey") {
+      if (typeof t.key !== "string" || !t.key) return null;
+      ep += "?apikey=" + encodeURIComponent(t.key) + "&vsn=" + (vsn || "1.0.0");
+    }
+    return ep;
   }
 
   function frame(topic, event, payload, ref) {
@@ -238,7 +277,9 @@
       petSVG: opts.petSVG || "",
       // fromSite 要随 cfg 一起留住：depart() 的载荷从 cfg 里取，漏在这儿就等于本站宠物没有来处
       fromSite: opts.fromSite || "",
-      siteId: opts.siteId || ("site-" + hash32(String(Math.random())).toString(36))
+      siteId: opts.siteId || ("site-" + hash32(String(Math.random())).toString(36)),
+      // 通道清单。传一条进来就只用那一条（便于断言与排查）。
+      transports: (opts.transports && opts.transports.length) ? opts.transports : TRANSPORTS
     };
     var on = opts.on || {};
     function emit(k, a, b) {
@@ -253,6 +294,17 @@
     var attempt = 0;
     var joined = false;
     var state = "idle";
+    var ti = 0;   // 当前通道在 cfg.transports 里的下标
+
+    function transport() { return cfg.transports[ti] || null; }
+
+    /** 连不上时说清楚：试过哪几条、现在算什么。 */
+    function failNote() {
+      var names = cfg.transports.map(function (t) { return t.label; }).join(" → ");
+      return "几条通道都连不上（" + names + "）。最常见的原因是网络到不了 " +
+             cfg.transports[0].url.replace(/^https?:\/\//, "") +
+             "（部分网络会把它掐掉），换条网络或让它走代理再试。";
+    }
 
     function nextRef() { return ++ref; }
 
@@ -306,8 +358,18 @@
     function scheduleRetry() {
       if (!running) return;
       attempt++;
+      // 先换通道，再谈放弃：单条通道只试 switchAfter 次就换，
+      // 否则按退避一路爬到 30 秒一档，用户要干等一分多钟才知道连不上。
+      if (attempt >= HEURISTIC.switchAfter && ti < cfg.transports.length - 1) {
+        ti++;
+        attempt = 0;
+        emit("log", "这条通道连不上，换「" + cfg.transports[ti].label + "」再试");
+        setState("connecting", "换通道：" + cfg.transports[ti].label);
+        open();
+        return;
+      }
       if (attempt > HEURISTIC.maxRetry) {
-        setState("demo", "连不上，改用演示模式");
+        setState("demo", failNote());
         return;
       }
       var wait = backoffDelay(attempt);
@@ -317,12 +379,13 @@
 
     function open() {
       if (!running) return;
-      var ep = wsEndpoint(cfg.url, cfg.key, cfg.vsn);
+      var t = transport();
+      var ep = t ? wsEndpointFor(t, cfg.vsn) : null;
       if (!ep || typeof root.WebSocket !== "function") {
         setState("demo", ep ? "这台机器没有 WebSocket" : "端点不合法");
         return;
       }
-      setState("connecting");
+      setState("connecting", "正在连 " + t.label);
       try { ws = new root.WebSocket(ep); }
       catch (e) { setState("demo", "建连失败"); return; }
 
@@ -347,8 +410,12 @@
         if (running) return;
         running = true;
         attempt = 0;
+        ti = 0;
         open();
       },
+      /** 当前落在哪条通道上（换通道时会跟着变） */
+      transportId: function () { return (transport() || {}).id || ""; },
+      transportLabel: function () { return (transport() || {}).label || ""; },
       /** 送自己的宠物出门 */
       depart: function (direction) {
         var dir = direction || (Math.random() < 0.5 ? "left" : "right");
@@ -398,6 +465,18 @@
     t("端点带 apikey 与 vsn", /apikey=K1&vsn=1\.0\.0$/.test(ep), true);
     t("端点拒绝非法地址", wsEndpoint("abc", "k", "1"), null);
     t("端点拒绝空 KEY", wsEndpoint("https://a.co", "", "1"), null);
+
+    // 通道：两条都要能拼出端点，且第二条不带任何凭据
+    t("通道有两条", TRANSPORTS.length, 2);
+    t("通道顺序：先 Supabase 后中继",
+      [TRANSPORTS[0].id, TRANSPORTS[1].id], ["supabase", "relay"]);
+    t("通道端点：Supabase 带凭据",
+      wsEndpointFor(TRANSPORTS[0], "1.0.0").indexOf("wss://mpkcvkqiimxhrlsvjasr.supabase.co/realtime/v1/websocket?apikey=") === 0, true);
+    t("通道端点：中继不带凭据",
+      wsEndpointFor(TRANSPORTS[1], "1.0.0"), "wss://crosspet-relay.app.workbuddy.host/");
+    t("通道端点：非法地址返回空", wsEndpointFor({ url: "abc", auth: "none" }, "1"), null);
+    t("通道端点：要凭据却没有 KEY 返回空",
+      wsEndpointFor({ url: "https://a.co", auth: "apikey", path: "/" }, "1"), null);
 
     var jf = JSON.parse(joinFrame("crosspet-global", 1));
     t("join 帧主题", jf.topic, "realtime:crosspet-global");
@@ -460,7 +539,9 @@
     VERSION: VERSION,
     DEFAULTS: DEFAULTS,
     HEURISTIC: HEURISTIC,
+    TRANSPORTS: TRANSPORTS,
     wsEndpoint: wsEndpoint,
+    wsEndpointFor: wsEndpointFor,
     joinFrame: joinFrame,
     broadcastFrame: broadcastFrame,
     heartbeatFrame: heartbeatFrame,
