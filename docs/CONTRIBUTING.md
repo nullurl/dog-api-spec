@@ -241,7 +241,8 @@ sh skill/install.sh --help
 #   reference/voice.html  reference/opinions.html  reference/norm-ids.html
 #   tools/adoption.html  spec/dog.html#adoption（§5.3）
 #   tools/quantifier.html  tools/expression.html
-#   tools/charts.html  tools/peripherals.html  tools/cyber-walk.html  tools/astraflow.html  sdk/demo.html
+#   tools/charts.html  tools/peripherals.html  tools/cyber-walk.html  tools/astraflow.html
+#   tools/crosspet.html  sdk/demo.html
 #   archive/single-file-v0.7.html（自包含，应能离线独立渲染）
 #
 # charts.html 额外自带一条自检：标题会变成「… · mounted/total」。
@@ -257,7 +258,12 @@ sh skill/install.sh --help
 # 那 15 项全是纯函数断言（节点表、鉴权头、两种请求体、模型分类、SSE 解析、base64 归一、打码与 curl），
 # 一项都不发请求 —— 断网也照样出结论。
 #
-# 带内联逻辑的页面（领养、赛博遛狗、星图接入）把管线函数挂在 window.<名字> 上，夹具才能在 DOM 桩里实跑；
+# crosspet.html 也自带一条：标题会变成「… · 44/44 自检」。
+# 其中 41 项来自 assets/js/crosspet-local.js 的 selftest()（端点拼装、Phoenix 帧、帧归类、
+# SVG 净化与定框、来客审查、重连退避、造型确定性、来源站透传），3 项是页面接线本身。
+# 全部是纯函数断言，一项都不发请求 —— 断网也照样出结论。
+#
+# 带内联逻辑的页面（领养、赛博遛狗、星图接入、跨站串门）把管线函数挂在 window.<名字> 上，夹具才能在 DOM 桩里实跑；
 # 改这类页面要同时更新夹具断言与 live-replay.sh 的抓取清单 —— 漏抓不是跳过，是直接判失败。
 ```
 
@@ -267,6 +273,12 @@ sh skill/install.sh --help
 
 - 不需要写测试（这是文档项目）
 - 不需要引入构建工具。**本项目有意保持零依赖、零构建**，直接打开即可阅读
-- 不需要让每个页面都离线。**唯一的例外是 `tools/astraflow.html`** —— 它专门用来调用外部模型，所以必须联网；
-  除此之外的页面一律不许发请求，也不许引 CDN。这张例外页不写死任何 KEY、不把 KEY 落进文件，
-  失败时给出可复制的 curl 而不是静默降级。
+- 不需要让每个页面都离线。**例外只有两张页：`tools/astraflow.html` 与 `tools/crosspet.html`**，
+  除此之外的页面一律不许发请求，也不许引 CDN。两张例外页各自只开一条口子：
+  - `tools/astraflow.html` 专门用来调用外部模型，所以必须联网。它不写死任何 KEY、不把 KEY 落进文件，
+    失败时给出可复制的 curl 而不是静默降级。
+  - `tools/crosspet.html` 专门用来跨站串门，所以必须连一条实时频道。它不引 supabase-js、不引任何 CDN，
+    协议自己实现（`assets/js/crosspet-local.js`），全页只建一条 WebSocket，发出去的只有宠物的造型与名字。
+    频道是零认证的公共 Broadcast —— 谁都能往里发，所以**收到的造型一律先净化再渲染**
+    （去脚本、去事件属性、去一切链接属性，再按 viewBox 定死外框），这一步有断言覆盖。
+    连不上就退到演示模式：按钮照按、流程照走，只是送不出去也接不进来。

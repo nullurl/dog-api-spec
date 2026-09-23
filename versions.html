@@ -30,7 +30,7 @@
     <table>
       <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
       <tr>
-        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.23</td>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.24</td>
         <td><code>docs/CHANGELOG.md</code></td>
         <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
       </tr>
@@ -57,6 +57,15 @@
     <table>
       <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
       <tr class="first">
+        <td class="vnum">0.24</td><td><span class="vcls engine">Interface</span></td>
+        <td>新增工具页<strong>《跨站串门》</strong>（<code>tools/crosspet.html</code>）：把 §3.10 记的那套协议在本站实装一遍 ——
+        送自己的狗出门、接别站走进来的宠物。实现放在 <code>assets/js/crosspet-local.js</code>，
+        <strong>不用 supabase-js、不引任何 CDN</strong>，只按 Phoenix 协议直连实时频道的 WebSocket；
+        两份实现落在同一频道上互通，是实测过的。收到的造型先净化、再按 <code>viewBox</code> 定死外框才渲染。
+        <strong>本站现在有两张会出网的页面</strong>（另一张是《星图接入》），例外记进 <code>docs/CONTRIBUTING.md</code>。
+        正文、附录、章节数与节号一律未动；导航多一条入口。</td>
+      </tr>
+      <tr>
         <td class="vnum">0.23</td><td><span class="vcls content">Content</span></td>
         <td>DOG 正文新增一章<strong>《跨站接口 / CrossPet 协议》</strong>（<code>DOG-crosspet</code>，§3.10），
         挂在本 PART 末尾：宠物经 Supabase 公共频道跨站串门 —— 接入方式、对外接口、实时通道的前置条件，

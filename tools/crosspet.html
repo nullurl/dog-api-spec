@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>跨站串门 — DOG API</title>
+<meta name="description" content="CrossPet Protocol 的本地实装页：用浏览器原生的 WebSocket 直连实时频道，把本站的狗送到别站、把别站的宠物接进来。全程不引任何第三方脚本。">
+<link rel="stylesheet" href="../assets/css/spec.css">
+<style>
+  .cwrap { max-width: 1180px; margin: 0 auto; padding: 30px 28px 120px; }
+  .chead { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 20px; }
+  .chead h1 { font-size: 30px; }
+  .chead p { color: var(--muted); font-size: 15px; max-width: 840px; margin-top: 8px; }
+  .banner { border-radius: 10px; padding: 15px 20px; margin-bottom: 20px; font-size: 14.5px; line-height: 1.85;
+            background: var(--accent-soft); border: 1px solid #f3d5ac; color: #7c4a08; }
+  .banner strong { color: #5a3406; }
+  .cols { display: grid; grid-template-columns: 362px 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 980px) { .cols { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+  .panel > h3 { margin: 0 0 12px; font-size: 13px; letter-spacing: .08em; color: var(--accent); text-transform: uppercase; }
+  .stage-wrap { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+  #stage { display: block; width: 100%; height: auto; background: #fdfcfb; }
+  #stage .ground { stroke: var(--line); stroke-width: 2; }
+  #stage .guest { transition: transform .9s cubic-bezier(.22,.7,.3,1); }
+  #stage .gm { font-size: 11px; font-family: ui-monospace, Menlo, monospace; fill: var(--muted); }
+  #stage .gm-me { fill: var(--accent); }
+  .hint { font-size: 12.5px; color: var(--faint); padding: 0 14px 12px; line-height: 1.8; }
+  .kv { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
+  .kv td { border: none; border-bottom: 1px solid var(--line); padding: 5px 2px; vertical-align: top; }
+  .kv td:first-child { color: var(--muted); white-space: nowrap; padding-right: 10px; width: 1%; }
+  .kv td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
+                      overflow-wrap: anywhere; word-break: normal; }
+  .kv tr:last-child td { border-bottom: none; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  .dot.idle { background: var(--faint); }
+  .dot.connecting { background: var(--warn); }
+  .dot.live { background: var(--ok); }
+  .dot.demo { background: #b91c1c; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  .fld { display: grid; gap: 5px; margin: 10px 0; }
+  .fld label { font-size: 12.5px; color: var(--muted); }
+  .fld .hint2 { font-size: 11.5px; color: var(--faint); }
+  input[type=text] { font-size: 13px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px;
+                     width: 100%; box-sizing: border-box; color: var(--ink); background: var(--bg); }
+  .dogbox { display: flex; gap: 14px; align-items: center; }
+  .dogbox svg { width: 108px; height: 76px; flex: 0 0 108px; background: var(--code-bg); border-radius: 8px; }
+  .logbox { max-height: 260px; overflow-y: auto; }
+  .logline { font-size: 12.5px; line-height: 1.75; padding: 5px 0; border-bottom: 1px dashed var(--line); color: var(--muted); }
+  .logline:last-child { border-bottom: none; }
+  .logline time { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--faint); margin-right: 8px; }
+  .logline b { color: var(--ink); font-weight: 600; }
+  .logline .good { color: var(--ok); }
+  .logline .bad { color: #b91c1c; }
+  .chk { font-size: 12.5px; padding: 3px 0; color: var(--muted); }
+  .chk.ok { color: var(--ok); }
+  .chk.bad { color: #b91c1c; font-weight: 600; }
+  .selfchk { margin-top: 6px; }
+  .selfchk > summary { cursor: pointer; font-size: 13px; letter-spacing: .08em; color: var(--accent);
+                       text-transform: uppercase; list-style: none; }
+  .selfchk > summary::-webkit-details-marker { display: none; }
+  .selfchk > summary::before { content: "▸ "; color: var(--faint); }
+  .selfchk[open] > summary::before { content: "▾ "; }
+  .selfchk > summary .mono { text-transform: none; letter-spacing: 0; color: var(--faint); margin-left: 6px; }
+  .chk-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px 24px; margin-top: 10px; }
+  @media (max-width: 900px) { .chk-grid { grid-template-columns: 1fr; } }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  .foot-note { font-size: 12.5px; color: var(--faint); line-height: 1.85; margin-top: 14px; }
+  .foot-note code, .hint code, .chk code { background: var(--code-bg); color: var(--code-ink); padding: 1px 4px; border-radius: 4px; }
+  .alert { border-radius: 9px; padding: 10px 13px; font-size: 13px; line-height: 1.8; margin-top: 10px; }
+  .alert.ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; }
+  .alert.bad { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; }
+  #toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); background: #1f2430; color: #fff;
+           font-size: 13px; padding: 9px 18px; border-radius: 8px; opacity: 0; transition: opacity .25s;
+           pointer-events: none; z-index: 60; }
+  #toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="cwrap">
+  <div class="chead">
+    <span class="doc-tag">TOOL / CROSSPET</span>
+    <h1>跨站串门</h1>
+    <p>正文《跨站接口》§3.10 里的五行代码是给别人的站点用的。本站自己按那五行接会引入 jsdelivr 上的
+    supabase-js，跟「页面不引 CDN」的规矩冲突，所以这一页换一份本地实装：只用浏览器原生的 WebSocket
+    直连实时频道，把本站的狗送出去，也把别站走进来的宠物接进来。</p>
+  </div>
+
+  <div class="banner">
+    <strong>这一页会出网。</strong>它是全站第二个发请求的页面（另一个是《星图接入》），例外记在
+    <code>docs/CONTRIBUTING.md</code>。频道是零认证的公共 Broadcast —— 谁都能往里发，所以进来的造型一律先过净化
+    （去掉脚本、事件属性、一切链接属性）再渲染。<strong>连着不 Supabase 的时候本页退到演示模式</strong>，
+    流程照跑，只是送不出去也接不进来。
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="panel">
+        <h3>接入</h3>
+        <table class="kv">
+          <tr><td>状态</td><td id="st-state"><span class="dot idle"></span>未接入</td></tr>
+          <tr><td>频道</td><td id="st-chan">crosspet-global</td></tr>
+          <tr><td>端点</td><td id="st-ep">—</td></tr>
+          <tr><td>本站标识</td><td id="st-site">—</td></tr>
+          <tr><td>收到</td><td id="st-recv">0 位来客 / 0 条互动</td></tr>
+        </table>
+        <div class="row">
+          <button class="btn" id="b-conn">接入频道</button>
+          <button class="btn ghost" id="b-drop">断开</button>
+        </div>
+        <div class="foot-note" id="conn-note">还没接入。这一页不会自动连 —— 由你决定什么时候打开。</div>
+      </div>
+
+      <div class="panel">
+        <h3>你的狗</h3>
+        <div class="dogbox">
+          <div id="my-dog"></div>
+          <div style="flex:1 1 auto">
+            <div class="fld">
+              <label for="in-name">名字</label>
+              <input type="text" id="in-name" maxlength="24" placeholder="一只狗">
+            </div>
+            <div class="row" style="margin-top:0">
+              <button class="btn ghost" id="b-shuffle">换一只</button>
+            </div>
+          </div>
+        </div>
+        <div class="foot-note">造型由种子确定性派生，同一个种子每次得到同一只 —— 跟 §5.3 的领养名一样，
+        不存图、只存一个种子。</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="stage-wrap">
+        <svg id="stage" viewBox="0 0 960 300" preserveAspectRatio="xMidYMid meet"
+             role="img" aria-label="跨站串门舞台"></svg>
+      </div>
+      <div class="hint">按下左边的按钮，狗从舞台边缘走出去。别站的宠物会从对侧走进来，停一会儿再走。
+        「宽进严出」是这版协议的设计：任何加载了 <code>crosspet.js</code> 的站点都会接收别站穿越过来的宠物，不强求双向确认。</div>
+      <div class="row" style="margin:0 14px 14px">
+        <button class="btn" id="b-left">送它出门 · 左</button>
+        <button class="btn" id="b-right">送它出门 · 右</button>
+        <button class="btn ghost" id="b-clear">请客人走</button>
+      </div>
+
+      <div class="panel">
+        <h3>来客记录</h3>
+        <div class="logbox" id="log-out"><div class="logline">还没有记录。</div></div>
+      </div>
+    </div>
+  </div>
+
+  <details class="panel selfchk">
+    <summary>自检 <span id="chk-sum" class="mono">—</span></summary>
+    <div id="st-out" class="chk-grid"></div>
+  </details>
+
+  <div class="foot-note">
+    协议与字段见正文《跨站接口》§3.10；对外接口挂 <code>CrossPet</code>，本页用的是同协议的本地实现
+    <code>assets/js/crosspet-local.js</code>。两份实现落在同一个频道 <code>crosspet-global</code> 上，
+    所以本站的狗和跑着原版 <code>crosspet.js</code> 的站点可以互相串门 —— 这一点是实测过的，
+    不是推测。凭证与项目见 <span class="mono">mpkcvkqiimxhrlsvjasr.supabase.co</span>（新加坡，
+    anon key 本来就是公开密钥）。
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="../assets/js/render.js"></script>
+<script src="../assets/js/crosspet-local.js"></script>
+<script>
+(function () {
+  "use strict";
+  var win = window, doc = document;
+  function $(id) { return doc.getElementById(id); }
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag) {
+    if (doc.createElementNS) { try { return doc.createElementNS(NS, tag); } catch (e) { /* 落到 createElement */ } }
+    return doc.createElement(tag);
+  }
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  /* 桩里 input.value 是 undefined，不能直读 */
+  function val(id, dflt) {
+    var e = $(id);
+    if (!e) return dflt;
+    var v = e.value;
+    return (typeof v === "string" && v.length) ? v : dflt;
+  }
+  /* 桩里没有 sessionStorage；顺带兜住隐私模式抛错的情形 */
+  var store = {
+    get: function (k) {
+      try { return (typeof win.sessionStorage !== "undefined" && win.sessionStorage) ? win.sessionStorage.getItem(k) : null; }
+      catch (e) { return null; }
+    },
+    set: function (k, v) {
+      try { if (typeof win.sessionStorage !== "undefined" && win.sessionStorage) win.sessionStorage.setItem(k, v); }
+      catch (e) { /* 存不下就算了，页面照跑 */ }
+    }
+  };
+  function hostOf() {
+    try {
+      if (typeof win.location !== "undefined" && win.location && win.location.hostname) {
+        return win.location.hostname + (win.location.pathname || "");
+      }
+    } catch (e) { /* 桩里没有 location */ }
+    return "本机页面";
+  }
+
+  var RA = (win.CrossPetLocal) || null;
+
+  /* ------------------------------------------------------------------ *
+   * 自检：把结果挂到标题上，夹具也直接读 window.CrossPetPage
+   * ------------------------------------------------------------------ */
+  var CHECKS = [];
+  function chk(name, ok) { CHECKS.push({ name: name, ok: !!ok }); }
+
+  chk("本地客户端已加载", !!RA && typeof RA.create === "function");
+  var r = RA ? RA.selftest() : { total: 0, pass: 0, items: [] };
+  chk("本地客户端自检全过", r.total > 0 && r.pass === r.total);
+
+  /* ------------------------------------------------------------------ *
+   * 状态
+   * ------------------------------------------------------------------ */
+  var S = {
+    ctl: null,
+    state: "idle",
+    siteId: "",
+    seed: "",
+    recv: 0,
+    meets: 0,
+    guests: [],
+    seq: 0
+  };
+  function seedInit() {
+    var s = store.get("crosspet.seed");
+    if (!s) { s = "seed-" + Math.floor(Math.random() * 1e9).toString(36); store.set("crosspet.seed", s); }
+    return s;
+  }
+  function siteInit() {
+    var s = store.get("crosspet.site");
+    if (!s) { s = "dog-" + Math.floor(Math.random() * 1e9).toString(36); store.set("crosspet.site", s); }
+    return s;
+  }
+  S.seed = seedInit();
+  S.siteId = siteInit();
+
+  var DOG_NAME = "马文的狗";
+
+  function mySvg() { return RA ? RA.dogSvg(S.seed) : ""; }
+  function myName() { return val("in-name", DOG_NAME); }
+
+  /* ------------------------------------------------------------------ *
+   * 渲染
+   * ------------------------------------------------------------------ */
+  var STATE_TEXT = {
+    idle: "未接入", connecting: "连接中", live: "已接入", demo: "演示模式", closed: "已断开"
+  };
+  function paintState() {
+    var t = STATE_TEXT[S.state] || S.state;
+    var box = $("st-state");
+    if (box) box.innerHTML = '<span class="dot ' + esc(S.state) + '"></span>' + esc(t);
+    var recv = $("st-recv");
+    if (recv) recv.textContent = S.recv + " 位来客 / " + S.meets + " 条互动";
+    var site = $("st-site");
+    if (site) site.textContent = S.siteId;
+  }
+  function paintEndpoint() {
+    var box = $("st-ep");
+    if (!box || !RA) return;
+    var full = RA.wsEndpoint(RA.DEFAULTS.url, RA.DEFAULTS.key, RA.DEFAULTS.vsn);
+    if (!full) { box.textContent = "—"; return; }
+    // 只留用户名与首尾，密钥不进页面可见文本
+    var masked = full.replace(/(apikey=)([A-Za-z0-9_-]{6})[A-Za-z0-9_.-]+([A-Za-z0-9_-]{4})/,
+      function (m, a, b, c) { return a + b + "…" + c; });
+    box.textContent = masked;
+  }
+  function paintDog() {
+    var box = $("my-dog");
+    if (!box) return;
+    box.innerHTML = mySvg();
+  }
+  function paintLog() {
+    var box = $("log-out");
+    if (!box) return;
+    if (!S.seq) { box.innerHTML = '<div class="logline">还没有记录。</div>'; return; }
+    var rows = S.log.map(function (l) {
+      return '<div class="logline"><time>' + esc(l.t) + '</time>' +
+             '<span class="' + esc(l.k || "") + '">' + l.h + '</span></div>';
+    });
+    box.innerHTML = rows.join("");
+  }
+  S.log = [];
+  function stamp() {
+    var d = new Date();
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+  }
+  function say(html, kind) {
+    S.seq++;
+    S.log.unshift({ t: stamp(), h: html, k: kind || "" });
+    if (S.log.length > 40) S.log.length = 40;
+    paintLog();
+  }
+  function toast(text) {
+    var t = $("toast");
+    if (!t) return;
+    t.textContent = text;
+    t.className = "on";
+    setTimeout(function () { t.className = ""; }, 2600);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 舞台
+   * ------------------------------------------------------------------ */
+  var SLOTS = [262, 400, 538, 676];
+  function paintStage() {
+    var stage = $("stage");
+    if (!stage) return;
+    stage.innerHTML = "";
+
+    var ground = el("line");
+    ground.setAttribute("x1", "40"); ground.setAttribute("y1", "244");
+    ground.setAttribute("x2", "920"); ground.setAttribute("y2", "244");
+    ground.setAttribute("class", "ground");
+    stage.appendChild(ground);
+
+    // 本站的狗：固定在左侧。造型自带 120×84 外框，按 0.9 缩放后脚底落在 168+75.6≈244
+    var mine = el("g");
+    mine.setAttribute("class", "me");
+    mine.innerHTML = mySvg();
+    mine.setAttribute("transform", "translate(72,168) scale(0.9)");
+    stage.appendChild(mine);
+
+    var tagMe = el("text");
+    tagMe.setAttribute("x", "76"); tagMe.setAttribute("y", "272");
+    tagMe.setAttribute("class", "gm gm-me");
+    tagMe.textContent = myName() + " · 本站";
+    stage.appendChild(tagMe);
+
+    // 来客
+    for (var i = 0; i < S.guests.length; i++) {
+      var g = S.guests[i];
+      var node = el("g");
+      node.setAttribute("class", "guest");
+      var x = SLOTS[i % SLOTS.length];
+      var body = (g.petSVG && g.petSVG.length) ? g.petSVG : (RA ? RA.dogSvg(g.fromSite || g.petName) : "");
+      if (RA) body = RA.fitSvg(body, 108, 76);
+      node.innerHTML = body;
+      node.setAttribute("transform", "translate(" + x + ",178) scale(0.86)");
+      stage.appendChild(node);
+
+      var tag = el("text");
+      tag.setAttribute("x", String(x + 4)); tag.setAttribute("y", "272");
+      tag.setAttribute("class", "gm");
+      tag.textContent = g.petName + " · " + (g.fromSite || "别站");
+      stage.appendChild(tag);
+    }
+  }
+  function addGuest(v) {
+    S.guests.push(v);
+    if (S.guests.length > 4) S.guests.shift();
+    paintStage();
+    S.recv++;
+    paintState();
+    say("<b>" + esc(v.petName) + "</b>（" + esc(v.petType) + "）从 " +
+        esc(v.fromSite || "别站") + " 走进来，方向 " + esc(v.direction), "good");
+    toast(v.petName + " 来了");
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 接入
+   * ------------------------------------------------------------------ */
+  function note(text, kind) {
+    var n = $("conn-note");
+    if (n) { n.className = "foot-note" + (kind ? " alert " + kind : ""); n.textContent = text; }
+  }
+  function build() {
+    if (!RA) return null;
+    return RA.create({
+      petType: "dog",
+      petName: myName(),
+      petSVG: mySvg(),
+      siteId: S.siteId,
+      fromSite: hostOf(),
+      on: {
+        state: function (s, why) {
+          S.state = s;
+          paintState();
+          if (s === "live") note("已接入频道。狗可以从这一页走到别的站点去。", "ok");
+          else if (s === "demo") note("没接上实时频道（" + (why || "网络不可达") + "）。本页退到演示模式：" +
+            "按钮照按，流程照走，但消息不会真的发出去，也收不到别人的宠物。", "bad");
+          else if (s === "connecting") note("正在连接…");
+        },
+        live: function () { say("已接入频道 <b>" + esc(RA.DEFAULTS.channel) + "</b>", "good"); },
+        arrive: function (v) { addGuest(v); },
+        meet: function (p) {
+          S.meets++;
+          paintState();
+          var who = (p && p.petName) ? p.petName : "一只宠物";
+          var other = (p && p.visitorName) ? p.visitorName : "另一只";
+          say("<b>" + esc(who) + "</b> 和 " + esc(other) + " 在别处：" + esc((p && p.interaction) || "相遇了"));
+        },
+        depart: function (dir) {
+          say("本站的 <b>" + esc(myName()) + "</b> 从 " + esc(dir === "left" ? "左边" : "右边") + "走出去");
+        },
+        log: function (t) { say(esc(t)); }
+      }
+    });
+  }
+  function connect() {
+    if (!RA) { note("本地客户端没加载成功，页面无法接入。", "bad"); return; }
+    if (S.ctl) { S.ctl.close(); }
+    S.ctl = null;
+    S.guests = [];
+    S.recv = 0; S.meets = 0;
+    paintStage();
+    S.ctl = build();
+    if (S.ctl) S.ctl.connect();
+  }
+  function depart(dir) {
+    if (!RA) return;
+    if (!S.ctl) { note("先接入频道，再送它出门。"); return; }
+    S.ctl.cfg.petName = myName();
+    S.ctl.cfg.petSVG = mySvg();
+    var sent = S.ctl.depart(dir);
+    if (!sent) say("这一下没有真的送出去 —— 还没接上频道。", "bad");
+  }
+
+  /* ------------------------------------------------------------------ *
+   * 事件
+   * ------------------------------------------------------------------ */
+  function on(id, fn) { var e = $(id); if (e && e.addEventListener) e.addEventListener("click", fn); }
+  on("b-conn", function () { connect(); });
+  on("b-drop", function () {
+    if (S.ctl) { S.ctl.close(); note("已断开。这一页不再发任何东西。"); }
+    say("手动断开");
+  });
+  on("b-left", function () { depart("left"); });
+  on("b-right", function () { depart("right"); });
+  on("b-clear", function () { S.guests = []; paintStage(); say("请客人走了"); });
+  on("b-shuffle", function () {
+    S.seed = "seed-" + Math.floor(Math.random() * 1e9).toString(36);
+    store.set("crosspet.seed", S.seed);
+    paintDog(); paintStage(); say("换了一只");
+  });
+  (function () {
+    var e = $("in-name");
+    if (e && e.addEventListener) {
+      e.addEventListener("input", function () { paintStage(); });
+    }
+  })();
+
+  /* ------------------------------------------------------------------ *
+   * 自检面板与标题信号
+   * ------------------------------------------------------------------ */
+  chk("舞台与来客槽位已定义", SLOTS.length >= 4);
+  var pagePass = 0;
+  for (var ci = 0; ci < CHECKS.length; ci++) if (CHECKS[ci].ok) pagePass++;
+  var total = CHECKS.length + r.total;
+  var okCount = pagePass + r.pass;
+
+  var out = [];
+  out.push('<div class="chk ' + (pagePass === CHECKS.length ? "ok" : "bad") + '">' +
+           (pagePass === CHECKS.length ? "✓" : "✗") + " 页面接线 " + pagePass + "/" + CHECKS.length + "</div>");
+  for (var k = 0; k < r.total; k++) {
+    out.push('<div class="chk ' + (r.items[k].ok ? "ok" : "bad") + '">' +
+             (r.items[k].ok ? "✓" : "✗") + " " + esc(r.items[k].name) + "</div>");
+  }
+  var outBox = $("st-out");
+  if (outBox) outBox.innerHTML = out.join("");
+  var sumBox = $("chk-sum");
+  if (sumBox) sumBox.textContent = okCount + "/" + total;
+  if (win.document && win.document.title) {
+    win.document.title = win.document.title + " · " + okCount + "/" + total + " 自检";
+  }
+
+  paintEndpoint();
+  paintState();
+  paintDog();
+  paintStage();
+  paintLog();
+
+  win.CrossPetPage = {
+    CHECKS: CHECKS,
+    SLOTS: SLOTS,
+    ON: function () { return { state: S.state, recv: S.recv, meets: S.meets, guests: S.guests.length, siteId: S.siteId }; },
+    esc: esc,
+    mySvg: mySvg,
+    stateText: STATE_TEXT,
+    connect: connect,
+    depart: depart,
+    selftest: function () { return { checks: CHECKS.length, passed: pagePass, total: total, ok: okCount, local: r }; }
+  };
+
+  SpecSite.mountChrome({ root: "../", active: "crosspet" });
+})();
+</script>
+
+</body>
+</html>

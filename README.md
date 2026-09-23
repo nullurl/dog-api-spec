@@ -55,7 +55,8 @@ python3 -m http.server 8000
 │   ├── charts.html               图表图鉴（19 张手写 SVG）
 │   ├── peripherals.html          外设控制台
 │   ├── cyber-walk.html           赛博遛狗（上传图片 → 网格 → 部件 → 两种 SVG 出口）
-│   ├── astraflow.html            星图接入（全站唯一出网页：清单 / 对话 / 生图 / 交接给遛狗）
+│   ├── astraflow.html            星图接入（会出网：清单 / 对话 / 生图 / 交接给遛狗）
+│   ├── crosspet.html             跨站串门（会出网：原生 WebSocket 直连公共频道）
 │   └── adoption.html             领养（按 §5.3 生成安装命令 / 派生 KEY 与名字 / 核验 / 查测试向量）
 ├── sdk/                          参考客户端
 │   ├── dog-api-client.js         DogClient（含量化端点）
@@ -75,6 +76,7 @@ python3 -m http.server 8000
 │   │   ├── dog.js                规范正文 36 章
 │   │   └── appendices.js         附录 A–R
 │   └── js/                       运行时内核（纯计算 / 纯渲染，零依赖）
+│       ├── crosspet-local.js     CrossPet 本地客户端（原生 WebSocket，零依赖）
 │       ├── render.js             共享渲染器（导航 / 目录 / 正文 / 协议约定）
 │       ├── quantify.js           量化引擎（参数注册表 / 公式 / 评分模型 / 分诊）
 │       ├── scenarios.js          标准场景库（D 日常 / M 医疗 / E 应急，14 个）

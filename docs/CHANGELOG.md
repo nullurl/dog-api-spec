@@ -8,6 +8,50 @@
 
 ---
 
+## [0.24] — CrossPet Local (Tool Page)
+
+**Change class:** Interface
+
+**做了什么**
+新增工具页 `tools/crosspet.html`《跨站串门》，以及零依赖的客户端 `assets/js/crosspet-local.js`：
+把 0.23 记录的那份协议搬到本站自己脚下 —— 一只狗从这一页走出去，别站的宠物从别站走进来。
+
+0.23 的条目里写着「两份部署必须填同一组 Supabase 凭证」。这一版把「同一组」落成了具体的一个项目：
+新建了一个 Supabase 项目（新加坡 `ap-southeast-1`，ref `mpkcvkqiimxhrlsvjasr`），客户端出厂即指向它，
+频道仍是 `crosspet-global`。anon key 本就是公开密钥，写进文件无妨；数据库密码与访问令牌一概不入库，
+只留在本机被忽略的目录里。
+
+**实现上的取舍：不引 supabase-js，也不引任何 CDN**
+参考实现的 `crosspet.js` 在凭证非空时从 `cdn.jsdelivr.net` 动态加载 `@supabase/supabase-js@2`。
+本站不接这份依赖：`crosspet-local.js` 用浏览器原生的 `WebSocket` 按 Phoenix 协议直连
+`wss://<ref>.supabase.co/realtime/v1/websocket`，自己拼 `phx_join` / `broadcast` / `heartbeat` 三类帧，
+自己归类收到的帧（回执 / 广播 / 系统消息）。
+**互通是实测的，不是推断的**：一端原生 WebSocket、一端 supabase-js，`pet_depart` 与 `pet_meet` 双向都收到了。
+代价是本站从此有**两张**页面会出网。
+
+**收到的造型一律先净化再渲染**：公共频道零认证，谁都能往里发，所以进来的 SVG 按不可信处理 ——
+脚本、事件属性、一切链接属性先削掉，再按 `viewBox` 定死外框（不这样，嵌进 `<g>` 会撑满舞台）。
+自己发出的回声按站点标识丢弃；连不上就退到演示模式 —— 按钮照按、流程照走，只是发不出去也收不进来。
+
+**改口**
+0.23 起把星图页称作「本站唯一会出网的页面」，这一版不再成立。星图页的标题、描述、正文与
+`docs/CONTRIBUTING.md` 的例外条款一并改为「两张页面之一」。
+
+**修掉一个静默丢字段的 bug**
+客户端构造时把 `fromSite` 漏在 `cfg` 之外，而 `depart()` 的载荷全从 `cfg` 取 ——
+于是本站宠物走出去时来源站永远是空串，别站收到只显示「别站」。已补进 `cfg`，
+并在自检里加了一条配置透传断言（41 项）。
+
+**没有做什么**
+不加载任何第三方脚本，不引 CDN。不改口径与量化数字，**正文的章节数与节号一律未动** ——
+§3.10 只追加了一节《本站的实装》与一张两份实现的对照表；导航多一条入口。
+
+**校验**
+① 22 个 HTML / 136 条本地链接 / 标签配平 / 208 处 `§` 引用全部指向存在的章节
+② 渲染冒烟 122 项（新增 31 项：净化与定框在**进 DOM 之前**再断言一遍，另用假 WebSocket 跑通
+   接入 → 收回声 → 收来客 → 送出门，桩里零真连接）
+③ 线上回放同套断言（推送后执行）
+
 ## [0.23] — CrossPet Protocol (New Chapter)
 
 **Change class:** Content
