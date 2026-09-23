@@ -30,7 +30,7 @@
     <table>
       <tr><th>轴</th><th>取值范围</th><th>谁在记录</th><th>变了意味着什么</th></tr>
       <tr>
-        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.24</td>
+        <td><strong>文档修订</strong></td><td class="vnum">0.1.0 → 0.25</td>
         <td><code>docs/CHANGELOG.md</code></td>
         <td>这份<em>规范文本</em>被编辑过。本页列的就是它。</td>
       </tr>
@@ -56,7 +56,15 @@
     <h2>修订序列</h2>
     <table>
       <tr><th>版本</th><th>类别</th><th>这一版做了什么</th></tr>
-      <tr class="first">
+            <tr class="first">
+        <td class="vnum">0.25</td><td><span class="vcls content">Content</span></td>
+        <td>DOG 正文 §3.10 补一节<strong>《接入凭证》</strong>：把「两份部署必须填同一组值」落实成一组可照抄的值 ——
+        新开 Supabase 项目 <code>crosspet</code>（新加坡 <code>ap-southeast-1</code>），并新增机器可读的
+        <code>assets/crosspet-credentials.json</code>（频道、端点、做法与注意事项一次取全）供工具引用。
+        两份值必须逐字一致，由校验流程比对；<code>render.js</code> 的修订号与凭证清单里的修订号也互相锁定。
+        <strong>章节数与节号一律未动</strong>，导航未动。</td>
+      </tr>
+      <tr>
         <td class="vnum">0.24</td><td><span class="vcls engine">Interface</span></td>
         <td>新增工具页<strong>《跨站串门》</strong>（<code>tools/crosspet.html</code>）：把 §3.10 记的那套协议在本站实装一遍 ——
         送自己的狗出门、接别站走进来的宠物。实现放在 <code>assets/js/crosspet-local.js</code>，

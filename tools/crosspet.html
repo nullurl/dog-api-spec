@@ -159,8 +159,10 @@
     协议与字段见正文《跨站接口》§3.10；对外接口挂 <code>CrossPet</code>，本页用的是同协议的本地实现
     <code>assets/js/crosspet-local.js</code>。两份实现落在同一个频道 <code>crosspet-global</code> 上，
     所以本站的狗和跑着原版 <code>crosspet.js</code> 的站点可以互相串门 —— 这一点是实测过的，
-    不是推测。凭证与项目见 <span class="mono">mpkcvkqiimxhrlsvjasr.supabase.co</span>（新加坡，
-    anon key 本来就是公开密钥）。
+    不是推测。<strong>要把别站接进来</strong>，让它照抄本站发布的这组凭证即可：完整值与做法见
+    <a href="../assets/crosspet-credentials.json"><code>assets/crosspet-credentials.json</code></a>（项目
+    <span class="mono">mpkcvkqiimxhrlsvjasr.supabase.co</span>，新加坡；anon key 本来就是公开密钥，
+    写进静态文件不算泄露）。
   </div>
 </div>
 
